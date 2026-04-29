@@ -13,23 +13,26 @@ Playable online demo: **<http://www.gomud.net>**
 ---
 
 <!-- TOC -->
-- [Features](#features)
-  - [Screenshots](#screenshots)
-  - [ANSI Colors](#ansi-colors)
-  - [Small Feature Demos](#small-feature-demos)
-- [Setup](#setup)
-  - [Requirements](#requirements)
-  - [Usage](#usage)
-- [Connecting](#connecting)
-- [Configuration](#configuration)
-  - [Configuration Files](#configuration-files)
-  - [Enable Server HTTPS Support](#enable-server-https-support)
-- [User Support](#user-support)
-- [Development Notes](#development-notes)
-  - [Contributor Guide](#contributor-guide)
-  - [Build Commands](#build-commands)
-  - [Env Vars](#env-vars)
-  - [Why Go?](#why-go)
+- [GoMud](#gomud)
+  - [Overview](#overview)
+  - [Features](#features)
+    - [Screenshots](#screenshots)
+    - [ANSI Colors](#ansi-colors)
+    - [Small Feature Demos](#small-feature-demos)
+  - [Setup](#setup)
+    - [Requirements](#requirements)
+    - [Quick Start](#quick-start)
+  - [Connecting](#connecting)
+  - [Common Server Commands](#common-server-commands)
+  - [Configuration](#configuration)
+    - [Config Files](#config-files)
+    - [Enable Server HTTPS Support](#enable-server-https-support)
+  - [User Support](#user-support)
+  - [Development Notes](#development-notes)
+    - [Contributor Guide](#contributor-guide)
+    - [Build Commands](#build-commands)
+    - [Env Vars](#env-vars)
+    - [Why Go?](#why-go)
 
 ---
 
@@ -49,6 +52,7 @@ Colorization is handled through extensive use of my [github.com/GoMudEngine/ansi
 
 ### Small Feature Demos
 
+- [Web Admin Tool](https://youtu.be/n44kQp2JwIk)
 - [Auto-complete input](https://youtu.be/7sG-FFHdhtI)
 - [In-game maps](https://youtu.be/navCCH-mz_8)
 - [Quests / Quest Progress](https://youtu.be/3zIClk3ewTU)
