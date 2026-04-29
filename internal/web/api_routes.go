@@ -41,6 +41,9 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/items/attack-messages", RunWithMUDLocked(
 		doBasicAuth(apiV1GetItemAttackMessages),
 	))
+	mux.HandleFunc("GET /admin/api/v1/items/ranks", RunWithMUDLocked(
+		doBasicAuth(apiV1GetItemRanks),
+	))
 	mux.HandleFunc("PUT /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}", RunWithMUDLocked(
 		doBasicAuth(apiV1PutItemAttackMessage),
 	))

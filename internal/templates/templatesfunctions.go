@@ -207,6 +207,13 @@ var (
 		},
 		"map": makeMap,
 		"t":   language.T,
+		"config": func(key string) string {
+			data := configs.GetConfig().AllConfigData()
+			if val, ok := data[key]; ok {
+				return fmt.Sprint(val)
+			}
+			return ""
+		},
 	}
 )
 

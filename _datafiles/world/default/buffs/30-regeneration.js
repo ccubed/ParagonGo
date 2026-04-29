@@ -8,7 +8,9 @@ function onStart(actor, triggersLeft) {
 // Invoked every time the buff is triggered (see roundinterval)
 function onTrigger(actor, triggersLeft) {
     healAmt = actor.AddHealth(UtilDiceRoll(1, 3));
-    SendUserMessage(actor.UserId(), 'You regenerate for <ansi fg="healing">'+String(healAmt)+' damage</ansi>!');
+    if (healAmt > 0) {
+        SendUserMessage(actor.UserId(), 'You regenerate for <ansi fg="healing">'+String(healAmt)+' damage</ansi>!');
+    }
 }
 
 // Invoked when the buff has run its course.

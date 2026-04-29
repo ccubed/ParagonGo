@@ -23,7 +23,7 @@ func seedConfig() Config {
 	c.Timing.NightHours = 8
 	c.FilePaths.DataFiles = "_datafiles/world/default"
 	c.FilePaths.HttpsCacheDir = "_datafiles/tls"
-	c.GamePlay.PVP = PVPEnabled
+	c.GamePlay.PVP.Enabled = PVPEnabled
 	c.GamePlay.XPScale = 100
 	c.GamePlay.ShopRestockRate = "6 hours"
 	c.GamePlay.ContainerSizeMax = 10

@@ -146,7 +146,7 @@
                     <label for="fUnarmedName">Unarmed Attack Name</label>
                     <input type="text" id="fUnarmedName" placeholder="fist" />
                 </div>
-                <div class="field">
+                <div class="field span2">
                     <label for="fDiceRoll">Unarmed Damage (Dice Roll)</label>
                     <input type="text" id="fDiceRoll" placeholder="1d4" />
                     <div class="field-hint">e.g. 1d6, 2d4+1</div>
@@ -219,6 +219,7 @@ async function loadRaces() {
     if (!res.ok) { console.error('Failed to load races:', res.error); return; }
     racesData = (res.data && res.data.data) || {};
     renderList();
+    DiceRollHelper.attach(document.getElementById('fDiceRoll'));
     const hashId = location.hash.slice(1);
     if (hashId && racesData[hashId]) selectRace(hashId);
 }
@@ -288,7 +289,9 @@ function populateForm(race) {
     document.getElementById('fTNLScale').value = r.TNLScale || 1.0;
     document.getElementById('fTNLScale-val').textContent = parseFloat(r.TNLScale || 1.0).toFixed(1);
     document.getElementById('fUnarmedName').value = r.UnarmedName || '';
-    document.getElementById('fDiceRoll').value = (r.Damage && r.Damage.DiceRoll) ? r.Damage.DiceRoll : '';
+    var fDiceRoll = document.getElementById('fDiceRoll');
+    fDiceRoll.value = (r.Damage && r.Damage.DiceRoll) ? r.Damage.DiceRoll : '';
+    fDiceRoll.dispatchEvent(new Event('change'));
     document.getElementById('fSelectable').checked = !!r.Selectable;
     document.getElementById('fTameable').checked = !!r.Tameable;
     document.getElementById('fKnowsFirstAid').checked = !!r.KnowsFirstAid;

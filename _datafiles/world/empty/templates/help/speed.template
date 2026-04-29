@@ -1,15 +1,18 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">speed</ansi>
 
-The <ansi fg="command">speed</ansi> stat measures your physical speed.
+<ansi fg="cyan">Speed</ansi> measures how quickly you move and react. A faster fighter lands more
+blows and is harder to pin down.
 
-<ansi fg="yellow">Usage: </ansi>
+<ansi fg="yellow">Combat</ansi>
 
-Besides various skils that use speed, here are some other general uses for it:
+* Increases your chance to hit. The faster you are compared to your opponent,
+  the more reliably your attacks connect (up to {{ config "GamePlay.Combat.ToHitMax" }}% hit chance).
+* When fighting unarmed or with claws, speed lets you strike multiple times per
+  round — up to {{ config "GamePlay.Combat.ExtraAttacksMax" }} extra attacks beyond your base attack.
+* Increases the number of your unarmed damage dice when fighting without a weapon.
 
-* Number of attacks is calculated as: <ansi fg="red">(attackSpeed-DefenderSpeed) / 25</ansi> (rounded up)
-* Chance to hit is: <ansi fg="red">30 + attackSpd/(AttackSpeed+DefenderSpeed) * 70</ansi>
-* Crit chance is <ansi fg="red">5 + (AttackStrength+AttackSpeed) / levelDifference</ansi>
-* Chance to be followed is: <ansi fg="red">(AttackSpeed-DefenderSpeed) + AttackPerception + 20</ansi>
-* <ansi fg="command">Flee</ansi> chance is <ansi fg="red">AttackSpeed / (AttackSpeed+DefenderSpeed) * 40</ansi>
-* Unarmed combat gains 1 extra D for every 25 speed
+<ansi fg="yellow">Movement</ansi>
 
+* Reduces the action-point cost of moving between rooms, letting you travel
+  more quickly each round.
+</ansi>

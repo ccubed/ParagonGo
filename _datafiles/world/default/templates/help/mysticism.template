@@ -1,11 +1,16 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mysticism</ansi>
 
-The <ansi fg="command">mysticism</ansi> stat measures your magical connection to the world.
+<ansi fg="cyan">Mysticism</ansi> measures your connection to the magical forces of the world.
+Those attuned to it can cast more spells and cast them more effectively.
 
-<ansi fg="yellow">Usage: </ansi>
+<ansi fg="yellow">Mana</ansi>
 
-Besides various skils that use mysticism, here are some other general uses for it:
+* Each point of Mysticism adds <ansi fg="cyan">3 maximum MP</ansi>. Without mana you cannot
+  cast spells, so this stat is essential for any spellcaster.
+* Improves the rate at which your mana recovers between fights.
 
-* Mana recovery per round is affected by mysticism
-* You get 2MP per point of mysticism
+<ansi fg="yellow">Magic</ansi>
 
+* Directly improves your spellcasting success, making it easier to land
+  spells against resistant targets.
+</ansi>

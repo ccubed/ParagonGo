@@ -1,7 +1,7 @@
 userid: 1
 role: admin
 username: admin
-password: password
+password: $2a$10$9yjj0tmGVRp/1RLDiNT2.u4nnrJEHEwi2fYf4rjNSL26c.FiRtWOe
 joined: 2024-10-31T13:28:45.395873-07:00
 macros:
   =1: e;e;e;e;e;e;e;e
@@ -37,13 +37,13 @@ character:
       base: 2
     perception:
       training: 2
-  level: 5
-  experience: 17682
-  trainingpoints: 44
-  statpoints: 6
-  health: 60
-  mana: 32
-  actionpoints: 202
+  level: 7
+  experience: 37682
+  trainingpoints: 46
+  statpoints: 8
+  health: 67
+  mana: 44
+  actionpoints: 203
   alignment: -1
   gold: 9950
   bank: 0
@@ -53,25 +53,27 @@ character:
     healall: 1
     illum: 1
     mm: 1
+    poly: 4
   items:
-  - itemid: 10006
-    uncursed: true
   - itemid: 30002
     uses: 1
   - itemid: 10012
   - itemid: 10001
+  - itemid: 10006
+    uncursed: true
   buffs:
     list:
-    - buffid: 28
+    - buffid: 39
       permabuff: true
-      roundcounter: 18
+      roundcounter: 7
       triggersleft: 1000000000
     - buffid: 29
       permabuff: true
-      roundcounter: 41
+      roundcounter: 15
       triggersleft: 1000000000
-    - buffid: 39
+    - buffid: 28
       permabuff: true
+      roundcounter: 15
       triggersleft: 1000000000
   equipment:
     weapon:
@@ -212,8 +214,5 @@ character:
       "2": "0xFFFFFF0000000000"
       "3": "0x0000000003FFFFFF"
       "13": "0x0000008000000000"
-itemstorage:
-  items:
-  - itemid: 20011
 configoptions:
   tinymap: true

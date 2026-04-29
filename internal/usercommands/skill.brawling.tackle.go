@@ -134,7 +134,7 @@ func Tackle(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 				if atkUser := users.GetByUserId(attackPlayerId); atkUser != nil {
 					atkUser.SendText(
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> lunges to tackles you and misses!`, user.Character.Name),
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> lunges to tackle you and misses!`, user.Character.Name),
 					)
 				}
 

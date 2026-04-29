@@ -5,8 +5,26 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
+
+// GET /admin/api/v1/items/ranks
+// Returns weapon rankings computed by the combat engine against a neutral
+// equal-stat opponent. Three sorted views are returned: by raw DPS, by
+// adjusted DPS (two-handed and wait-round penalties applied), and by max
+// single-hit damage.
+func apiV1GetItemRanks(w http.ResponseWriter, r *http.Request) {
+	byDPS, byAdjDPS, byMaxDmg := combat.RankWeapons()
+	writeJSON(w, http.StatusOK, APIResponse[map[string]any]{
+		Success: true,
+		Data: map[string]any{
+			"by_dps":     byDPS,
+			"by_adj_dps": byAdjDPS,
+			"by_max_dmg": byMaxDmg,
+		},
+	})
+}
 
 // GET /admin/api/v1/items/types
 func apiV1GetItemTypes(w http.ResponseWriter, r *http.Request) {

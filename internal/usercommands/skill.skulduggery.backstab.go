@@ -43,7 +43,7 @@ func Backstab(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if user.Character.Equipment.Offhand.ItemId != 0 {
-		wpn := user.Character.Equipment.Weapon.GetSpec()
+		wpn := user.Character.Equipment.Offhand.GetSpec()
 		if wpn.Type == items.Weapon {
 			wpnSubtypeChecks = append(wpnSubtypeChecks, wpn.Subtype)
 		}

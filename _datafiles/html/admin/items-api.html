@@ -40,7 +40,7 @@
 </style>
 
 <h1>Items API Reference</h1>
-<p class="subtitle">REST endpoints for browsing, creating, editing, and deleting item definitions. For attack message endpoints see <a href="/admin/items-attack-messages-api">Attack Messages API Docs</a>.</p>
+<p class="subtitle">REST endpoints for browsing, creating, editing, and deleting item definitions. For attack message endpoints see <a href="/admin/items-attack-messages-api">Attack Messages API Docs</a>. To view rankings interactively see <a href="/admin/items-rank">Weapon Rankings</a>.</p>
 
 <div class="api-list">
 
@@ -58,6 +58,31 @@
                 <details class="resp-entry">
                     <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
                     <div class="resp-body"><div class="curl-block">{"success":true,"data":{"subtypes":[...],"types":[{"Type":"weapon","Description":"...","Count":0,"MinItemId":10000,"MaxItemId":19999},...]}}</div></div>
+                </details>
+            </div>
+        </div>
+    </details>
+
+    <details class="api-entry">
+        <summary>
+            <span class="method method-get">GET</span>
+            <span class="api-path">/admin/api/v1/items/ranks</span>
+            <span class="api-desc">Weapon balance rankings</span>
+        </summary>
+        <div class="api-body">
+            <p>Runs the combat engine's <code>RankWeapons()</code> function against a neutral equal-stat baseline and returns three sorted views of every loaded weapon:</p>
+            <ul style="margin:0.4rem 0 0.6rem 1.2rem;font-size:0.85rem;color:#444;line-height:1.7">
+                <li><strong>by_dps</strong> — raw expected damage per round</li>
+                <li><strong>by_adj_dps</strong> — DPS adjusted for two-handed (×0.75) and wait-round (÷(1+W)) opportunity cost</li>
+                <li><strong>by_max_dmg</strong> — theoretical maximum single-hit damage ceiling</li>
+            </ul>
+            <p>Each entry contains <code>ItemId</code>, <code>Name</code>, <code>Subtype</code>, <code>Hands</code>, <code>WaitRounds</code>, <code>DiceRoll</code>, <code>AvgDmg</code>, <code>MaxDmg</code>, <code>DPS</code>, and <code>AdjDPS</code>. This endpoint is read-only and has no side effects.</p>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/items/ranks</span></div>
+            <div class="response-examples">
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"by_adj_dps":[{"ItemId":10009,"Name":"ancient royal scepter","Subtype":"bludgeoning","Hands":1,"DiceRoll":"2d8+2#10","AvgDmg":11,"MaxDmg":18,"DPS":2.719,"AdjDPS":2.719,"WaitRounds":0},...],"by_dps":[...],"by_max_dmg":[...]}}</div></div>
                 </details>
             </div>
         </div>

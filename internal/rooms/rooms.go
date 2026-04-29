@@ -2325,11 +2325,11 @@ func (r *Room) CanPvp(attUser *users.UserRecord, defUser *users.UserRecord) erro
 		return errors.New(`Fighting is not allowed here.`)
 	}
 
-	c := configs.GetGamePlayConfig()
+	c := configs.GetPVPConfig()
 
 	// Possible settings are `enabled`, `disabled`, `limited`
-	pvpSetting := string(c.PVP)
-	minLevel := int(c.PVPMinimumLevel)
+	pvpSetting := string(c.Enabled)
+	minLevel := int(c.MinimumLevel)
 
 	if pvpSetting == configs.PVPDisabled {
 		return errors.New(`PVP is disabled.`)

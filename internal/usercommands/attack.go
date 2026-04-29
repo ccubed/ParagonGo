@@ -250,7 +250,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				)
 
 				room.SendText(
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, p.Character.Name, p.Character.Name),
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, user.Character.Name, p.Character.Name),
 					user.UserId, attackPlayerId)
 			}
 

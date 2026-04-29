@@ -39,6 +39,10 @@ func serveAdminTemplate(w http.ResponseWriter, r *http.Request, filename string,
 	}
 }
 
+func adminItemsRank(w http.ResponseWriter, r *http.Request) {
+	serveAdminTemplate(w, r, "items-rank.html", nil)
+}
+
 func adminItems(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "items.html", nil)
 }

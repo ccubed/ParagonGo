@@ -1,9 +1,19 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">smarts</ansi>
 
-The <ansi fg="command">smarts</ansi> stat measures your intellect.
+<ansi fg="cyan">Smarts</ansi> measures your intellect and tactical awareness. A sharper mind finds
+weaknesses others miss.
 
-<ansi fg="yellow">Usage: </ansi>
+<ansi fg="yellow">Combat</ansi>
 
-Besides various skils that use smarts, here are some other general uses for it:
+* Increases your critical hit chance. The smarter you are compared to your
+  opponent, the more often you land a decisive blow (up to {{ config "GamePlay.Combat.CritChanceMax" }}% crit chance).
 
+<ansi fg="yellow">Magic</ansi>
 
+* Improves your spellcasting success, helping you land spells more reliably.
+
+<ansi fg="yellow">Exploration</ansi>
+
+* Expands how many rooms your map can hold, letting you chart larger areas
+  before older sections fade from memory.
+</ansi>

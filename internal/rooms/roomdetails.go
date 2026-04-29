@@ -54,7 +54,7 @@ type RoomTemplateDetails struct {
 
 func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTemplateDetails {
 
-	c := configs.GetGamePlayConfig()
+	c := configs.GetPVPConfig()
 
 	var roomSymbol string = r.MapSymbol
 	var roomLegend string = r.MapLegend
@@ -70,7 +70,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	showPvp := false
 	// Don't need to show the PVP flag if Pvp is globally enabled or globally disabled
-	if c.PVP == configs.PVPLimited {
+	if c.Enabled == configs.PVPLimited {
 		showPvp = r.IsPvp()
 	}
 

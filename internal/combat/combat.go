@@ -2,7 +2,6 @@ package combat
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -98,7 +97,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 // Performs a combat round from a mob to a mob
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, User)
+	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
@@ -118,81 +117,23 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 
 	msgs := items.GetPreAttackMessage(sourceChar.Equipment.Weapon.GetSpec().Subtype, stepType)
 
-	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
-
 	// zero means randomly selected, otherwise use the ItemId to consistently choose a message
 	msgSeed := 0
-	if configs.GetGamePlayConfig().ConsistentAttackMessages {
+	if configs.GetCombatConfig().ConsistentAttackMessages {
 		msgSeed = sourceChar.Equipment.Weapon.ItemId
 	}
 
-	tokenReplacements := map[items.TokenName]string{
-		items.TokenItemName:     races.GetRace(sourceChar.GetRaceId()).UnarmedName,
-		items.TokenSource:       sourceChar.Name,
-		items.TokenSourceType:   string(sourceType) + `name`,
-		items.TokenTarget:       targetChar.Name,
-		items.TokenTargetType:   string(targetType) + `name`,
-		items.TokenUsesLeft:     `[Invalid]`,
-		items.TokenDamage:       `[Invalid]`,
-		items.TokenEntranceName: `unknown`,
-		items.TokenExitName:     `unknown`,
-	}
-
-	if sourceChar.RoomId == targetChar.RoomId {
-		toAttackerMsg = msgs.Together.ToAttacker.Get(msgSeed)
-		toDefenderMsg = msgs.Together.ToDefender.Get(msgSeed)
-		toAttackerRoomMsg = msgs.Together.ToRoom.Get(msgSeed)
-		toDefenderRoomMsg = items.ItemMessage("")
-
-	} else {
-
-		toAttackerMsg = msgs.Separate.ToAttacker.Get(msgSeed)
-		toDefenderMsg = msgs.Separate.ToDefender.Get(msgSeed)
-		toAttackerRoomMsg = msgs.Separate.ToAttackerRoom.Get(msgSeed)
-		toDefenderRoomMsg = msgs.Separate.ToDefenderRoom.Get(msgSeed)
-
-		// Find the exit that leads to the target from the source (if any)
-		if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
-			tokenReplacements[items.TokenExitName] = `unknown`
-			for exitName, exit := range atkRoom.Exits {
-				if exit.RoomId == targetChar.RoomId {
-					tokenReplacements[items.TokenExitName] = exitName
-					break
-				}
-			}
-		}
-		// find the exit that leads to the source from the target (if any)
-		if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-			tokenReplacements[items.TokenEntranceName] = `unknown`
-			for exitName, exit := range defRoom.Exits {
-				if exit.RoomId == sourceChar.RoomId {
-					tokenReplacements[items.TokenEntranceName] = exitName
-					break
-				}
-			}
-		}
-	}
-
+	weaponName := races.GetRace(sourceChar.GetRaceId()).UnarmedName
 	if sourceChar.Equipment.Weapon.ItemId > 0 {
-		tokenReplacements[items.TokenItemName] = sourceChar.Equipment.Weapon.DisplayName()
+		weaponName = sourceChar.Equipment.Weapon.DisplayName()
 	}
 
-	if sourceType == Mob {
-		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
-	}
-
-	if targetType == Mob {
-		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
-	}
-
-	for tokenName, tokenValue := range tokenReplacements {
-		toAttackerMsg = toAttackerMsg.SetTokenValue(tokenName, tokenValue)
-		toDefenderMsg = toDefenderMsg.SetTokenValue(tokenName, tokenValue)
-		toAttackerRoomMsg = toAttackerRoomMsg.SetTokenValue(tokenName, tokenValue)
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = toDefenderRoomMsg.SetTokenValue(tokenName, tokenValue)
-		}
-	}
+	toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
+		sourceChar, targetChar, sourceType, targetType,
+		weaponName, `[Invalid]`, msgSeed,
+		msgs.Together.ToAttacker, msgs.Together.ToDefender, msgs.Together.ToRoom, items.MessageOptions(nil),
+		msgs.Separate.ToAttacker, msgs.Separate.ToDefender, msgs.Separate.ToAttackerRoom, msgs.Separate.ToDefenderRoom,
+	)
 
 	if string(toAttackerMsg) != `` {
 		attackResult.SendToSource(string(toAttackerMsg))
@@ -219,76 +160,111 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	return attackResult
 }
 
+// buildCombatMessages resolves token replacements and selects the correct
+// together/separate message variants for a single combat message event.
+// It returns the four populated message strings ready to send.
+// Pass nil (or empty MessageOptions) for togetherToDefenderRoom to suppress that message slot.
+func buildCombatMessages(
+	sourceChar *characters.Character, targetChar *characters.Character,
+	sourceType SourceTarget, targetType SourceTarget,
+	weaponName string, damageStr string, msgSeed int,
+	togetherToAttacker, togetherToDefender, togetherToRoom, togetherToDefenderRoom items.MessageOptions,
+	separateToAttacker, separateToDefender, separateToAttackerRoom, separateToDefenderRoom items.MessageOptions,
+) (toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage) {
+
+	tokenReplacements := map[items.TokenName]string{
+		items.TokenItemName:     weaponName,
+		items.TokenSource:       sourceChar.Name,
+		items.TokenSourceType:   string(sourceType) + `name`,
+		items.TokenTarget:       targetChar.Name,
+		items.TokenTargetType:   string(targetType) + `name`,
+		items.TokenUsesLeft:     `[Invalid]`,
+		items.TokenDamage:       damageStr,
+		items.TokenEntranceName: `unknown`,
+		items.TokenExitName:     `unknown`,
+	}
+
+	if sourceType == Mob {
+		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
+	}
+
+	if targetType == Mob {
+		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
+	}
+
+	if sourceChar.RoomId == targetChar.RoomId {
+
+		toAttackerMsg = togetherToAttacker.Get(msgSeed)
+		toDefenderMsg = togetherToDefender.Get(msgSeed)
+		toAttackerRoomMsg = togetherToRoom.Get(msgSeed)
+		toDefenderRoomMsg = togetherToDefenderRoom.Get(msgSeed)
+
+	} else {
+
+		toAttackerMsg = separateToAttacker.Get(msgSeed)
+		toDefenderMsg = separateToDefender.Get(msgSeed)
+		toAttackerRoomMsg = separateToAttackerRoom.Get(msgSeed)
+		toDefenderRoomMsg = separateToDefenderRoom.Get(msgSeed)
+
+		// Find the exit that leads to the target from the source (if any)
+		if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
+			for exitName, exit := range atkRoom.Exits {
+				if exit.RoomId == targetChar.RoomId {
+					tokenReplacements[items.TokenExitName] = exitName
+					break
+				}
+			}
+		}
+		// Find the exit that leads to the source from the target (if any)
+		if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
+			for exitName, exit := range defRoom.Exits {
+				if exit.RoomId == sourceChar.RoomId {
+					tokenReplacements[items.TokenEntranceName] = exitName
+					break
+				}
+			}
+		}
+	}
+
+	for tokenName, tokenValue := range tokenReplacements {
+		toAttackerMsg = toAttackerMsg.SetTokenValue(tokenName, tokenValue)
+		toDefenderMsg = toDefenderMsg.SetTokenValue(tokenName, tokenValue)
+		toAttackerRoomMsg = toAttackerRoomMsg.SetTokenValue(tokenName, tokenValue)
+		if len(string(toDefenderRoomMsg)) > 0 {
+			toDefenderRoomMsg = toDefenderRoomMsg.SetTokenValue(tokenName, tokenValue)
+		}
+	}
+
+	return toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg
+}
+
 func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget) AttackResult {
 
 	attackResult := AttackResult{}
 
-	attackCount := int(math.Ceil(float64(sourceChar.Stats.Speed.ValueAdj-targetChar.Stats.Speed.ValueAdj) / 25))
-	if attackCount < 1 {
-		attackCount = 1
-	}
+	atkCount := combatAttackCount(sourceChar, targetChar)
 
-	// Statmods can add a damage bonus...
-	statModDBonus := sourceChar.StatMod(`damage`)
-	// Add any additional attacks
-	attackCount += sourceChar.StatMod(`attacks`)
+	// Statmods can add a damage bonus plus the stat-driven damage bonus.
+	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
 
-	for i := 0; i < attackCount; i++ {
+	for i := 0; i < atkCount; i++ {
 
-		mudlog.Debug(`calculateCombat`, `Atk`, fmt.Sprintf(`%d/%d`, i+1, attackCount), `Source`, fmt.Sprintf(`%s (%s)`, sourceChar.Name, sourceType), `Target`, fmt.Sprintf(`%s (%s)`, targetChar.Name, targetType))
+		mudlog.Debug(`calculateCombat`, `Atk`, fmt.Sprintf(`%d/%d`, i+1, atkCount), `Source`, fmt.Sprintf(`%s (%s)`, sourceChar.Name, sourceType), `Target`, fmt.Sprintf(`%s (%s)`, targetChar.Name, targetType))
 
-		attackWeapons := []items.Item{}
+		attackWeapons := resolveAttackWeapons(sourceChar)
 
 		dualWieldLevel := sourceChar.GetSkillLevel(skills.DualWield)
 
-		if sourceChar.Equipment.Weapon.ItemId > 0 {
-			attackWeapons = append(attackWeapons, sourceChar.Equipment.Weapon)
-		}
-
-		if sourceChar.Equipment.Offhand.ItemId > 0 && sourceChar.Equipment.Offhand.GetSpec().Type == items.Weapon {
-			attackWeapons = append(attackWeapons, sourceChar.Equipment.Offhand)
-		}
-
-		// Put an empty weapon, so basically hands.
-		if len(attackWeapons) == 0 {
-			attackWeapons = append(attackWeapons, items.Item{
-				ItemId: 0,
-			})
-		}
-
 		if len(attackWeapons) > 1 {
-
-			maxWeapons := 1
-			if dualWieldLevel == 1 {
-				maxWeapons = 1
-			}
-
-			if dualWieldLevel == 2 {
-
-				roll := util.Rand(100)
-
-				util.LogRoll(`Both Weapons`, roll, 50)
-
-				if roll < 50 {
-					maxWeapons = 2
-				}
-			}
-
-			if dualWieldLevel >= 3 {
-				maxWeapons = 2
-			}
-
-			// If two martial weapons are equipped, allow dual wielding even without the stat.
-			if sourceChar.Equipment.Weapon.GetSpec().Subtype == items.Claws && sourceChar.Equipment.Offhand.GetSpec().Subtype == items.Claws {
-				maxWeapons = 2
-			}
+			bothClaws := sourceChar.Equipment.Weapon.GetSpec().Subtype == items.Claws &&
+				sourceChar.Equipment.Offhand.GetSpec().Subtype == items.Claws
+			maxWeapons := dualWieldActiveWeaponCount(dualWieldLevel, bothClaws)
+			util.LogRoll(`Both Weapons`, maxWeapons, 2)
 
 			for len(attackWeapons) > maxWeapons {
-				// Remove a random position
 				rnd := util.Rand(len(attackWeapons))
 				attackWeapons = append(attackWeapons[:rnd], attackWeapons[rnd+1:]...)
 			}
-
 		}
 
 		attackMessagePrefix := ``
@@ -300,15 +276,12 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 			sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 		}
 
-		for _, weapon := range attackWeapons {
+		for wIdx, weapon := range attackWeapons {
 
+			// Only the offhand weapon (index > 0) incurs a hit penalty for dual-wielding.
 			penalty := 0
-			if len(attackWeapons) > 1 {
-				if dualWieldLevel < 4 {
-					penalty = 35 //35% penalty to hit
-				} else {
-					penalty = 25 //25% penalty to hit
-				}
+			if wIdx > 0 {
+				penalty = dualWieldHitPenalty(dualWieldLevel)
 			}
 
 			// Set the default weapon info
@@ -318,9 +291,6 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 			// Get default racial dice rolls
 			attacks, dCount, dSides, dBonus, critBuffs := sourceChar.GetDefaultDiceRoll()
-
-			// Add damage bonus due to statmods
-			dBonus += statModDBonus
 
 			if weapon.ItemId > 0 {
 
@@ -335,9 +305,12 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				dBonus += weapon.StatMod(string(statmods.RacialBonusPrefix) + strings.ToLower(targetChar.Race()))
 			}
 
+			// Apply damage stat modifier after weapon selection so it is never overwritten.
+			dBonus += statModDBonus
+
 			// zero means randomly selected, otherwise use the ItemId to consistently choose a message
 			msgSeed := 0
-			if configs.GetGamePlayConfig().ConsistentAttackMessages {
+			if configs.GetCombatConfig().ConsistentAttackMessages {
 				msgSeed = weapon.ItemId
 			}
 
@@ -348,108 +321,43 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				attackTargetDamage := 0
 				attackTargetReduction := 0
-
-				attackSourceDamage := 0
-				attackSourceReduction := 0
+				isCrit := false
 
 				if Hits(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty) {
+					// Check dodge before applying damage.
+					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
+						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s dodges your attack!</ansi>`, targetChar.Name))
+						attackResult.SendToTarget(`<ansi fg="cyan">You dodge the attack!</ansi>`)
+						continue
+					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus
 
-					if attackResult.Crit || Crits(sourceChar, targetChar) {
-						attackResult.Crit = true
+					// Backstab sets attackResult.Crit for the first hit only; subsequent
+					// hits use a fresh per-attack roll so crits don't cascade.
+					isCrit = attackResult.Crit || Crits(sourceChar, targetChar)
+					attackResult.Crit = false // consume the backstab flag after one use
+					if isCrit {
+						attackResult.Crit = true // record that at least one crit occurred this round
 						attackResult.BuffTarget = critBuffs
-						attackTargetDamage += dCount*dSides + dBonus
+						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
+							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
 					}
 				}
 
-				defenseAmt := util.Rand(targetChar.GetDefense())
-				if defenseAmt > 0 {
-					attackTargetReduction = int(math.Round((float64(defenseAmt) / 100) * float64(attackTargetDamage)))
-					attackTargetDamage -= attackTargetReduction
-				}
+				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
 
-				defenseAmt = util.Rand(sourceChar.GetDefense())
-				if defenseAmt > 0 {
-					attackSourceReduction = int(math.Round((float64(defenseAmt) / 100) * float64(attackSourceDamage)))
-					attackSourceDamage -= attackSourceReduction
-				}
+				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus)
+				msgs := items.GetAttackMessage(weaponSubType, pct)
 
-				// Calculate actual damage vs. possible damage pct
-				pctDamage := math.Ceil(float64(attackTargetDamage) / float64(dCount*dSides+dBonus) * 100)
+				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
+					&sourceChar, &targetChar, sourceType, targetType,
+					weaponName, strconv.Itoa(attackTargetDamage), msgSeed,
+					msgs.Together.ToAttacker, msgs.Together.ToDefender, msgs.Together.ToRoom, items.MessageOptions(nil),
+					msgs.Separate.ToAttacker, msgs.Separate.ToDefender, msgs.Separate.ToAttackerRoom, msgs.Separate.ToDefenderRoom,
+				)
 
-				msgs := items.GetAttackMessage(weaponSubType, int(pctDamage))
-
-				var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
-
-				tokenReplacements := map[items.TokenName]string{
-					items.TokenItemName:     weaponName,
-					items.TokenSource:       sourceChar.Name,
-					items.TokenSourceType:   string(sourceType) + `name`,
-					items.TokenTarget:       targetChar.Name,
-					items.TokenTargetType:   string(targetType) + `name`,
-					items.TokenUsesLeft:     `[Invalid]`,
-					items.TokenDamage:       strconv.Itoa(attackTargetDamage),
-					items.TokenEntranceName: `unknown`,
-					items.TokenExitName:     `unknown`,
-				}
-
-				if sourceChar.RoomId == targetChar.RoomId {
-
-					toAttackerMsg = msgs.Together.ToAttacker.Get(msgSeed)
-					toDefenderMsg = msgs.Together.ToDefender.Get(msgSeed)
-					toAttackerRoomMsg = msgs.Together.ToRoom.Get(msgSeed)
-					toDefenderRoomMsg = items.ItemMessage("")
-
-				} else {
-
-					toAttackerMsg = msgs.Separate.ToAttacker.Get(msgSeed)
-					toDefenderMsg = msgs.Separate.ToDefender.Get(msgSeed)
-					toAttackerRoomMsg = msgs.Separate.ToAttackerRoom.Get(msgSeed)
-					toDefenderRoomMsg = msgs.Separate.ToDefenderRoom.Get(msgSeed)
-
-					// Find the exit that leads to the target from the source (if any)
-					if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
-						for exitName, exit := range atkRoom.Exits {
-							if exit.RoomId == targetChar.RoomId {
-								tokenReplacements[items.TokenExitName] = exitName
-								break
-							}
-						}
-					}
-					// find the exit that leads to the source from the target (if any)
-					if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-						for exitName, exit := range defRoom.Exits {
-							if exit.RoomId == sourceChar.RoomId {
-								tokenReplacements[items.TokenEntranceName] = exitName
-								break
-							}
-						}
-					}
-				}
-
-				if sourceChar.Equipment.Weapon.ItemId > 0 {
-					tokenReplacements[items.TokenItemName] = sourceChar.Equipment.Weapon.DisplayName()
-				}
-
-				if sourceType == Mob {
-					tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
-				}
-
-				if targetType == Mob {
-					tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
-				}
-
-				for tokenName, tokenValue := range tokenReplacements {
-					toAttackerMsg = toAttackerMsg.SetTokenValue(tokenName, tokenValue)
-					toDefenderMsg = toDefenderMsg.SetTokenValue(tokenName, tokenValue)
-					toAttackerRoomMsg = toAttackerRoomMsg.SetTokenValue(tokenName, tokenValue)
-					if len(string(toDefenderRoomMsg)) > 0 {
-						toDefenderRoomMsg = toDefenderRoomMsg.SetTokenValue(tokenName, tokenValue)
-					}
-				}
-
-				if attackResult.Crit {
+				if isCrit {
 					toAttackerMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
 					toDefenderMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toDefenderMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
 					toAttackerRoomMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
@@ -467,15 +375,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					}
 				}
 
-				// Send to attacker
-				attackerMsg := string(toAttackerMsg)
-				if attackSourceDamage > 0 && attackSourceReduction > 0 {
-					attackerMsg += fmt.Sprintf(` <ansi fg="white">[%d was blocked]</ansi>`, attackSourceReduction)
-				}
-
-				attackResult.SendToSource(
-					string(attackerMsg),
-				)
+				attackResult.SendToSource(string(toAttackerMsg))
 
 				// Send to victim
 				defenderMsg := string(toDefenderMsg)
@@ -483,9 +383,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %d]</ansi>`, attackTargetReduction)
 				}
 
-				attackResult.SendToTarget(
-					string(defenderMsg),
-				)
+				attackResult.SendToTarget(defenderMsg)
 
 				// Send to room
 				attackResult.SendToSourceRoom(
@@ -502,102 +400,47 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				attackResult.DamageToTarget += attackTargetDamage
 				attackResult.DamageToTargetReduction += attackTargetReduction
-
-				attackResult.DamageToSource += attackSourceDamage
-				attackResult.DamageToSourceReduction += attackSourceReduction
-			}
-
-			if util.RollDice(1, 5) == 1 { // 20% chance to join
-				if sourceChar.RoomId == targetChar.RoomId {
-					if sourceChar.Pet.Exists() && sourceChar.Pet.Damage.DiceRoll != `` {
-
-						attacks, dCount, dSides, dBonus, critBuffs = sourceChar.Pet.GetDiceRoll()
-
-						for i := 0; i < attacks; i++ {
-
-							attackTargetDamage := util.RollDice(dCount, dSides) + dBonus
-
-							attackResult.DamageToTarget += attackTargetDamage
-
-							toAttackerMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), attackTargetDamage, string(targetType), targetChar.Name)
-							attackResult.SendToSource(toAttackerMsg)
-
-							toDefenderMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to you!`, sourceChar.Pet.DisplayName(), attackTargetDamage)
-							attackResult.SendToTarget(toDefenderMsg)
-
-							toAttackerRoomMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), attackTargetDamage, string(targetType), targetChar.Name)
-							attackResult.SendToTargetRoom(toAttackerRoomMsg)
-
-						}
-
-					}
-				}
 			}
 
 		}
+
+		// Pet has a 20% chance per attack round to join the fight (once, regardless of weapon count)
+		if util.RollDice(1, 5) == 1 {
+			if sourceChar.RoomId == targetChar.RoomId {
+				if sourceChar.Pet.Exists() && sourceChar.Pet.Damage.DiceRoll != `` {
+
+					pAttacks, pDCount, pDSides, pDBonus, _ := sourceChar.Pet.GetDiceRoll()
+
+					for p := 0; p < pAttacks; p++ {
+
+						if !Hits(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, 0) {
+							toAttackerMsg := fmt.Sprintf(`%s lunges at <ansi fg="%sname">%s</ansi> but misses!`, sourceChar.Pet.DisplayName(), string(targetType), targetChar.Name)
+							attackResult.SendToSource(toAttackerMsg)
+							continue
+						}
+
+						attackTargetDamage := util.RollDice(pDCount, pDSides) + pDBonus
+
+						attackTargetDamage, _ = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+
+						attackResult.DamageToTarget += attackTargetDamage
+
+						toAttackerMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), attackTargetDamage, string(targetType), targetChar.Name)
+						attackResult.SendToSource(toAttackerMsg)
+
+						toDefenderMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to you!`, sourceChar.Pet.DisplayName(), attackTargetDamage)
+						attackResult.SendToTarget(toDefenderMsg)
+
+						toAttackerRoomMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%d damage</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), attackTargetDamage, string(targetType), targetChar.Name)
+						attackResult.SendToTargetRoom(toAttackerRoomMsg)
+
+					}
+
+				}
+			}
+		}
+
 	}
 	return attackResult
 
-}
-
-// hit chance will be between 30 and 100
-func hitChance(attackSpd, defendSpd int) int {
-	atkPlusDef := float64(attackSpd + defendSpd)
-	if atkPlusDef < 1 {
-		atkPlusDef = 1
-	}
-	return 30 + int(float64(attackSpd)/atkPlusDef*70)
-}
-
-// Chance to hit
-func Hits(attackSpd, defendSpd, hitModifier int) bool {
-	// Attack speeds affect 90% of the hit chance
-	toHit := hitChance(attackSpd, defendSpd)
-	if hitModifier != 0 {
-		toHit += hitModifier
-	}
-
-	// Always at leat a 5% chance
-	if toHit < 5 {
-		toHit = 5
-	}
-
-	// Always at most a 95% chance
-	if toHit > 95 {
-		toHit = 95
-	}
-	hitRoll := util.Rand(100)
-
-	util.LogRoll(`Hits`, hitRoll, toHit)
-
-	return hitRoll < toHit
-}
-
-// Whether they crit
-func Crits(sourceChar characters.Character, targetChar characters.Character) bool {
-
-	levelDiff := sourceChar.Level - targetChar.Level
-	if levelDiff < 1 {
-		levelDiff = 1
-	}
-	critChance := 5 + int(math.Round(float64(sourceChar.Stats.Strength.ValueAdj+sourceChar.Stats.Speed.ValueAdj)/float64(levelDiff)))
-
-	if sourceChar.HasBuffFlag(buffs.Accuracy) {
-		critChance *= 2
-	}
-
-	if targetChar.HasBuffFlag(buffs.Blink) {
-		critChance /= 2
-	}
-
-	// Minimum 5% chance
-	if critChance < 5 {
-		critChance = 5
-	}
-
-	critRoll := util.Rand(100)
-
-	util.LogRoll(`Crits`, critRoll, critChance)
-
-	return critRoll < critChance
 }

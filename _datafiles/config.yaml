@@ -294,22 +294,47 @@ GamePlay:
   # - ContainerSizeMax -
   #   Maximum number of objects a container can hold before stuff overflows
   ContainerSizeMax: 10
-  # - ConsistentAttackMessages -
-  #   If true, each weapon ID will consistently use the same message for each type
-  #   of attack. If false, it will randomize messages. Setting this to true gives
-  #   each weapon a more consistent feel in battle, though combat may feel less
-  #   varied.
-  #   Note: see _datafiles/combat-messages/*
-  ConsistentAttackMessages: true
-  # - PVP -
-  #   Possible Values:
-  #     enabled   - PVP is enabled everywhere
-  #     disabled  - PVP is disabled eveywhere
-  #     limited   - PVP is enabled for all players but only in PVP enabled rooms
-  PVP: limited
-  # - PVPMinimumLevel -
-  #   Minimum level one must be to be targetted or to target other players in PVP
-  PVPMinimumLevel: 15
+  # Combat calculation bounds
+  # Each value controls the minimum or maximum output of a particular combat
+  # formula. The actual result scales between min and max based on the stat
+  # delta between attacker and defender divided by 100.
+  Combat:
+    # - ConsistentAttackMessages -
+    #   If true, each weapon ID will consistently use the same message for each type
+    #   of attack. If false, it will randomize messages. Setting this to true gives
+    #   each weapon a more consistent feel in battle, though combat may feel less
+    #   varied.
+    #   Note: see _datafiles/combat-messages/*
+    ConsistentAttackMessages: true
+    # Flat damage bonus driven by Strength delta
+    DamageBonusMin: 0
+    DamageBonusMax: 10
+    # Chance to hit (percent) driven by Speed delta
+    ToHitMin: 25
+    ToHitMax: 100
+    # Extra attacks for weaponless/claws combat driven by Speed delta
+    ExtraAttacksMin: 0
+    ExtraAttacksMax: 3
+    # Critical hit chance (percent) driven by Smarts delta
+    CritChanceMin: 5
+    CritChanceMax: 30
+    # Critical hit damage multiplier driven by Perception delta
+    CritMultMin: 1.5
+    CritMultMax: 3.0
+    # Chance to dodge (percent) driven by Perception delta
+    DodgeChanceMin: 5
+    DodgeChanceMax: 30
+  # PVP Restrictions
+  PVP:
+    # - Enabled -
+    #   Possible Values:
+    #     enabled   - PVP is enabled everywhere
+    #     disabled  - PVP is disabled eveywhere
+    #     limited   - PVP is enabled for all players but only in PVP enabled rooms
+    Enabled: limited
+    # - MinimumLevel -
+    #   Minimum level one must be to be targetted or to target other players in PVP
+    MinimumLevel: 15
   # - XPScale -
   #   Scales how much XP is gained when characters gain XP. Number is a percentage
   #   Example: 100 = 100%

@@ -49,6 +49,7 @@
         font-family: monospace; font-size: 0.82rem; color: #1a1a2e;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    tr[data-subsection] td.key-cell { padding-left: 3.2rem; }
     td.value-cell {
         max-width: 0; overflow: hidden;
     }
@@ -112,9 +113,24 @@
 
     /* section header rows */
     tr.section-header td {
-        background: #f5f5f5; font-size: 0.78rem; font-weight: 700;
-        text-transform: uppercase; letter-spacing: 0.06em; color: #666;
-        padding: 0.4rem 0.9rem; border-bottom: 1px solid #e0e0e0;
+        background: #1a1a2e; color: #c0c8e0;
+        font-size: 0.78rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 0.45rem 0.9rem; border-bottom: 1px solid #2d2d4e;
+    }
+
+    /* subsection header rows */
+    tr.subsection-header td {
+        background: #f0f0f5; color: #444;
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        padding: 0.3rem 0.9rem 0.3rem 3.2rem;
+        border-bottom: 1px solid #e0e0e0;
+        border-top: 1px solid #e0e0e0;
+    }
+    tr.subsection-header td::before {
+        content: '\203A\00A0';
+        color: #aaa;
     }
 
     .no-results { padding: 1.5rem; text-align: center; color: #888; font-size: 0.9rem; display: none; }
@@ -230,6 +246,19 @@
         'GamePlay.ShopRestockRate': 'Default time for shops to restock one item. Format: {num} {unit}, e.g. "6 hours". Prefix with "real" for real-world time.',
         'GamePlay.ContainerSizeMax': 'Maximum number of items a container can hold before it overflows.',
         'GamePlay.ConsistentAttackMessages': 'If true, each weapon ID always uses the same attack message. If false, messages are randomised.',
+        'GamePlay.Combat.ConsistentAttackMessages': 'If true, each weapon ID consistently uses the same attack message for each attack type. If false, messages are randomised. See _datafiles/combat-messages/ for message definitions.',
+        'GamePlay.Combat.DamageBonusMin': 'Minimum flat damage bonus added to attacks. Scales up toward DamageBonusMax based on the attacker’s Strength advantage over the defender.',
+        'GamePlay.Combat.DamageBonusMax': 'Maximum flat damage bonus added to attacks when the attacker has full Strength advantage over the defender.',
+        'GamePlay.Combat.ToHitMin': 'Minimum chance to hit (percent). Applied when attacker has no Speed advantage. Must be between 0 and 100.',
+        'GamePlay.Combat.ToHitMax': 'Maximum chance to hit (percent). Applied when attacker has full Speed advantage over the defender.',
+        'GamePlay.Combat.ExtraAttacksMin': 'Minimum number of extra attacks granted for weaponless or claws combat. Applied when attacker has no Speed advantage.',
+        'GamePlay.Combat.ExtraAttacksMax': 'Maximum extra attacks for weaponless or claws combat when attacker has full Speed advantage over the defender.',
+        'GamePlay.Combat.CritChanceMin': 'Minimum critical hit chance (percent). Applied when attacker has no Smarts advantage.',
+        'GamePlay.Combat.CritChanceMax': 'Maximum critical hit chance (percent) when attacker has full Smarts advantage over the defender.',
+        'GamePlay.Combat.CritMultMin': 'Minimum critical hit damage multiplier. Applied when attacker has no Perception advantage.',
+        'GamePlay.Combat.CritMultMax': 'Maximum critical hit damage multiplier when attacker has full Perception advantage over the defender.',
+        'GamePlay.Combat.DodgeChanceMin': 'Minimum chance to dodge an incoming hit (percent). Applied when defender has no Perception advantage over the attacker.',
+        'GamePlay.Combat.DodgeChanceMax': 'Maximum chance to dodge an incoming hit (percent) when defender has full Perception advantage over the attacker.',
         'GamePlay.PVP': 'PVP mode. Options: enabled (everywhere), disabled (nowhere), limited (PVP-flagged rooms only).',
         'GamePlay.PVPMinimumLevel': 'Minimum level required to participate in PVP.',
         'GamePlay.XPScale': 'Global XP multiplier as a percentage. 100 = normal.',
@@ -297,18 +326,48 @@
         const tbody = document.getElementById('config-body');
         tbody.innerHTML = '';
 
-        const keys = Object.keys(data).sort();
-        let lastSection = null;
+        const keys = Object.keys(data).sort((a, b) => {
+            const aParts = a.split('.');
+            const bParts = b.split('.');
+            // Primary: section name
+            if (aParts[0] < bParts[0]) return -1;
+            if (aParts[0] > bParts[0]) return  1;
+            // Same section: flat keys (2 parts) sort before subsection keys (3+ parts)
+            const aFlat = aParts.length === 2;
+            const bFlat = bParts.length === 2;
+            if (aFlat && !bFlat) return -1;
+            if (!aFlat && bFlat) return  1;
+            // Both flat or both in subsections: alphabetical
+            return a < b ? -1 : a > b ? 1 : 0;
+        });
+        let lastSection    = null;
+        let lastSubsection = null;
 
         for (const key of keys) {
-            const section = key.split('.')[0];
+            const parts      = key.split('.');
+            const section    = parts[0];
+            const subsection = parts.length >= 3 ? parts[0] + '.' + parts[1] : null;
+
             if (section !== lastSection) {
-                lastSection = section;
+                lastSection    = section;
+                lastSubsection = null;
                 const hdr = document.createElement('tr');
                 hdr.className = 'section-header';
                 hdr.dataset.section = section;
                 hdr.innerHTML = `<td colspan="2">${escHtml(section)}</td>`;
                 tbody.appendChild(hdr);
+            }
+
+            if (subsection !== lastSubsection) {
+                lastSubsection = subsection;
+                if (subsection !== null) {
+                    const sub = document.createElement('tr');
+                    sub.className = 'subsection-header';
+                    sub.dataset.section = section;
+                    sub.dataset.subsection = subsection;
+                    sub.innerHTML = `<td colspan="2">${escHtml(subsection.toUpperCase())}</td>`;
+                    tbody.appendChild(sub);
+                }
             }
 
             const value = String(data[key]);
@@ -317,6 +376,7 @@
             const tr = document.createElement('tr');
             tr.dataset.key = key;
             tr.dataset.section = section;
+            if (subsection) tr.dataset.subsection = subsection;
             tr.dataset.value = value.toLowerCase();
 
             tr.innerHTML = `
@@ -340,6 +400,7 @@
                 const dr = document.createElement('tr');
                 dr.className = 'desc-row';
                 dr.dataset.section = section;
+                if (subsection) dr.dataset.subsection = subsection;
                 dr.dataset.descFor = key;
                 dr.innerHTML = `<td colspan="2">${escHtml(desc)}</td>`;
                 tbody.appendChild(dr);
@@ -364,10 +425,12 @@
     window.filterTable = function () {
         const query = document.getElementById('search-input').value.toLowerCase();
         const section = document.getElementById('section-filter').value;
-        const rows = document.querySelectorAll('#config-body tr[data-key]');
-        const headers = document.querySelectorAll('#config-body tr.section-header');
-        const descRows = document.querySelectorAll('#config-body tr.desc-row');
-        const visibleSections = new Set();
+        const rows        = document.querySelectorAll('#config-body tr[data-key]');
+        const headers     = document.querySelectorAll('#config-body tr.section-header');
+        const subHeaders  = document.querySelectorAll('#config-body tr.subsection-header');
+        const descRows    = document.querySelectorAll('#config-body tr.desc-row');
+        const visibleSections    = new Set();
+        const visibleSubsections = new Set();
         let anyVisible = false;
 
         for (const row of rows) {
@@ -378,6 +441,7 @@
             row.classList.toggle('hidden-row', !show);
             if (show) {
                 visibleSections.add(row.dataset.section);
+                if (row.dataset.subsection) visibleSubsections.add(row.dataset.subsection);
                 anyVisible = true;
             }
         }
@@ -389,6 +453,10 @@
 
         for (const hdr of headers) {
             hdr.classList.toggle('hidden-row', !visibleSections.has(hdr.dataset.section));
+        }
+
+        for (const sub of subHeaders) {
+            sub.classList.toggle('hidden-row', !visibleSubsections.has(sub.dataset.subsection));
         }
 
         document.getElementById('no-results').style.display = anyVisible ? 'none' : 'block';

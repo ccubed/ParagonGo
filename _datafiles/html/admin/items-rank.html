@@ -1,0 +1,462 @@
+{{template "header" .}}
+
+<style>
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle a { color: #1a1a2e; }
+
+    /* toolbar */
+    .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
+    .btn-primary { background: #1a1a2e; color: #fff; }
+    .btn-primary:hover { background: #2d2d4e; }
+    .btn-primary:disabled { background: #999; cursor: default; }
+    .last-updated { font-size: 0.78rem; color: #aaa; margin-left: auto; }
+
+    /* status */
+    .status-bar { display: none; padding: 0.5rem 0.85rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
+    .status-bar.error { background: #fde8e8; color: #8a0000; display: block; }
+
+    /* view tabs */
+    .view-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .view-tab {
+        flex: 1; padding: 0.55rem 0.5rem; border: none; background: #f5f5f5;
+        cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #555;
+        border-right: 1px solid #ddd; transition: background 0.1s, color 0.1s;
+        text-align: center; line-height: 1.3;
+    }
+    .view-tab:last-child { border-right: none; }
+    .view-tab:hover { background: #ebebeb; color: #1a1a2e; }
+    .view-tab.active { background: #1a1a2e; color: #fff; }
+    .view-tab .tab-title { display: block; }
+    .view-tab .tab-hint { display: block; font-size: 0.72rem; font-weight: 400; opacity: 0.75; margin-top: 0.1rem; }
+
+    /* filter bar */
+    .filter-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-bar label { font-size: 0.82rem; color: #555; white-space: nowrap; }
+    .filter-bar select, .filter-bar input[type="text"] {
+        padding: 0.3rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
+        font-size: 0.82rem; background: #fff;
+    }
+    .filter-bar select:focus, .filter-bar input[type="text"]:focus { outline: 2px solid #1a1a2e; }
+
+    /* rank table */
+    .rank-table-wrap { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .rank-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .rank-table th {
+        background: #1a1a2e; color: #c0c8e0;
+        padding: 0.5rem 0.85rem; text-align: left;
+        font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+        font-weight: 600; white-space: nowrap;
+    }
+    .rank-table th.sortable { cursor: pointer; user-select: none; }
+    .rank-table th.sortable:hover { color: #fff; }
+    .rank-table th .sort-arrow { margin-left: 0.3rem; font-size: 0.65rem; opacity: 0.5; }
+    .rank-table th.sorted-asc .sort-arrow::after  { content: " ▲"; opacity: 1; }
+    .rank-table th.sorted-desc .sort-arrow::after { content: " ▼"; opacity: 1; }
+    .rank-table th:not(.sorted-asc):not(.sorted-desc) .sort-arrow::after { content: " ⇅"; }
+    .rank-table td { padding: 0.5rem 0.85rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .rank-table tr:last-child td { border-bottom: none; }
+    .rank-table tr:hover td { background: #f5f7ff; }
+
+    /* weapon name + link */
+    .weapon-name { font-weight: 600; color: #1a1a2e; }
+    .weapon-name a { color: inherit; text-decoration: none; }
+    .weapon-name a:hover { text-decoration: underline; }
+
+    /* subtype pill */
+    .subtype-pill {
+        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px;
+        font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+    }
+    .st-cleaving    { background: #fce4ec; color: #880e4f; }
+    .st-slashing    { background: #e8f5e9; color: #1b5e20; }
+    .st-stabbing    { background: #e3f2fd; color: #0d47a1; }
+    .st-bludgeoning { background: #fff3e0; color: #e65100; }
+    .st-shooting    { background: #f3e5f5; color: #4a148c; }
+    .st-claws       { background: #e0f7fa; color: #006064; }
+    .st-whipping    { background: #f9fbe7; color: #558b2f; }
+    .st-generic     { background: #f5f5f5; color: #616161; }
+
+    /* hands badge */
+    .hands-badge {
+        display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px;
+        font-size: 0.7rem; font-weight: 700;
+    }
+    .hands-1 { background: #e8f5e9; color: #2e7d32; }
+    .hands-2 { background: #fff3e0; color: #e65100; }
+
+    /* wait badge */
+    .wait-badge {
+        display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px;
+        font-size: 0.7rem; font-weight: 700;
+    }
+    .wait-0 { background: #e8f5e9; color: #2e7d32; }
+    .wait-n { background: #fde8e8; color: #8a0000; }
+
+    /* score bar */
+    .score-cell { white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+    .score-cell[data-row-tip] { cursor: help; }
+    .score-val { font-family: monospace; font-weight: 700; color: #1a1a2e; flex: 1; }
+    .score-bar-track { display: inline-block; vertical-align: middle; width: 80px; height: 8px; background: #eee; border-radius: 3px; overflow: hidden; flex-shrink: 0; margin-left: auto; }
+    .score-bar-fill  { display: block; height: 8px; border-radius: 3px; background: #4a6fa5; transition: width 0.3s ease; }
+    .score-bar-fill.top { background: #c0392b; }
+
+    /* dice cell */
+    .dice-roll { font-family: monospace; font-size: 0.82rem; color: #555; }
+
+    /* id cell */
+    .item-id { font-family: monospace; font-size: 0.78rem; color: #aaa; }
+
+    /* loading skeleton */
+    .skeleton-row td { padding: 0.55rem 0.85rem; }
+    .skel { background: #eee; border-radius: 3px; height: 14px; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* empty state */
+    .empty-state { padding: 3rem; text-align: center; color: #aaa; font-size: 0.9rem; }
+
+    /* legend */
+    .legend { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.78rem; color: #555; margin-bottom: 1rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* tooltip */
+    .th-tip-icon {
+        display: inline-block; margin-left: 0.3rem;
+        width: 1rem; height: 1rem; line-height: 1rem;
+        border-radius: 50%; background: rgba(255,255,255,0.15);
+        color: #c0c8e0; font-size: 0.65rem; font-weight: 700;
+        text-align: center; cursor: help; vertical-align: middle;
+        user-select: none; flex-shrink: 0;
+    }
+    .rank-table th:hover .th-tip-icon { background: rgba(255,255,255,0.25); }
+    .tip {
+        display: none; position: fixed; z-index: 200;
+        background: #1a1a2e; color: #e0e0e0;
+        font-size: 0.78rem; font-family: system-ui, sans-serif; font-weight: 400;
+        text-transform: none; letter-spacing: normal;
+        line-height: 1.5; max-width: 240px;
+        padding: 0.5rem 0.75rem; border-radius: 5px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        pointer-events: none; white-space: normal;
+    }
+</style>
+
+<h1>Weapon Rankings</h1>
+<p class="subtitle">
+    Combat-engine rankings for all loaded weapons against a neutral equal-stat opponent.
+    Scores reflect <em>expected</em> output — no randomness. See <a href="/admin/items-api">Items API Docs</a> for the raw endpoint.
+</p>
+
+<div id="statusBar" class="status-bar"></div>
+
+<div class="toolbar">
+    <button class="btn btn-primary" onclick="loadRankings()">Refresh</button>
+    <span id="lastUpdated" class="last-updated"></span>
+</div>
+
+<div class="view-tabs">
+    <button class="view-tab active" id="tab-dps"     onclick="switchView('dps')">
+        <span class="tab-title">Raw DPS</span>
+        <span class="tab-hint">Pure damage output</span>
+    </button>
+    <button class="view-tab" id="tab-adj"     onclick="switchView('adj')">
+        <span class="tab-title">Adjusted DPS</span>
+        <span class="tab-hint">2H &amp; wait-round penalty</span>
+    </button>
+    <button class="view-tab" id="tab-maxdmg"  onclick="switchView('maxdmg')">
+        <span class="tab-title">Max Hit</span>
+        <span class="tab-hint">Burst ceiling</span>
+    </button>
+</div>
+
+<div class="filter-bar">
+    <label for="filterSubtype">Subtype:</label>
+    <select id="filterSubtype" onchange="renderTable()">
+        <option value="">All</option>
+        <option value="cleaving">Cleaving</option>
+        <option value="slashing">Slashing</option>
+        <option value="stabbing">Stabbing</option>
+        <option value="bludgeoning">Bludgeoning</option>
+        <option value="shooting">Shooting</option>
+        <option value="claws">Claws</option>
+        <option value="whipping">Whipping</option>
+        <option value="generic">Generic</option>
+    </select>
+    <label for="filterHands">Hands:</label>
+    <select id="filterHands" onchange="renderTable()">
+        <option value="">All</option>
+        <option value="1">1-Handed</option>
+        <option value="2">2-Handed</option>
+    </select>
+    <label for="filterSearch">Search:</label>
+    <input type="text" id="filterSearch" placeholder="weapon name…" oninput="renderTable()">
+</div>
+
+<div class="legend">
+    <span class="legend-item"><span class="hands-badge hands-2">2H</span> Two-handed (loses offhand slot)</span>
+    <span class="legend-item"><span class="wait-badge wait-n">+W</span> Extra wait rounds between attacks</span>
+</div>
+
+<div class="rank-table-wrap">
+    <table class="rank-table" id="rankTable">
+        <thead>
+            <tr>
+                <th style="width:4rem" class="sortable" data-key="ItemId" onclick="sortBy('ItemId')" data-tip="Numeric item ID. Weapons use the 10000–19999 range.">ID<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" data-key="Name" onclick="sortBy('Name')" data-tip="The weapon's display name. Click to open it in the item editor.">Name<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" data-key="DiceRoll" onclick="sortBy('DiceRoll')" data-tip="Damage dice expression: [attacks@]NdS[+bonus][#critBuff]. For example, 2d6+1 means roll 2 six-sided dice and add 1.">Dice<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" data-key="Subtype" onclick="sortBy('Subtype')" data-tip="Weapon category. Determines which attack messages are used and which skills apply (e.g. backstab requires cleaving, stabbing, slashing, or claws).">Subtype<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" data-key="Hands" onclick="sortBy('Hands')" data-tip="1H weapons leave the offhand slot free for a second weapon or shield. 2H weapons occupy both slots.">Hands<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" data-key="WaitRounds" onclick="sortBy('WaitRounds')" data-tip="Extra rounds the wielder must wait between attacks. A value of 1 means the weapon attacks every other round, halving its effective DPS.">Wait<span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+                <th class="sortable" id="scoreHeader" data-key="DPS" onclick="sortBy('DPS')" data-tip=""><span id="scoreLabel">Score</span><span class="sort-arrow"></span><span class="th-tip-icon">?</span></th>
+            </tr>
+        </thead>
+        <tbody id="rankBody">
+            <tr class="skeleton-row"><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:140px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:110px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:160px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="tooltip" class="tip"></div>
+
+<script>
+(function() {
+    // --- state ---
+    var allData   = { by_dps: [], by_adj_dps: [], by_max_dmg: [] };
+    var view      = 'dps';   // 'dps' | 'adj' | 'maxdmg'
+    var sortKey   = null;    // null = use natural ranking order
+    var sortAsc   = true;
+
+    // --- bootstrap ---
+    window.loadRankings = loadRankings;
+    window.switchView   = switchView;
+    window.renderTable  = renderTable;
+    window.sortBy       = sortBy;
+
+    loadRankings();
+
+    // --- data loading ---
+    async function loadRankings() {
+        const result = await AdminAPI.get('/admin/api/v1/items/ranks', true);
+        if (!result.ok || !result.data || !result.data.success) {
+            showError((result.data && result.data.error) || result.error || 'Unknown error');
+            return;
+        }
+        allData = result.data.data;
+        sortKey = null;
+        renderTable();
+        document.getElementById('lastUpdated').textContent =
+            'Updated ' + new Date().toLocaleTimeString();
+        hideError();
+    }
+
+    // --- view switching ---
+    function switchView(v) {
+        view = v;
+        sortKey = null;
+        ['dps','adj','maxdmg'].forEach(function(id) {
+            document.getElementById('tab-' + id).classList.toggle('active', id === v);
+        });
+        var header = document.getElementById('scoreHeader');
+        var keyMap = { dps: 'DPS', adj: 'AdjDPS', maxdmg: 'MaxDmg' };
+        header.dataset.key = keyMap[v];
+        header.onclick = function() { sortBy(keyMap[v]); };
+        var labelMap = { dps: 'Raw DPS', adj: 'Adj DPS', maxdmg: 'Max Dmg' };
+        document.getElementById('scoreLabel').textContent = labelMap[v];
+        var tipMap = {
+            dps:    'Average damage per round against an equal-stat opponent. No stat bonuses, no randomness — pure weapon output.',
+            adj:    'Raw DPS with opportunity-cost penalties applied: ×0.75 for two-handed weapons (lost offhand slot) and ÷(1+W) for wait rounds. Use this to compare weapons across hand categories.',
+            maxdmg: 'Highest possible damage from a single hit: (attacks × diceCount × diceSides) + bonus. The average is shown in parentheses.'
+        };
+        header.dataset.tip = tipMap[v];
+        renderTable();
+    }
+
+    // --- sorting ---
+    function sortBy(key) {
+        if (sortKey === key) {
+            sortAsc = !sortAsc;
+        } else {
+            sortKey = key;
+            sortAsc = (key === 'Name' || key === 'DiceRoll' || key === 'Subtype');
+        }
+        renderTable();
+    }
+
+    // --- rendering ---
+    function renderTable() {
+        var rows = currentRows();
+        rows = applyFilters(rows);
+        if (sortKey) rows = applySort(rows, sortKey, sortAsc);
+
+        updateSortHeaders();
+
+        var scoreKey = { dps: 'DPS', adj: 'AdjDPS', maxdmg: 'MaxDmg' }[view];
+        var maxScore = 0;
+        rows.forEach(function(r) { if (r[scoreKey] > maxScore) maxScore = r[scoreKey]; });
+
+        var tbody = document.getElementById('rankBody');
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No weapons match the current filters.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map(function(r, i) {
+            var score   = r[scoreKey];
+            if (score === undefined || score === null) return '';
+            var scoreFmt = (scoreKey === 'MaxDmg')
+                ? score + ' <small style="color:#aaa;font-weight:400">(avg ' + (r.AvgDmg || 0).toFixed(1) + ')</small>'
+                : score.toFixed(3);
+            var pct     = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
+            var isTop   = pct > 85;
+
+            var dprTip = '';
+            if (scoreKey === 'DPS'    && r.DPR    != null) dprTip = 'DPR (no miss/dodge/defense): ' + r.DPR.toFixed(2);
+            if (scoreKey === 'AdjDPS' && r.AdjDPR != null) dprTip = 'Adj DPR (no miss/dodge/defense): ' + r.AdjDPR.toFixed(2);
+
+            return '<tr>' +
+                '<td class="item-id">' + r.ItemId + '</td>' +
+                '<td class="weapon-name"><a href="/admin/items?search=' + encodeURIComponent(r.Name) + '">' + escHtml(r.Name) + '</a></td>' +
+                '<td class="dice-roll">' + escHtml(r.DiceRoll) + '</td>' +
+                '<td>' + subtypePill(r.Subtype) + '</td>' +
+                '<td>' + handsBadge(r.Hands) + '</td>' +
+                '<td>' + waitBadge(r.WaitRounds) + '</td>' +
+                '<td class="score-cell"' + (dprTip ? ' data-row-tip="' + escHtml(dprTip) + '"' : '') + '>' +
+                    '<span class="score-val">' + scoreFmt + '</span>' +
+                    '<span class="score-bar-track"><span class="score-bar-fill' + (isTop ? ' top' : '') + '" style="width:' + pct + '%"></span></span>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function currentRows() {
+        var map = { dps: 'by_dps', adj: 'by_adj_dps', maxdmg: 'by_max_dmg' };
+        return (allData[map[view]] || []).slice();
+    }
+
+    function applyFilters(rows) {
+        var subtype = document.getElementById('filterSubtype').value;
+        var hands   = document.getElementById('filterHands').value;
+        var search  = document.getElementById('filterSearch').value.toLowerCase().trim();
+        return rows.filter(function(r) {
+            if (subtype && r.Subtype !== subtype) return false;
+            if (hands   && String(r.Hands) !== hands) return false;
+            if (search  && r.Name.toLowerCase().indexOf(search) === -1) return false;
+            return true;
+        });
+    }
+
+    function applySort(rows, key, asc) {
+        return rows.slice().sort(function(a, b) {
+            var av = a[key], bv = b[key];
+            if (typeof av === 'string') av = av.toLowerCase();
+            if (typeof bv === 'string') bv = bv.toLowerCase();
+            if (av < bv) return asc ? -1 :  1;
+            if (av > bv) return asc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    function updateSortHeaders() {
+        document.querySelectorAll('.rank-table th.sortable').forEach(function(th) {
+            var k = th.dataset.key;
+            th.classList.toggle('sorted-asc',  sortKey === k &&  sortAsc);
+            th.classList.toggle('sorted-desc', sortKey === k && !sortAsc);
+        });
+    }
+
+    // --- badge helpers ---
+    function subtypePill(st) {
+        var cls = 'st-' + (st || 'generic').toLowerCase();
+        return '<span class="subtype-pill ' + cls + '">' + escHtml(st || 'generic') + '</span>';
+    }
+
+    function handsBadge(h) {
+        return '<span class="hands-badge hands-' + h + '">' + h + 'H</span>';
+    }
+
+    function waitBadge(w) {
+        if (!w) return '<span class="wait-badge wait-0">0</span>';
+        return '<span class="wait-badge wait-n">+' + w + '</span>';
+    }
+
+    // --- status helpers ---
+    function showError(msg) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar error';
+    }
+    function hideError() {
+        var bar = document.getElementById('statusBar');
+        bar.className = 'status-bar';
+    }
+
+    function escHtml(s) {
+        return String(s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // --- tooltip engine ---
+    (function() {
+        var tip = document.getElementById('tooltip');
+        var SCORE_TIPS = {
+            dps:    'Average damage per round against an equal-stat opponent. No stat bonuses, no randomness — pure weapon output.',
+            adj:    'Raw DPS with opportunity-cost penalties applied: ×0.75 for two-handed weapons (lost offhand slot) and ÷(1+W) for wait rounds. Use this to compare weapons across hand categories.',
+            maxdmg: 'Highest possible damage from a single hit: (attacks × diceCount × diceSides) + bonus. The average is shown in parentheses.'
+        };
+
+        // seed the score header tip for the initial view
+        document.getElementById('scoreHeader').dataset.tip = SCORE_TIPS['dps'];
+
+        // header tooltips — static elements, attach directly
+        document.querySelectorAll('.rank-table th[data-tip]').forEach(function(th) {
+            th.addEventListener('mouseenter', function(e) {
+                var text = th.dataset.tip;
+                if (!text) return;
+                tip.textContent = text;
+                tip.style.display = 'block';
+                positionTip(e);
+            });
+            th.addEventListener('mousemove', positionTip);
+            th.addEventListener('mouseleave', hideTip);
+        });
+
+        // row score-cell tooltips — tbody is rebuilt on every render,
+        // so use event delegation on the table instead
+        var tbody = document.getElementById('rankBody');
+        tbody.addEventListener('mouseover', function(e) {
+            var td = e.target.closest('td[data-row-tip]');
+            if (!td) { hideTip(); return; }
+            tip.textContent = td.dataset.rowTip;
+            tip.style.display = 'block';
+            positionTip(e);
+        });
+        tbody.addEventListener('mousemove', function(e) {
+            if (tip.style.display === 'block') positionTip(e);
+        });
+        tbody.addEventListener('mouseout', function(e) {
+            var td = e.target.closest('td[data-row-tip]');
+            if (td && !td.contains(e.relatedTarget)) hideTip();
+        });
+
+        function hideTip() { tip.style.display = 'none'; }
+
+        function positionTip(e) {
+            var pad = 12;
+            var tw  = tip.offsetWidth;
+            var th2 = tip.offsetHeight;
+            var x   = e.clientX + pad;
+            var y   = e.clientY + pad;
+            if (x + tw > window.innerWidth  - pad) x = e.clientX - tw - pad;
+            if (y + th2 > window.innerHeight - pad) y = e.clientY - th2 - pad;
+            tip.style.left = x + 'px';
+            tip.style.top  = y + 'px';
+        }
+    })();
+})();
+</script>
+
+{{template "footer" .}}

@@ -110,7 +110,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 					util.LogRoll(`Flee`, roll, chanceIn100)
 
-					if roll < chanceIn100 {
+					if roll >= chanceIn100 {
 						blockedByPlayer = u.Character.Name
 						blockedByPlayerId = u.UserId
 						break
