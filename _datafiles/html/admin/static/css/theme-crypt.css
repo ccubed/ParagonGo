@@ -1,0 +1,191 @@
+/* Crypt - morbid dark: bone, rot, and grave-moss */
+:root {
+    /* Primary brand */
+    --color-primary:            #3d2b1f;
+    --color-primary-hover:      #5a3e2e;
+    --color-primary-on:         #e8dcc8;
+
+    /* Navigation */
+    --color-nav-bg:             #1a1008;
+    --color-nav-link:           #8a7a60;
+    --color-nav-link-hover:     #c8b890;
+    --color-nav-border:         #0a0804;
+    --color-nav-dropdown-bg:    #221508;
+    --color-nav-dropdown-hover: #3d2b1f;
+
+    /* Page surface */
+    --color-page-bg:            #0e0a06;
+    --color-surface:            #1a1008;
+    --color-surface-alt:        #221508;
+    --color-surface-raised:     #2a1c0c;
+
+    /* Text */
+    --color-text:               #c8b890;
+    --color-text-muted:         #8a7a60;
+    --color-text-subtle:        #6e6048;
+    --color-text-faint:         #504838;
+    --color-text-placeholder:   #3a3028;
+    --color-text-secondary:     #4a4030;
+    --color-text-tertiary:      #a89878;
+    --color-text-strong:        #d8c8a0;
+
+    /* Borders */
+    --color-border:             #3a2a18;
+    --color-border-light:       #2a1c0c;
+    --color-border-medium:      #4a3828;
+    --color-border-strong:      #5a4838;
+    --color-border-faint:       #1a1008;
+
+    /* Active list item */
+    --color-active-bg:          #5a3e2e;
+    --color-active-text:        #e8dcc8;
+    --color-active-id:          #a08060;
+
+    /* Hover row */
+    --color-row-hover:          #221508;
+
+    /* Focus outline */
+    --color-focus:              #8a6840;
+
+    /* Buttons */
+    --color-btn-primary-bg:     #5a3e2e;
+    --color-btn-primary-text:   #e8dcc8;
+    --color-btn-primary-hover:  #3d2b1f;
+    --color-btn-disabled:       #3a3028;
+    --color-btn-cancel-bg:      #2a1c0c;
+    --color-btn-cancel-text:    #8a7a60;
+    --color-btn-cancel-hover:   #3a2a18;
+
+    /* New/create button */
+    --color-btn-new-bg:         var(--color-success-text);
+    --color-btn-new-text:       #0e0a06;
+    --color-btn-new-hover:      #4a7a30;
+
+    /* Save button (inline edit) */
+    --color-btn-save-bg:        #3a6828;
+    --color-btn-save-text:      #e8dcc8;
+    --color-btn-save-hover:     #4a7a30;
+
+    /* Danger */
+    --color-danger:             #c84040;
+
+    /* Status: success */
+    --color-success-bg:         #182818;
+    --color-success-text:       #68a848;
+
+    /* Status: error */
+    --color-error-bg:           #280e0e;
+    --color-error-text:         #c84040;
+
+    /* Status: warning */
+    --color-warning-bg:         #281e08;
+    --color-warning-text:       #c8a040;
+
+    /* Status: info */
+    --color-info-bg:            #0e1828;
+    --color-info-text:          #6888c8;
+
+    /* Chips / badges */
+    --color-chip-bg:            #2a1c0c;
+    --color-chip-text:          #a08060;
+    --color-chip-active-bg:     #5a3e2e;
+    --color-chip-active-text:   #e8dcc8;
+
+    /* Script badge */
+    --color-badge-script-bg:    #281e08;
+    --color-badge-script-text:  #c8a040;
+
+    /* Hostile badge */
+    --color-badge-hostile-bg:   #280e0e;
+    --color-badge-hostile-text: #c84040;
+
+    /* Accent (range sliders, links) */
+    --color-accent:             #8a6840;
+    --color-accent-link:        #a08060;
+
+    /* Surfaces - explicit white (panels, cards, sidebars, inputs) */
+    --color-surface-white:      var(--color-surface);
+
+    /* Danger button */
+    --color-btn-danger-bg:      #8a2020;
+    --color-btn-danger-text:    #e8dcc8;
+    --color-btn-danger-hover:   #6a1818;
+
+    /* Delete button */
+    --color-btn-delete-bg:      var(--color-surface-raised);
+    --color-btn-delete-border:  #6a3030;
+
+    /* Hover tint */
+    --color-hover-tint:         #2a1c0c;
+    --color-hover-tint-border:  #8a6840;
+
+    /* Code / terminal blocks */
+    --color-code-bg:            #080604;
+    --color-code-text:          #a09070;
+
+    /* API reference pages */
+    --color-api-entry-bg:       var(--color-surface);
+    --color-api-summary-hover:  var(--color-surface-alt);
+    --color-api-kw:             #a08060;
+    --color-api-str:            #88a868;
+    --color-api-flag:           #a878a8;
+
+    /* Overlay & shadow */
+    --color-overlay:            rgba(0,0,0,0.6);
+    --color-shadow:             rgba(0,0,0,0.5);
+
+    /* Code syntax highlighting */
+    --color-code-comment:       #6e6048;
+    --color-code-keyword:       #c87050;
+    --color-code-symbol:        #c8a040;
+    --color-code-link:          #88a868;
+    --color-code-addition:      #a0c880;
+
+    /* Method badges (API reference) */
+    --color-method-put-bg:      #2a1828;
+    --color-method-put-text:    #a878a8;
+    --color-method-patch-bg:    #c8a040;
+
+    /* Inline empty/muted states */
+    --color-empty-text:         var(--color-text-placeholder);
+}
+
+/* Dark surface overrides */
+.sidebar, .editor-panel, .card, .runtime-card, .section-block, .section-panel,
+.api-entry, .config-table-wrap, .section-card, #pending-panel, .user-display,
+.picker-wrap, .script-editor-wrap, .select-dialog-backdrop > div,
+.dialog-inner, .zone-edit-dialog > div {
+    background: var(--color-surface) !important; color: var(--color-text);
+}
+thead th { background: var(--color-surface-raised) !important; color: var(--color-text-muted) !important; }
+tbody tr:hover { background: var(--color-row-hover) !important; }
+.pager button { background: var(--color-surface) !important; color: var(--color-text) !important; }
+.pager button:hover:not(:disabled) { background: var(--color-surface-alt) !important; }
+input[type="text"], input[type="number"], input[type="search"],
+input[type="password"], input[type="email"], select, textarea {
+    background: var(--color-surface-raised) !important; color: var(--color-text) !important;
+    border-color: var(--color-border-medium) !important; color-scheme: dark;
+}
+input[type="range"] { color-scheme: dark; }
+.tab-btn.active { background: var(--color-surface) !important; color: var(--color-primary-on) !important; border-color: var(--color-primary) !important; }
+.resp-entry summary:hover, .api-entry[open] summary { background: var(--color-surface-alt) !important; }
+.statmod-known-item, .pending-item, .prefix-hint { background: var(--color-surface-raised) !important; }
+.toggle-knob { background: var(--color-surface) !important; }
+.item-picker-display, .shop-picker-display, .music-picker-display, .picker-display { background: var(--color-surface-raised) !important; color: var(--color-text-muted) !important; }
+.edit-form input[type="text"] { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.script-editor-container, .hljs, pre, code { background: var(--color-surface-raised) !important; }
+.select-dialog-list, .picker-list, .picker-row { background: var(--color-surface) !important; color: var(--color-text) !important; }
+.picker-row:hover, .select-dialog-row:hover { background: var(--color-row-hover) !important; }
+.zone-modal-content, .rank-table-wrap { background: var(--color-surface) !important; }
+.shop-picker-wrap.eq-disabled { background: var(--color-surface-raised) !important; }
+.btn-zone-edit { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.btn-zone-edit:hover, .btn-search:hover, .view-tab:hover { background: var(--color-hover-tint) !important; border-color: var(--color-hover-tint-border) !important; }
+.btn-remove { background: var(--color-surface-raised) !important; color: var(--color-error-text) !important; border-color: var(--color-border-medium) !important; }
+.btn-remove:hover { background: var(--color-error-bg) !important; }
+.btn-cancel, .btn-discard, .btn-delete { background: var(--color-btn-cancel-bg) !important; color: var(--color-btn-cancel-text) !important; border-color: var(--color-border-medium) !important; }
+.btn-cancel:hover, .btn-discard:hover, .btn-delete:hover { background: var(--color-btn-cancel-hover) !important; }
+.conv-block, .info-callout { background: var(--color-surface-raised) !important; border-color: var(--color-border) !important; color: var(--color-text) !important; }
+.slot-item { background: var(--color-surface-raised) !important; color: var(--color-text-tertiary) !important; }
+.quest-progress-item { background: var(--color-surface-raised) !important; border-color: var(--color-border) !important; }
+.turn-cmd-input, .conv-speaker-sel { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.view-tab.active { background: var(--color-primary) !important; color: var(--color-primary-on) !important; }

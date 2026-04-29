@@ -2,73 +2,90 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .page-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 800px) { .page-layout { grid-template-columns: 1fr; } }
 
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid #eee; display: flex; gap: 0.5rem; }
-    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); display: flex; gap: 0.5rem; }
+    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
     .alias-list { overflow-y: auto; max-height: 72vh; }
     .alias-row {
-        padding: 0.45rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.45rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem;
     }
     .alias-row:last-child { border-bottom: none; }
-    .alias-row:hover { background: #f5f7ff; }
-    .alias-row.active { background: #1a1a2e; color: #fff; }
+    .alias-row:hover { background: var(--color-row-hover); }
+    .alias-row.active { background: var(--color-primary); color: var(--color-surface-white); }
     .alias-swatch {
         width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.15);
+        border: 1px solid var(--color-border-medium);
     }
     .alias-name { flex: 1; font-family: monospace; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .alias-value { font-size: 0.75rem; color: #999; font-family: monospace; flex-shrink: 0; }
-    .alias-row.active .alias-value { color: #8899cc; }
-    .no-aliases { padding: 1.5rem; text-align: center; color: #888; font-size: 0.85rem; }
-    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: #1e6e34; color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: block; text-align: center; }
-    .btn-new:hover { background: #145728; }
+    .alias-value { font-size: 0.75rem; color: var(--color-text-secondary); font-family: monospace; flex-shrink: 0; }
+    .alias-row.active .alias-value { color: var(--color-active-id); }
+    .no-aliases { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
+    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: var(--color-success-text); color: var(--color-surface-white); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: block; text-align: center; }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
 
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
-    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; padding: 0.5rem 0 0.4rem; border-bottom: 1px solid #eee; margin-bottom: 0.9rem; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.5rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.9rem; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"], .field input[type="number"] {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc;
-        border-radius: 4px; font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium);
+        border-radius: 4px; font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
-    .value-row { display: flex; gap: 0.5rem; align-items: center; }
+    .value-row { display: flex; gap: 0.5rem; align-items: center; position: relative; }
     .value-row input { flex: 1; }
     .color-swatch-lg {
         width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0;
-        border: 1px solid #ccc; background: #000;
+        border: 1px solid var(--color-border-medium); background: var(--color-code-bg);
+        cursor: pointer;
     }
+    .color-swatch-lg:hover { box-shadow: 0 0 0 2px var(--color-focus); }
 
-    .preview-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #eee; }
-    .preview-section h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #555; margin-bottom: 0.5rem; }
+    .ansi-palette-popup {
+        position: absolute; top: 100%; left: 0; z-index: 100; margin-top: 0.35rem;
+        background: var(--color-surface); border: 1px solid var(--color-border);
+        border-radius: 6px; padding: 0.5rem;
+        box-shadow: 0 4px 16px var(--color-shadow);
+        display: flex; flex-wrap: wrap; gap: 2px;
+        width: 404px;
+    }
+    .ansi-palette-cell {
+        width: 18px; height: 18px; border-radius: 2px; cursor: pointer;
+        border: 2px solid transparent; flex-shrink: 0; transition: transform 0.08s;
+    }
+    .ansi-palette-cell:hover { transform: scale(1.4); border-color: rgba(255,255,255,0.6); z-index: 1; position: relative; }
+    .ansi-palette-cell.selected { border-color: var(--color-surface-white); box-shadow: 0 0 0 2px var(--color-focus); }
+
+    .preview-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border-light); }
+    .preview-section h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 0.5rem; }
     .preview-output {
         font-family: monospace; font-size: 1rem; padding: 0.6rem 0.8rem;
-        background: #000; border-radius: 4px; color: #ccc; min-height: 2.4rem;
+        background: var(--color-code-bg); border-radius: 4px; color: var(--color-border-medium); min-height: 2.4rem;
         display: flex; align-items: center; gap: 0.5rem;
     }
     .preview-swatch { width: 22px; height: 22px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
     .preview-sample { font-size: 0.95rem; }
 
     .btn-row { display: flex; gap: 0.6rem; margin-top: 1.25rem; }
-    .btn-save { padding: 0.45rem 1.2rem; background: #1a1a2e; color: #fff; border: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn-save:hover { background: #2d2d4e; }
-    .btn-delete { padding: 0.45rem 1rem; background: #fff; color: #8a0000; border: 1px solid #e0a0a0; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn-delete:hover { background: #fde8e8; }
+    .btn-save { padding: 0.45rem 1.2rem; background: var(--color-primary); color: var(--color-surface-white); border: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { background: var(--color-primary-hover); }
+    .btn-delete { padding: 0.45rem 1rem; background: var(--color-surface-white); color: var(--color-error-text); border: 1px solid var(--color-btn-delete-border); border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn-delete:hover { background: var(--color-error-bg); }
 </style>
 
 <h1>Color Aliases</h1>
@@ -102,7 +119,7 @@
                     <label for="fieldValue">ANSI Color Code (0–255)</label>
                     <div class="value-row">
                         <input type="number" id="fieldValue" min="0" max="255" placeholder="0–255" oninput="updatePreview()" />
-                        <div class="color-swatch-lg" id="valueSwatch"></div>
+                        <div class="color-swatch-lg" id="valueSwatch" onclick="togglePalette()" title="Pick color"></div>
                     </div>
                     <div class="field-hint">Enter a numeric ANSI 256-color code.</div>
                 </div>
@@ -162,7 +179,7 @@ function renderList() {
         const code = aliasData[name];
         const hex = AnsiColors.toHex(code);
         const isActive = name === activeName;
-        return `<div class="alias-row${isActive ? ' active' : ''}" data-name="${escAttr(name)}" onclick="selectAlias(${JSON.stringify(name)})">
+        return `<div class="alias-row${isActive ? ' active' : ''}" data-name="${escAttr(name)}" onclick="selectAlias(${escAttr(JSON.stringify(name))})">
             <div class="alias-swatch" style="background:${hex}"></div>
             <span class="alias-name">${escHtml(name)}</span>
             <span class="alias-value">${code}</span>
@@ -211,9 +228,9 @@ function showEditor(name, code) {
 function updatePreview() {
     const code = parseInt(document.getElementById('fieldValue').value, 10);
     if (isNaN(code) || code < 0 || code > 255) {
-        document.getElementById('valueSwatch').style.background = '#000';
-        document.getElementById('previewSwatch').style.background = '#333';
-        document.getElementById('previewSample').innerHTML = '<span style="color:#666">Enter a valid code (0–255)</span>';
+        document.getElementById('valueSwatch').style.background = 'var(--color-code-bg)';
+        document.getElementById('previewSwatch').style.background = 'var(--color-text-strong)';
+        document.getElementById('previewSample').innerHTML = '<span style="color:var(--color-text-subtle)">Enter a valid code (0–255)</span>';
         return;
     }
     const hex = AnsiColors.toHex(code);
@@ -273,6 +290,47 @@ function showStatus(type, msg) {
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s) { return String(s).replace(/"/g,'&quot;'); }
+
+// ---- 256-color palette picker ----
+let palettePopup = null;
+
+function togglePalette() {
+    if (palettePopup) { closePalette(); return; }
+
+    const currentCode = parseInt(document.getElementById('fieldValue').value, 10);
+
+    palettePopup = document.createElement('div');
+    palettePopup.className = 'ansi-palette-popup';
+
+    let html = '';
+    for (let i = 0; i < 256; i++) {
+        const sel = i === currentCode ? ' selected' : '';
+        html += '<div class="ansi-palette-cell' + sel + '" data-code="' + i + '" style="background:' + AnsiColors.toHex(i) + '" title="' + i + '"></div>';
+    }
+    palettePopup.innerHTML = html;
+
+    palettePopup.addEventListener('click', function (e) {
+        const cell = e.target.closest('.ansi-palette-cell');
+        if (!cell) return;
+        document.getElementById('fieldValue').value = cell.dataset.code;
+        updatePreview();
+        closePalette();
+    });
+
+    document.getElementById('valueSwatch').closest('.value-row').appendChild(palettePopup);
+    setTimeout(() => document.addEventListener('click', onPaletteOutsideClick), 0);
+}
+
+function closePalette() {
+    if (palettePopup) { palettePopup.remove(); palettePopup = null; }
+    document.removeEventListener('click', onPaletteOutsideClick);
+}
+
+function onPaletteOutsideClick(e) {
+    if (palettePopup && !palettePopup.contains(e.target) && e.target.id !== 'valueSwatch') {
+        closePalette();
+    }
+}
 
 loadAliases();
 </script>

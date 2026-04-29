@@ -2,54 +2,54 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     /* picker bar */
     .picker-bar { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .user-display {
         display: flex; align-items: center; gap: 0.6rem;
-        background: #fff; border: 1px solid #ddd; border-radius: 4px;
+        background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 4px;
         padding: 0.35rem 0.75rem; font-size: 0.875rem; min-width: 220px;
     }
-    .user-display .uid { font-family: monospace; color: #888; font-size: 0.8rem; }
-    .user-display.empty { color: #aaa; font-style: italic; }
+    .user-display .uid { font-family: monospace; color: var(--color-text-faint); font-size: 0.8rem; }
+    .user-display.empty { color: var(--color-text-placeholder); font-style: italic; }
 
     /* status */
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     /* editor panel */
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     /* form */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
     .form-grid .span2 { grid-column: 1 / -1; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"],
     .field input[type="number"],
     .field input[type="password"],
     .field select,
     .field textarea {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 80px; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
     /* range sliders */
     .range-wrap { display: flex; align-items: center; gap: 0.6rem; }
-    .range-wrap input[type="range"] { flex: 1; accent-color: #1a1a2e; }
-    .range-val { font-family: monospace; font-size: 0.85rem; font-weight: 600; min-width: 2.5rem; text-align: center; color: #1a1a2e; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--color-primary); }
+    .range-val { font-family: monospace; font-size: 0.85rem; font-weight: 600; min-width: 2.5rem; text-align: center; color: var(--color-primary); }
 
     /* section cards */
     .section-card {
         grid-column: 1 / -1;
-        border: 1px solid #e0e0e0; border-radius: 6px;
+        border: 1px solid var(--color-border-strong); border-radius: 6px;
         padding: 1rem 1.1rem 0.75rem;
-        background: #fafafa;
+        background: var(--color-surface-alt);
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem;
     }
     .section-card + .section-card { margin-top: 0.25rem; }
@@ -58,72 +58,72 @@
     /* section headings */
     .section-title {
         font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.06em; color: #444; padding: 0 0 0.5rem;
-        border-bottom: 2px solid #1a1a2e; margin-bottom: 0.25rem; grid-column: 1 / -1;
+        letter-spacing: 0.06em; color: var(--color-text-tertiary); padding: 0 0 0.5rem;
+        border-bottom: 2px solid var(--color-primary); margin-bottom: 0.25rem; grid-column: 1 / -1;
     }
 
     /* tags editor */
     .tags-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
     .tag-chip {
         display: inline-flex; align-items: center; gap: 0.3rem;
-        background: #e8eaf6; color: #3949ab; border-radius: 12px;
+        background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 12px;
         padding: 0.2rem 0.6rem; font-size: 0.8rem;
     }
-    .tag-chip button { background: none; border: none; cursor: pointer; color: #3949ab; font-size: 0.85rem; line-height: 1; padding: 0; }
-    .tag-chip button:hover { color: #c00; }
-    .tag-add-input { width: 140px; padding: 0.25rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; }
+    .tag-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.85rem; line-height: 1; padding: 0; }
+    .tag-chip button:hover { color: var(--color-danger); }
+    .tag-add-input { width: 140px; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; }
     .btn-add-sm {
-        font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed #aaa;
-        background: none; border-radius: 4px; cursor: pointer; color: #555; margin-top: 0.25rem;
+        font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed var(--color-text-placeholder);
+        background: none; border-radius: 4px; cursor: pointer; color: var(--color-text-muted); margin-top: 0.25rem;
     }
-    .btn-add-sm:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .btn-add-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
     /* buff chips / item chips */
     .buff-ids-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
     .buff-chip {
         display: inline-flex; align-items: center; gap: 0.3rem;
-        background: #e8eaf6; color: #3949ab; border-radius: 12px;
+        background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 12px;
         padding: 0.2rem 0.6rem; font-size: 0.8rem;
     }
-    .buff-chip button { background: none; border: none; cursor: pointer; color: #3949ab; font-size: 0.85rem; line-height: 1; padding: 0; }
-    .buff-chip button:hover { color: #c00; }
+    .buff-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.85rem; line-height: 1; padding: 0; }
+    .buff-chip button:hover { color: var(--color-danger); }
 
-    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: #888; padding: 0 0.2rem; line-height: 1; }
-    .btn-icon:hover { color: #c00; }
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-faint); padding: 0 0.2rem; line-height: 1; }
+    .btn-icon:hover { color: var(--color-danger); }
 
     /* equipment picker */
     .shop-picker-wrap { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-    .shop-picker-display { font-size: 0.82rem; color: #333; font-family: monospace; }
-    .shop-picker-display.empty { color: #aaa; font-style: italic; font-family: inherit; }
-    .shop-picker-wrap.eq-disabled { background: #e8e8e8; border-radius: 4px; padding: 0.2rem 0.5rem; opacity: 0.6; cursor: not-allowed; }
+    .shop-picker-display { font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace; }
+    .shop-picker-display.empty { color: var(--color-text-placeholder); font-style: italic; font-family: inherit; }
+    .shop-picker-wrap.eq-disabled { background: var(--color-border-strong); border-radius: 4px; padding: 0.2rem 0.5rem; opacity: 0.6; cursor: not-allowed; }
     .shop-picker-wrap.eq-disabled * { pointer-events: none; }
-    .shop-picker-wrap.eq-disabled .shop-picker-display { color: #888; font-style: normal; font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+    .shop-picker-wrap.eq-disabled .shop-picker-display { color: var(--color-text-faint); font-style: normal; font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 
     /* shop cards */
     .shop-entries { display: flex; flex-direction: column; gap: 0.75rem; }
-    .shop-card { border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem 0.9rem; background: #fafafa; position: relative; }
+    .shop-card { border: 1px solid var(--color-border); border-radius: 6px; padding: 0.75rem 0.9rem; background: var(--color-surface-alt); position: relative; }
     .shop-card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
     .shop-card-type-badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
-    .shop-type-item  { background: #e6f4ea; color: #1e6e34; }
-    .shop-type-mob   { background: #e3f2fd; color: #0d47a1; }
-    .shop-type-buff  { background: #f3e5f5; color: #6a1b9a; }
-    .shop-type-pet   { background: #fff3e0; color: #8a4a00; }
-    .shop-card-remove { position: absolute; top: 0.5rem; right: 0.6rem; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #999; line-height: 1; }
-    .shop-card-remove:hover { color: #c00; }
+    .shop-type-item  { background: var(--color-success-bg); color: var(--color-success-text); }
+    .shop-type-mob   { background: var(--color-info-bg); color: var(--color-info-text); }
+    .shop-type-buff  { background: var(--color-method-put-bg); color: var(--color-method-put-text); }
+    .shop-type-pet   { background: var(--color-warning-bg); color: var(--color-warning-text); }
+    .shop-card-remove { position: absolute; top: 0.5rem; right: 0.6rem; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--color-text-secondary); line-height: 1; }
+    .shop-card-remove:hover { color: var(--color-danger); }
     .shop-card-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem 0.75rem; }
-    .shop-field label { display: block; font-size: 0.72rem; font-weight: 600; color: #666; margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.02em; }
-    .shop-field input, .shop-field select { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; background: #fff; }
-    .shop-field .field-hint { font-size: 0.7rem; color: #999; margin-top: 0.1rem; }
+    .shop-field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--color-text-subtle); margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.02em; }
+    .shop-field input, .shop-field select { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; background: var(--color-surface-white); }
+    .shop-field .field-hint { font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 0.1rem; }
 
     /* action bar */
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
     .btn { padding: 0.45rem 1.1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .btn-secondary { background: #eee; color: #333; }
-    .btn-secondary:hover { background: #ddd; }
-    .user-id-display { font-family: monospace; font-size: 0.82rem; color: #888; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-secondary { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-secondary:hover { background: var(--color-border); }
+    .user-id-display { font-family: monospace; font-size: 0.82rem; color: var(--color-text-faint); margin-left: auto; }
 
     /* editor header */
     .editor-header { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem; }
@@ -131,31 +131,31 @@
 
     /* role badge */
     .role-badge { display: inline-block; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
-    .role-admin { background: #fde8e8; color: #8a0000; }
-    .role-user  { background: #e6f4ea; color: #1e6e34; }
-    .role-guest { background: #f0f0f0; color: #555; }
+    .role-admin { background: var(--color-error-bg); color: var(--color-error-text); }
+    .role-user  { background: var(--color-success-bg); color: var(--color-success-text); }
+    .role-guest { background: var(--color-border-faint); color: var(--color-text-muted); }
 
     /* toggle switch */
     .toggle-field { display: flex; align-items: center; gap: 0.75rem; padding: 0.35rem 0; }
     .toggle-switch { position: relative; display: inline-block; width: 2.4rem; height: 1.35rem; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle-track {
-        position: absolute; inset: 0; background: #ccc; border-radius: 999px;
+        position: absolute; inset: 0; background: var(--color-border-medium); border-radius: 999px;
         cursor: pointer; transition: background 0.18s;
     }
     .toggle-track::after {
         content: ''; position: absolute; top: 0.175rem; left: 0.175rem;
-        width: 1rem; height: 1rem; background: #fff; border-radius: 50%;
-        transition: transform 0.18s; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        width: 1rem; height: 1rem; background: var(--color-surface-white); border-radius: 50%;
+        transition: transform 0.18s; box-shadow: 0 1px 3px var(--color-shadow);
     }
-    .toggle-switch input:checked + .toggle-track { background: #1a1a2e; }
+    .toggle-switch input:checked + .toggle-track { background: var(--color-primary); }
     .toggle-switch input:checked + .toggle-track::after { transform: translateX(1.05rem); }
-    .toggle-switch input:focus-visible + .toggle-track { outline: 2px solid #1a1a2e; outline-offset: 2px; }
-    .toggle-label { font-size: 0.875rem; color: #444; line-height: 1.4; }
+    .toggle-switch input:focus-visible + .toggle-track { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .toggle-label { font-size: 0.875rem; color: var(--color-text-tertiary); line-height: 1.4; }
 
     /* read-only field */
     .field input[readonly], .field textarea[readonly] {
-        background: #f5f5f5; color: #666; cursor: default;
+        background: var(--color-page-bg); color: var(--color-text-subtle); cursor: default;
     }
 
     /* skills grid */
@@ -166,56 +166,117 @@
     }
     .skill-item { display: flex; flex-direction: column; gap: 0.2rem; }
     .skill-item label {
-        font-size: 0.75rem; font-weight: 600; color: #555;
+        font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
         text-transform: capitalize; letter-spacing: 0.02em;
     }
     .skill-level-wrap { display: flex; gap: 0.25rem; }
     .skill-level-btn {
-        flex: 1; padding: 0.3rem 0; border: 1px solid #ccc; border-radius: 4px;
-        background: #fff; font-size: 0.78rem; font-weight: 600; cursor: pointer;
-        color: #888; text-align: center; transition: background 0.12s, color 0.12s, border-color 0.12s;
+        flex: 1; padding: 0.3rem 0; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        background: var(--color-surface-white); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+        color: var(--color-text-faint); text-align: center; transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
     .skill-level-btn.active {
-        background: #1a1a2e; color: #fff; border-color: #1a1a2e;
+        background: var(--color-primary); color: var(--color-surface-white); border-color: var(--color-primary);
     }
-    .skill-level-btn:hover:not(.active) { background: #e8eaf6; border-color: #9fa8da; color: #3949ab; }
+    .skill-level-btn:hover:not(.active) { background: var(--color-chip-bg); border-color: var(--color-chip-text); color: var(--color-chip-text); }
 
     /* quest progress */
     .quest-progress-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .quest-progress-item {
         display: flex; align-items: center; gap: 0.75rem;
-        padding: 0.5rem 0.75rem; background: #fff; border: 1px solid #e0e0e0;
+        padding: 0.5rem 0.75rem; background: var(--color-surface-white); border: 1px solid var(--color-border-strong);
         border-radius: 5px; font-size: 0.85rem;
     }
-    .quest-progress-item.quest-done { border-color: #a5d6a7; background: #f1f8f2; }
-    .quest-progress-item.quest-started { border-color: #ffe082; background: #fffde7; }
-    .quest-name { font-weight: 600; color: #1a1a2e; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .quest-progress-item.quest-done { border-color: var(--color-success-text); background: var(--color-success-bg); }
+    .quest-progress-item.quest-started { border-color: var(--color-warning-text); background: var(--color-warning-bg); }
+    .quest-name { font-weight: 600; color: var(--color-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .quest-step-badge {
         font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 3px;
         font-weight: 600; text-transform: uppercase; flex-shrink: 0;
     }
-    .quest-step-badge.step-done { background: #c8e6c9; color: #1b5e20; }
-    .quest-step-badge.step-mid  { background: #fff9c4; color: #6d4c00; }
-    .quest-step-badge.step-start { background: #e3f2fd; color: #0d47a1; }
-    .quest-id-badge { font-size: 0.72rem; color: #aaa; font-family: monospace; flex-shrink: 0; }
-    .quest-secret-badge { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: #fff3e0; color: #8a4a00; flex-shrink: 0; }
-    .no-quests-msg { color: #aaa; font-size: 0.85rem; font-style: italic; padding: 0.5rem 0; }
+    .quest-step-badge.step-done { background: var(--color-success-bg); color: var(--color-success-text); }
+    .quest-step-badge.step-mid  { background: var(--color-warning-bg); color: var(--color-warning-text); }
+    .quest-step-badge.step-start { background: var(--color-info-bg); color: var(--color-info-text); }
+    .quest-id-badge { font-size: 0.72rem; color: var(--color-text-placeholder); font-family: monospace; flex-shrink: 0; }
+    .quest-secret-badge { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--color-warning-bg); color: var(--color-warning-text); flex-shrink: 0; }
+    .no-quests-msg { color: var(--color-text-placeholder); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0; }
 
     /* pet panel */
-    .pet-panel {
-        background: #fff; border: 1px solid #e0e0e0; border-radius: 6px;
-        padding: 0.85rem 1rem; display: grid;
-        grid-template-columns: 1fr 1fr; gap: 0.6rem 1rem;
+    .pet-empty {
+        color: var(--color-text-placeholder); font-style: italic; font-size: 0.85rem;
+        padding: 0.75rem 0;
     }
-    .pet-panel.empty { color: #aaa; font-style: italic; font-size: 0.85rem; padding: 0.75rem 1rem; display: block; }
-    .pet-field { display: flex; flex-direction: column; gap: 0.15rem; }
-    .pet-field label { font-size: 0.72rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.03em; }
-    .pet-field .pet-val { font-size: 0.85rem; color: #333; font-family: monospace; }
-    .pet-field.span2 { grid-column: 1 / -1; }
-    .pet-items-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.15rem; }
+    .pet-card {
+        background: var(--color-surface-alt);
+        border: 1px solid var(--color-border-strong);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .pet-card-header {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--color-warning-bg);
+        border-bottom: 1px solid var(--color-border-strong);
+    }
+    .pet-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+    .pet-name-block { flex: 1; min-width: 0; }
+    .pet-name {
+        font-size: 1rem; font-weight: 700;
+        color: var(--color-warning-text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pet-type-line {
+        font-size: 0.75rem; color: var(--color-warning-text); opacity: 0.75;
+        font-family: monospace; margin-top: 0.1rem;
+    }
+    .pet-name-style {
+        font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 3px;
+        background: var(--color-chip-bg); color: var(--color-chip-text);
+        font-family: monospace; flex-shrink: 0;
+    }
+    .pet-body { padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+    .pet-section-label {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.06em; color: var(--color-text-faint);
+        margin-bottom: 0.4rem;
+    }
+    .pet-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .pet-stat {
+        display: flex; flex-direction: column; gap: 0.1rem; min-width: 80px;
+    }
+    .pet-stat-label {
+        font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.04em; color: var(--color-text-faint);
+    }
+    .pet-stat-value {
+        font-size: 0.9rem; font-weight: 600;
+        color: var(--color-text); font-family: monospace;
+    }
+    .pet-mods-grid {
+        display: flex; flex-wrap: wrap; gap: 0.35rem;
+    }
+    .pet-mod-chip {
+        font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 4px;
+        font-family: monospace; font-weight: 600;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+    }
+    .pet-mod-chip.positive { color: var(--color-success-text); border-color: var(--color-success-bg); background: var(--color-success-bg); }
+    .pet-mod-chip.negative { color: var(--color-error-text); border-color: var(--color-error-bg); background: var(--color-error-bg); }
+    .pet-buff-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .pet-buff-chip {
+        font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 12px;
+        background: var(--color-chip-bg); color: var(--color-chip-text);
+    }
+    .pet-items-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .pet-item-chip {
-        font-size: 0.78rem; padding: 0.15rem 0.5rem; border-radius: 10px;
-        background: #e8eaf6; color: #3949ab;
+        font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 4px;
+        background: var(--color-surface-raised); border: 1px solid var(--color-border);
+        color: var(--color-text); font-family: monospace;
+    }
+    .pet-divider {
+        border: none; border-top: 1px solid var(--color-border-light); margin: 0;
     }
 </style>
 
@@ -312,7 +373,7 @@
                 <div class="field" id="f-formrace-wrap" style="display:none;">
                     <label>Current Form</label>
                     <input type="text" id="f-formrace" readonly
-                           style="background:#f0f0f0; cursor:default;" />
+                           style="background:var(--color-border-faint); cursor:default;" />
                 </div>
 
                 <div class="field span2">
@@ -485,7 +546,7 @@
                 <div class="section-title" style="margin-top:0.5rem;">Pet</div>
 
                 <div class="field span2">
-                    <div id="pet-panel" class="pet-panel empty">No pet.</div>
+                    <div id="pet-panel"></div>
                 </div>
             </div>
         </div>
@@ -853,10 +914,32 @@
     // Shop entries (shared logic with mobs page)
     // -------------------------------------------------------------------------
     function detectShopType(entry) {
-        if (entry.PetType) return 'pet';
-        if (entry.BuffId)  return 'buff';
-        if (entry.MobId)   return 'mob';
+        if ('PetType' in entry) return 'pet';
+        if ('BuffId' in entry)  return 'buff';
+        if ('MobId' in entry)   return 'mob';
         return 'item';
+    }
+
+    const _shopNameCache = {};
+    async function resolveShopName(type, id) {
+        if (!id) return null;
+        const key = type + ':' + id;
+        if (_shopNameCache[key] !== undefined) return _shopNameCache[key];
+        if (type === 'item') {
+            const res = await AdminAPI.get('/admin/api/v1/items');
+            for (const e of (res.ok && res.data && res.data.data) || [])
+                _shopNameCache['item:' + e.ItemId] = e.Name;
+        } else if (type === 'buff') {
+            const res = await AdminAPI.get('/admin/api/v1/buffs');
+            const specs = (res.ok && res.data && res.data.data && res.data.data.specs) || {};
+            for (const e of Object.values(specs))
+                _shopNameCache['buff:' + e.BuffId] = e.Name;
+        } else if (type === 'mob') {
+            const res = await AdminAPI.get('/admin/api/v1/mobs');
+            for (const e of (res.ok && res.data && res.data.data) || [])
+                _shopNameCache['mob:' + e.MobId] = (e.Character && e.Character.Name) || '(unnamed)';
+        }
+        return _shopNameCache[key] || null;
     }
 
     const shopTypeMeta = {
@@ -896,6 +979,12 @@
             ? ('#' + initialId + (initialName ? ' ' + initialName : ''))
             : 'none selected';
 
+        if (initialId && !initialName) {
+            resolveShopName(type, initialId).then(name => {
+                if (name) display.textContent = '#' + initialId + ' ' + name;
+            });
+        }
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn-add-sm';
@@ -934,6 +1023,12 @@
         const display = document.createElement('span');
         display.className = 'shop-picker-display' + (initialId ? '' : ' empty');
         display.textContent = initialId ? ('#' + initialId) : 'none';
+
+        if (initialId) {
+            resolveShopName('item', initialId).then(name => {
+                if (name) display.textContent = '#' + initialId + ' ' + name;
+            });
+        }
 
         const pickBtn = document.createElement('button');
         pickBtn.type = 'button';
@@ -1340,53 +1435,111 @@
     // -------------------------------------------------------------------------
     function renderPet(pet) {
         const panel = document.getElementById('pet-panel');
+        panel.innerHTML = '';
+
         if (!pet || !pet.Type) {
-            panel.className = 'pet-panel empty';
-            panel.innerHTML = 'No pet.';
+            panel.innerHTML = '<div class="pet-empty">No pet.</div>';
             return;
         }
 
-        panel.className = 'pet-panel';
-        panel.innerHTML = '';
+        const card = document.createElement('div');
+        card.className = 'pet-card';
 
-        function addField(label, value, span2) {
-            const f = document.createElement('div');
-            f.className = 'pet-field' + (span2 ? ' span2' : '');
-            const lbl = document.createElement('label');
-            lbl.textContent = label;
-            const val = document.createElement('span');
-            val.className = 'pet-val';
-            val.textContent = value || '\u2014';
-            f.appendChild(lbl);
-            f.appendChild(val);
-            panel.appendChild(f);
+        // Header: icon, name, type, name style tag
+        const header = document.createElement('div');
+        header.className = 'pet-card-header';
+        const displayName = pet.Name ? esc(pet.Name) : esc(pet.Type);
+        const nameStyleHtml = pet.NameStyle
+            ? '<span class="pet-name-style">' + esc(pet.NameStyle) + '</span>'
+            : '';
+        header.innerHTML =
+            '<span class="pet-icon">&#x1F43E;</span>' +
+            '<div class="pet-name-block">' +
+                '<div class="pet-name">' + displayName + '</div>' +
+                '<div class="pet-type-line">' + esc(pet.Type) + '</div>' +
+            '</div>' +
+            nameStyleHtml;
+        card.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'pet-body';
+
+        // Stats section (capacity + damage)
+        const hasCapacity = pet.Capacity > 0;
+        const hasDamage   = pet.Damage && (pet.Damage.DiceRoll || pet.Damage.Attacks > 0);
+        if (hasCapacity || hasDamage) {
+            const sec = document.createElement('div');
+            const lbl = document.createElement('div');
+            lbl.className = 'pet-section-label';
+            lbl.textContent = 'Stats';
+            sec.appendChild(lbl);
+            const row = document.createElement('div');
+            row.className = 'pet-row';
+            if (hasCapacity) {
+                row.appendChild(makePetStat('Carry Capacity',
+                    String(pet.Capacity) + ' item' + (pet.Capacity !== 1 ? 's' : '')));
+            }
+            if (hasDamage) {
+                const dmg = pet.Damage;
+                const dmgStr = (dmg.DiceRoll || '') +
+                    (dmg.Attacks > 1 ? ' \u00d7' + dmg.Attacks + ' attacks' : '');
+                row.appendChild(makePetStat('Damage', dmgStr || '\u2014'));
+            }
+            sec.appendChild(row);
+            body.appendChild(sec);
         }
 
-        addField('Type', pet.Type);
-        addField('Name', pet.Name || '(unnamed)');
-        addField('Name Style', pet.NameStyle || '(none)');
-        addField('Capacity', pet.Capacity != null ? String(pet.Capacity) : '0');
-
-        if (pet.Damage && (pet.Damage.DiceRoll || pet.Damage.Attacks)) {
-            const dmg = pet.Damage;
-            addField('Damage', (dmg.DiceRoll || '') + (dmg.Attacks > 1 ? ' x' + dmg.Attacks : ''));
+        // Stat mods section
+        const hasMods = pet.StatMods && Object.keys(pet.StatMods).length > 0;
+        if (hasMods) {
+            if (body.children.length > 0) body.appendChild(makePetDivider());
+            const sec = document.createElement('div');
+            const lbl = document.createElement('div');
+            lbl.className = 'pet-section-label';
+            lbl.textContent = 'Stat Modifiers';
+            sec.appendChild(lbl);
+            const grid = document.createElement('div');
+            grid.className = 'pet-mods-grid';
+            for (const [stat, val] of Object.entries(pet.StatMods)) {
+                const n = parseInt(val, 10) || 0;
+                const chip = document.createElement('span');
+                chip.className = 'pet-mod-chip' + (n > 0 ? ' positive' : n < 0 ? ' negative' : '');
+                chip.textContent = stat + ' ' + (n > 0 ? '+' : '') + n;
+                grid.appendChild(chip);
+            }
+            sec.appendChild(grid);
+            body.appendChild(sec);
         }
 
-        if (pet.StatMods && Object.keys(pet.StatMods).length > 0) {
-            const modStr = Object.entries(pet.StatMods).map(([k, v]) => k + ':' + v).join(', ');
-            addField('Stat Mods', modStr, true);
-        }
-
+        // Granted buffs section
         if (pet.BuffIds && pet.BuffIds.length > 0) {
-            addField('Buff IDs', pet.BuffIds.join(', '), true);
+            if (body.children.length > 0) body.appendChild(makePetDivider());
+            const sec = document.createElement('div');
+            const lbl = document.createElement('div');
+            lbl.className = 'pet-section-label';
+            lbl.textContent = 'Granted Buffs';
+            sec.appendChild(lbl);
+            const chips = document.createElement('div');
+            chips.className = 'pet-buff-chips';
+            for (const id of pet.BuffIds) {
+                const chip = document.createElement('span');
+                chip.className = 'pet-buff-chip';
+                chip.textContent = buffName(id);
+                chips.appendChild(chip);
+            }
+            sec.appendChild(chips);
+            body.appendChild(sec);
         }
 
+        // Carried items section
         if (pet.Items && pet.Items.length > 0) {
-            const f = document.createElement('div');
-            f.className = 'pet-field span2';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Carried Items';
-            f.appendChild(lbl);
+            if (body.children.length > 0) body.appendChild(makePetDivider());
+            const sec = document.createElement('div');
+            const lbl = document.createElement('div');
+            lbl.className = 'pet-section-label';
+            lbl.textContent = 'Carried Items (' + pet.Items.length +
+                (pet.Capacity ? '/' + pet.Capacity : '') + ')';
+            sec.appendChild(lbl);
             const list = document.createElement('div');
             list.className = 'pet-items-list';
             for (const it of pet.Items) {
@@ -1395,9 +1548,39 @@
                 chip.textContent = '#' + it.ItemId + ' ' + itemName(it.ItemId);
                 list.appendChild(chip);
             }
-            f.appendChild(list);
-            panel.appendChild(f);
+            sec.appendChild(list);
+            body.appendChild(sec);
         }
+
+        if (body.children.length === 0) {
+            const msg = document.createElement('div');
+            msg.style.cssText = 'font-size:0.82rem;color:var(--color-text-faint);font-style:italic;';
+            msg.textContent = 'No additional details.';
+            body.appendChild(msg);
+        }
+
+        card.appendChild(body);
+        panel.appendChild(card);
+    }
+
+    function makePetStat(label, value) {
+        const el = document.createElement('div');
+        el.className = 'pet-stat';
+        const l = document.createElement('span');
+        l.className = 'pet-stat-label';
+        l.textContent = label;
+        const v = document.createElement('span');
+        v.className = 'pet-stat-value';
+        v.textContent = value;
+        el.appendChild(l);
+        el.appendChild(v);
+        return el;
+    }
+
+    function makePetDivider() {
+        const hr = document.createElement('hr');
+        hr.className = 'pet-divider';
+        return hr;
     }
 
     init();

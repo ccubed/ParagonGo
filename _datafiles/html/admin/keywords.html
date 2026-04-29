@@ -2,80 +2,80 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
-    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #1a1a2e; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--color-primary); margin-bottom: 1.25rem; flex-wrap: wrap; }
     .tab-btn {
-        padding: 0.55rem 1.1rem; border: none; background: #eee; color: #555;
+        padding: 0.55rem 1.1rem; border: none; background: var(--color-border-light); color: var(--color-text-muted);
         font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: 4px 4px 0 0;
         margin-bottom: -2px; border: 2px solid transparent; border-bottom: none;
     }
-    .tab-btn:hover { background: #e0e0e0; }
-    .tab-btn.active { background: #fff; color: #1a1a2e; border-color: #1a1a2e; }
+    .tab-btn:hover { background: var(--color-border-strong); }
+    .tab-btn.active { background: var(--color-surface-white); color: var(--color-primary); border-color: var(--color-primary); }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .section-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; margin-bottom: 1rem; }
-    .section-desc { font-size: 0.82rem; color: #666; margin-bottom: 1rem; }
+    .section-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; margin-bottom: 1rem; }
+    .section-desc { font-size: 0.82rem; color: var(--color-text-subtle); margin-bottom: 1rem; }
 
-    .btn-save-all { padding: 0.5rem 1.5rem; background: #1a1a2e; color: #fff; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-bottom: 1.25rem; }
-    .btn-save-all:hover { background: #2d2d4e; }
-    .btn-add { padding: 0.3rem 0.8rem; background: #1e6e34; color: #fff; border: none; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-    .btn-add:hover { background: #145728; }
-    .btn-remove { padding: 0.2rem 0.5rem; background: #fff; color: #8a0000; border: 1px solid #e0a0a0; border-radius: 3px; font-size: 0.75rem; cursor: pointer; }
-    .btn-remove:hover { background: #fde8e8; }
+    .btn-save-all { padding: 0.5rem 1.5rem; background: var(--color-primary); color: var(--color-surface-white); border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-bottom: 1.25rem; }
+    .btn-save-all:hover { background: var(--color-primary-hover); }
+    .btn-add { padding: 0.3rem 0.8rem; background: var(--color-success-text); color: var(--color-surface-white); border: none; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn-add:hover { background: var(--color-btn-new-hover); }
+    .btn-remove { padding: 0.2rem 0.5rem; background: var(--color-surface-white); color: var(--color-error-text); border: 1px solid var(--color-btn-delete-border); border-radius: 3px; font-size: 0.75rem; cursor: pointer; }
+    .btn-remove:hover { background: var(--color-error-bg); }
 
     /* Help Topics */
-    .help-group { margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 5px; overflow: hidden; }
+    .help-group { margin-bottom: 1rem; border: 1px solid var(--color-border-strong); border-radius: 5px; overflow: hidden; }
     .help-group-header {
         display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.85rem;
-        background: #f5f5f5; font-weight: 600; font-size: 0.85rem; cursor: pointer; user-select: none;
+        background: var(--color-page-bg); font-weight: 600; font-size: 0.85rem; cursor: pointer; user-select: none;
     }
-    .help-group-header:hover { background: #eee; }
-    .help-group-header .arrow { font-size: 0.65rem; color: #888; transition: transform 0.15s; }
+    .help-group-header:hover { background: var(--color-border-light); }
+    .help-group-header .arrow { font-size: 0.65rem; color: var(--color-text-faint); transition: transform 0.15s; }
     .help-group.open .arrow { transform: rotate(90deg); }
     .help-group-body { display: none; padding: 0.5rem 0.85rem 0.75rem; }
     .help-group.open .help-group-body { display: block; }
     .help-category { margin-bottom: 0.75rem; }
     .help-category-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
-    .help-category-name { font-size: 0.82rem; font-weight: 600; color: #444; text-transform: capitalize; }
+    .help-category-name { font-size: 0.82rem; font-weight: 600; color: var(--color-text-tertiary); text-transform: capitalize; }
     .chip-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
     .chip {
         display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem;
-        background: #e8eaf6; border-radius: 12px; font-size: 0.78rem; color: #333;
+        background: var(--color-chip-bg); border-radius: 12px; font-size: 0.78rem; color: var(--color-text-strong);
     }
-    .chip .x { cursor: pointer; color: #888; font-weight: 700; font-size: 0.7rem; }
-    .chip .x:hover { color: #c00; }
+    .chip .x { cursor: pointer; color: var(--color-text-faint); font-weight: 700; font-size: 0.7rem; }
+    .chip .x:hover { color: var(--color-danger); }
     .add-inline { display: inline-flex; align-items: center; gap: 0.3rem; }
-    .add-inline input { padding: 0.2rem 0.4rem; border: 1px solid #ccc; border-radius: 3px; font-size: 0.8rem; width: 120px; }
-    .add-inline button { padding: 0.2rem 0.5rem; background: #1e6e34; color: #fff; border: none; border-radius: 3px; font-size: 0.75rem; cursor: pointer; }
+    .add-inline input { padding: 0.2rem 0.4rem; border: 1px solid var(--color-border-medium); border-radius: 3px; font-size: 0.8rem; width: 120px; }
+    .add-inline button { padding: 0.2rem 0.5rem; background: var(--color-success-text); color: var(--color-surface-white); border: none; border-radius: 3px; font-size: 0.75rem; cursor: pointer; }
 
     /* Alias Tables */
     .alias-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .alias-table th { text-align: left; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #666; padding: 0.4rem 0.6rem; border-bottom: 2px solid #ddd; letter-spacing: 0.03em; }
-    .alias-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; vertical-align: middle; }
-    .alias-table tr:hover { background: #fafafa; }
+    .alias-table th { text-align: left; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-subtle); padding: 0.4rem 0.6rem; border-bottom: 2px solid var(--color-border); letter-spacing: 0.03em; }
+    .alias-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--color-border-light); vertical-align: middle; }
+    .alias-table tr:hover { background: var(--color-surface-alt); }
     .alias-table input[type="text"] {
-        width: 100%; padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 3px;
+        width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 3px;
         font-size: 0.84rem; font-family: inherit;
     }
-    .alias-table input:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .alias-table input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .col-action { width: 40px; text-align: center; }
     .add-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; flex-wrap: wrap; }
-    .add-row input { padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 3px; font-size: 0.84rem; }
+    .add-row input { padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 3px; font-size: 0.84rem; }
     .add-row .inp-key { width: 140px; }
     .add-row .inp-val { width: 260px; }
     .add-row .inp-short { width: 60px; }
 
     /* Legend Overrides */
-    .legend-zone { margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 5px; overflow: hidden; }
+    .legend-zone { margin-bottom: 1rem; border: 1px solid var(--color-border-strong); border-radius: 5px; overflow: hidden; }
     .legend-zone-header {
         display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.85rem;
-        background: #f5f5f5; font-weight: 600; font-size: 0.85rem;
+        background: var(--color-page-bg); font-weight: 600; font-size: 0.85rem;
     }
     .legend-zone-body { padding: 0.5rem 0.85rem 0.75rem; }
 </style>
@@ -216,7 +216,7 @@ function switchTab(id) {
 function renderHelpTopics() {
     const c = document.getElementById('helpTopicsContainer');
     const types = Object.keys(data.Help).sort();
-    if (types.length === 0) { c.innerHTML = '<div style="color:#888;font-size:0.85rem;">No help topics defined.</div>'; return; }
+    if (types.length === 0) { c.innerHTML = '<div style="color:var(--color-text-faint);font-size:0.85rem;">No help topics defined.</div>'; return; }
     c.innerHTML = types.map(type => {
         const cats = data.Help[type];
         const catKeys = Object.keys(cats).sort();
@@ -224,7 +224,7 @@ function renderHelpTopics() {
             <div class="help-group-header" onclick="this.parentElement.classList.toggle('open')">
                 <span class="arrow">&#9654;</span>
                 <span>${esc(type)}</span>
-                <span style="font-size:0.75rem;color:#888;font-weight:400;">(${catKeys.length} categories)</span>
+                <span style="font-size:0.75rem;color:var(--color-text-faint);font-weight:400;">(${catKeys.length} categories)</span>
                 <button class="btn-remove" style="margin-left:auto;" onclick="event.stopPropagation();removeHelpType('${esc(type)}')">Remove Type</button>
             </div>
             <div class="help-group-body">
@@ -431,7 +431,7 @@ function renderLegend() {
         if (b === '*') return 1;
         return a.localeCompare(b);
     });
-    if (zones.length === 0) { c.innerHTML = '<div style="color:#888;font-size:0.85rem;">No legend overrides defined.</div>'; return; }
+    if (zones.length === 0) { c.innerHTML = '<div style="color:var(--color-text-faint);font-size:0.85rem;">No legend overrides defined.</div>'; return; }
     c.innerHTML = zones.map(zone => {
         const entries = data.MapLegendOverrides[zone] || {};
         const symbols = Object.keys(entries).sort();

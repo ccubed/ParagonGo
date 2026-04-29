@@ -2,37 +2,37 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #666; margin-bottom: 0.5rem; }
-    .card .value { font-size: 1.75rem; font-weight: 700; color: #1a1a2e; }
-    .card .detail { font-size: 0.85rem; color: #555; margin-top: 0.25rem; }
-    .card a { display: inline-block; margin-top: 0.75rem; font-size: 0.85rem; color: #1a1a2e; text-decoration: underline; }
-    .card a:hover { color: #444; }
+    .card { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-subtle); margin-bottom: 0.5rem; }
+    .card .value { font-size: 1.75rem; font-weight: 700; color: var(--color-primary); }
+    .card .detail { font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.25rem; }
+    .card a { display: inline-block; margin-top: 0.75rem; font-size: 0.85rem; color: var(--color-primary); text-decoration: underline; }
+    .card a:hover { color: var(--color-text-tertiary); }
 
     /* toolbar */
     .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .refresh-rate { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: #555; }
-    .refresh-rate input[type="range"] { width: 120px; accent-color: #1a1a2e; cursor: pointer; }
-    .refresh-rate-label { min-width: 2.5rem; font-size: 0.82rem; color: #1a1a2e; font-weight: 600; }
-    .refresh-countdown { font-size: 0.78rem; color: #888; min-width: 9rem; }
-    .last-updated { font-size: 0.78rem; color: #aaa; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .refresh-rate { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: var(--color-text-muted); }
+    .refresh-rate input[type="range"] { width: 120px; accent-color: var(--color-primary); cursor: pointer; }
+    .refresh-rate-label { min-width: 2.5rem; font-size: 0.82rem; color: var(--color-primary); font-weight: 600; }
+    .refresh-countdown { font-size: 0.78rem; color: var(--color-text-faint); min-width: 9rem; }
+    .last-updated { font-size: 0.78rem; color: var(--color-text-placeholder); margin-left: auto; }
 
     /* status */
     .status-bar { display: none; padding: 0.5rem 0.85rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.error { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.error { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     /* runtime card grid */
     .runtime-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
-    .runtime-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1rem 1.1rem; }
-    .runtime-card .rc-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 0.35rem; }
-    .runtime-card .rc-value { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; line-height: 1.1; }
-    .runtime-card .rc-unit { font-size: 0.72rem; color: #aaa; margin-top: 0.2rem; }
+    .runtime-card { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1rem 1.1rem; }
+    .runtime-card .rc-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-faint); margin-bottom: 0.35rem; }
+    .runtime-card .rc-value { font-size: 1.6rem; font-weight: 700; color: var(--color-primary); line-height: 1.1; }
+    .runtime-card .rc-unit { font-size: 0.72rem; color: var(--color-text-placeholder); margin-top: 0.2rem; }
 </style>
 
 <h1>{{.CONFIG.Server.MudName}}</h1>

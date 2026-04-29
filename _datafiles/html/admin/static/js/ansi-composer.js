@@ -29,92 +29,95 @@ const AnsiComposerPicker = (() => {
         s.id = 'acp-styles';
         s.textContent = `
             .acp-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+                position: fixed; inset: 0; background: var(--color-overlay);
                 display: flex; align-items: center; justify-content: center;
                 z-index: 9999;
             }
             /* ── Main composer modal ── */
             .acp-modal {
-                background: #fff; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+                background: var(--color-surface); border-radius: 8px; box-shadow: 0 8px 40px var(--color-shadow);
                 width: 640px; max-width: 96vw; max-height: 92vh;
                 display: flex; flex-direction: column; overflow: hidden;
             }
             .acp-header {
-                padding: 0.85rem 1.1rem 0.7rem; border-bottom: 1px solid #e5e5e5;
+                padding: 0.85rem 1.1rem 0.7rem; border-bottom: 1px solid var(--color-border);
                 display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
             }
-            .acp-title { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
-            .acp-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #888; line-height: 1; padding: 0 0.2rem; }
-            .acp-close:hover { color: #333; }
-            .acp-body { overflow-y: auto; padding: 1rem 1.1rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
+            .acp-title { font-size: 1rem; font-weight: 700; color: var(--color-text); }
+            .acp-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--color-text-faint); line-height: 1; padding: 0 0.2rem; }
+            .acp-close:hover { color: var(--color-text); }
+            .acp-body { overflow-y: auto; padding: 1rem 1.1rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; background: var(--color-surface); }
             .acp-section-label {
                 font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-                letter-spacing: 0.04em; color: #888; margin-bottom: 0.3rem;
+                letter-spacing: 0.04em; color: var(--color-text-faint); margin-bottom: 0.3rem;
             }
             .acp-toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
             .acp-btn-colorize {
-                padding: 0.38rem 0.9rem; background: #1a1a2e; color: #fff; border: none;
+                padding: 0.38rem 0.9rem; background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); border: none;
                 border-radius: 4px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
             }
-            .acp-btn-colorize:hover { background: #2d2d4e; }
+            .acp-btn-colorize:hover { background: var(--color-btn-primary-hover); }
             .acp-btn-strip {
-                padding: 0.38rem 0.9rem; background: #fff; color: #555; border: 1px solid #ccc;
+                padding: 0.38rem 0.9rem; background: var(--color-btn-cancel-bg); color: var(--color-btn-cancel-text); border: 1px solid var(--color-border-medium);
                 border-radius: 4px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
             }
-            .acp-btn-strip:hover { background: #f0f0f0; }
-            .acp-toolbar-hint { font-size: 0.75rem; color: #999; margin-left: auto; }
+            .acp-btn-strip:hover { background: var(--color-btn-cancel-hover); }
+            .acp-toolbar-hint { font-size: 0.75rem; color: var(--color-text-secondary); margin-left: auto; }
             .acp-textarea {
                 width: 100%; min-height: 90px; padding: 0.5rem 0.65rem;
-                border: 1px solid #ccc; border-radius: 4px; font-family: monospace;
-                font-size: 0.85rem; line-height: 1.55; resize: vertical; background: #fafafa;
+                border: 1px solid var(--color-border-medium); border-radius: 4px; font-family: monospace;
+                font-size: 0.85rem; line-height: 1.55; resize: vertical;
+                background: var(--color-surface-alt); color: var(--color-text);
             }
-            .acp-textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; background: #fff; }
+            .acp-textarea:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; border-color: transparent; background: var(--color-surface); }
             .acp-preview {
                 min-height: 60px; padding: 0.55rem 0.75rem;
-                background: #000; border-radius: 4px; color: #ccc;
+                background: var(--color-code-bg); border-radius: 4px; color: var(--color-code-text);
                 font-family: monospace; font-size: 0.9rem; line-height: 1.6;
                 white-space: pre-wrap; word-break: break-word;
             }
-            .acp-preview-empty { color: #444; font-style: italic; }
+            .acp-preview-empty { color: var(--color-text-subtle); font-style: italic; }
             .acp-footer {
-                padding: 0.7rem 1.1rem; border-top: 1px solid #eee;
+                padding: 0.7rem 1.1rem; border-top: 1px solid var(--color-border-light);
                 display: flex; justify-content: flex-end; gap: 0.5rem; flex-shrink: 0;
+                background: var(--color-surface);
             }
             .acp-btn {
                 padding: 0.42rem 1.1rem; border-radius: 4px; font-size: 0.85rem;
                 font-weight: 600; cursor: pointer; border: 1px solid transparent;
             }
-            .acp-btn-cancel { background: #f0f0f0; color: #444; border-color: #ccc; }
-            .acp-btn-cancel:hover { background: #e5e5e5; }
-            .acp-btn-apply { background: #1a1a2e; color: #fff; }
-            .acp-btn-apply:hover { background: #2d2d4e; }
+            .acp-btn-cancel { background: var(--color-btn-cancel-bg); color: var(--color-btn-cancel-text); border-color: var(--color-border-medium); }
+            .acp-btn-cancel:hover { background: var(--color-btn-cancel-hover); }
+            .acp-btn-apply { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); }
+            .acp-btn-apply:hover { background: var(--color-btn-primary-hover); }
 
             /* ── Color picker sub-modal ── */
             .acp-sub-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+                position: fixed; inset: 0; background: var(--color-overlay);
                 display: flex; align-items: center; justify-content: center;
                 z-index: 10000;
             }
             .acp-sub-modal {
-                background: #fff; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+                background: var(--color-surface); border-radius: 8px; box-shadow: 0 8px 40px var(--color-shadow);
                 width: 520px; max-width: 96vw; max-height: 88vh;
                 display: flex; flex-direction: column; overflow: hidden;
             }
             .acp-sub-header {
-                padding: 0.75rem 1rem 0.6rem; border-bottom: 1px solid #e5e5e5;
+                padding: 0.75rem 1rem 0.6rem; border-bottom: 1px solid var(--color-border);
                 display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
             }
-            .acp-sub-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
-            .acp-sub-body { overflow-y: auto; padding: 0.9rem 1rem; flex: 1; }
+            .acp-sub-title { font-size: 0.95rem; font-weight: 700; color: var(--color-text); }
+            .acp-sub-body { overflow-y: auto; padding: 0.9rem 1rem; flex: 1; background: var(--color-surface); }
             .acp-sub-footer {
-                padding: 0.65rem 1rem; border-top: 1px solid #eee;
+                padding: 0.65rem 1rem; border-top: 1px solid var(--color-border-light);
                 display: flex; justify-content: flex-end; gap: 0.5rem; flex-shrink: 0;
+                background: var(--color-surface);
             }
 
             /* Selection strip */
             .acp-sel-strip {
-                background: #000; border-radius: 4px; padding: 0.4rem 0.65rem;
-                font-family: monospace; font-size: 0.88rem; color: #ccc;
+                background: var(--color-code-bg); border-radius: 4px; padding: 0.4rem 0.65rem;
+                font-family: monospace; font-size: 0.88rem; color: var(--color-code-text);
                 margin-bottom: 0.85rem; min-height: 1.8rem; word-break: break-all;
             }
 
@@ -124,53 +127,56 @@ const AnsiComposerPicker = (() => {
                 border: 2px solid transparent; border-radius: 6px;
                 padding: 0.5rem 0.6rem; cursor: pointer; transition: border-color 0.12s, background 0.12s;
             }
-            .acp-channel:hover { background: #f9f9ff; }
-            .acp-channel.acp-active-fg { border-color: #1a1a2e; background: #f0f2ff; cursor: default; }
-            .acp-channel.acp-active-bg { border-color: #666; background: #f5f5f5; cursor: default; }
+            .acp-channel:hover { background: var(--color-row-hover); }
+            .acp-channel.acp-active-fg { border-color: var(--color-primary); background: var(--color-surface-alt); cursor: default; }
+            .acp-channel.acp-active-bg { border-color: var(--color-text-subtle); background: var(--color-surface-raised); cursor: default; }
             .acp-channel-label {
                 font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-                letter-spacing: 0.05em; color: #555; margin-bottom: 0.4rem;
+                letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: 0.4rem;
                 display: flex; align-items: center; gap: 0.4rem; pointer-events: none;
             }
             .acp-badge { font-size: 0.62rem; padding: 0.1rem 0.32rem; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
-            .acp-badge-fg { background: #1a1a2e; color: #fff; }
-            .acp-badge-bg { background: #555; color: #fff; }
+            .acp-badge-fg { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); }
+            .acp-badge-bg { background: var(--color-text-subtle); color: var(--color-surface-white); }
             .acp-ch-row { display: flex; gap: 0.4rem; align-items: center; }
             .acp-ch-row input[type="number"] {
-                width: 64px; padding: 0.3rem 0.4rem; border: 1px solid #ccc;
+                width: 64px; padding: 0.3rem 0.4rem; border: 1px solid var(--color-border-medium);
                 border-radius: 4px; font-size: 0.85rem; font-family: monospace;
+                background: var(--color-surface-raised); color: var(--color-text);
             }
-            .acp-ch-row input:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
-            .acp-swatch { width: 26px; height: 26px; border-radius: 4px; border: 1px solid #ccc; background: #1a1a1a; flex-shrink: 0; }
-            .acp-clear-btn { font-size: 0.72rem; padding: 0.2rem 0.4rem; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; color: #555; }
-            .acp-clear-btn:hover { background: #f0f0f0; }
+            .acp-ch-row input:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; border-color: transparent; }
+            .acp-swatch { width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--color-border-medium); background: var(--color-code-bg); flex-shrink: 0; }
+            .acp-clear-btn { font-size: 0.72rem; padding: 0.2rem 0.4rem; border: 1px solid var(--color-border-medium); background: var(--color-surface-raised); border-radius: 3px; cursor: pointer; color: var(--color-text-muted); }
+            .acp-clear-btn:hover { background: var(--color-surface-alt); }
 
             /* Alias list */
             .acp-alias-search {
-                width: 100%; padding: 0.3rem 0.5rem; border: 1px solid #ccc;
+                width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium);
                 border-radius: 4px; font-size: 0.82rem; margin-bottom: 0.3rem;
+                background: var(--color-surface-raised); color: var(--color-text);
             }
-            .acp-alias-search:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
-            .acp-alias-list { max-height: 150px; overflow-y: auto; border: 1px solid #e8e8e8; border-radius: 4px; margin-bottom: 0.85rem; }
+            .acp-alias-search:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; border-color: transparent; }
+            .acp-alias-list { max-height: 150px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 4px; margin-bottom: 0.85rem; background: var(--color-surface); }
             .acp-alias-row {
                 display: flex; align-items: center; gap: 0.5rem;
                 padding: 0.26rem 0.5rem; cursor: pointer;
-                border-bottom: 1px solid #f2f2f2; user-select: none;
+                border-bottom: 1px solid var(--color-border-faint); user-select: none;
+                color: var(--color-text);
             }
             .acp-alias-row:last-child { border-bottom: none; }
-            .acp-alias-row:hover { background: #f5f7ff; }
-            .acp-alias-row.acp-sel-fg  { background: #1a1a2e; color: #fff; }
-            .acp-alias-row.acp-sel-bg  { background: #555; color: #fff; }
-            .acp-alias-row.acp-sel-both { background: linear-gradient(90deg,#1a1a2e 50%,#555 50%); color: #fff; }
-            .acp-alias-swatch { width: 22px; height: 16px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.12); }
+            .acp-alias-row:hover { background: var(--color-row-hover); }
+            .acp-alias-row.acp-sel-fg  { background: var(--color-active-bg); color: var(--color-active-text); }
+            .acp-alias-row.acp-sel-bg  { background: var(--color-text-subtle); color: var(--color-surface-white); }
+            .acp-alias-row.acp-sel-both { background: linear-gradient(90deg, var(--color-active-bg) 50%, var(--color-text-subtle) 50%); color: var(--color-surface-white); }
+            .acp-alias-swatch { width: 22px; height: 16px; border-radius: 3px; flex-shrink: 0; border: 1px solid var(--color-border-medium); }
             .acp-alias-name { flex: 1; font-size: 0.82rem; font-family: monospace; }
-            .acp-alias-code { font-size: 0.7rem; font-family: monospace; color: #aaa; flex-shrink: 0; }
+            .acp-alias-code { font-size: 0.7rem; font-family: monospace; color: var(--color-text-placeholder); flex-shrink: 0; }
             .acp-alias-row.acp-sel-fg .acp-alias-code,
             .acp-alias-row.acp-sel-bg .acp-alias-code,
-            .acp-alias-row.acp-sel-both .acp-alias-code { color: rgba(255,255,255,0.55); }
+            .acp-alias-row.acp-sel-both .acp-alias-code { color: var(--color-text-placeholder); }
             .acp-alias-sel-badges { display: flex; gap: 0.2rem; flex-shrink: 0; }
-            .acp-sel-badge { font-size: 0.58rem; font-weight: 700; padding: 0.08rem 0.26rem; border-radius: 2px; text-transform: uppercase; background: rgba(255,255,255,0.25); color: #fff; }
-            .acp-alias-empty { padding: 0.65rem; text-align: center; color: #aaa; font-size: 0.82rem; font-style: italic; }
+            .acp-sel-badge { font-size: 0.58rem; font-weight: 700; padding: 0.08rem 0.26rem; border-radius: 2px; text-transform: uppercase; background: rgba(255,255,255,0.25); color: var(--color-surface-white); }
+            .acp-alias-empty { padding: 0.65rem; text-align: center; color: var(--color-text-placeholder); font-size: 0.82rem; font-style: italic; }
 
             /* 256-color palette */
             .acp-palette { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 0.85rem; }
@@ -179,18 +185,18 @@ const AnsiComposerPicker = (() => {
                 border: 2px solid transparent; flex-shrink: 0; transition: transform 0.08s;
             }
             .acp-palette-cell:hover { transform: scale(1.35); border-color: rgba(255,255,255,0.6); z-index: 1; position: relative; }
-            .acp-palette-cell.acp-ring-fg { border-color: #fff; box-shadow: 0 0 0 2px #1a1a2e; }
-            .acp-palette-cell.acp-ring-bg { border-color: #fff; box-shadow: 0 0 0 2px #888; }
+            .acp-palette-cell.acp-ring-fg { border-color: var(--color-surface-white); box-shadow: 0 0 0 2px var(--color-primary); }
+            .acp-palette-cell.acp-ring-bg { border-color: var(--color-surface-white); box-shadow: 0 0 0 2px var(--color-text-faint); }
 
             /* Sub-modal result preview */
             .acp-result-preview {
-                background: #000; border-radius: 4px; padding: 0.4rem 0.65rem;
-                font-family: monospace; font-size: 0.88rem; color: #ccc;
+                background: var(--color-code-bg); border-radius: 4px; padding: 0.4rem 0.65rem;
+                font-family: monospace; font-size: 0.88rem; color: var(--color-code-text);
                 min-height: 1.8rem; word-break: break-all;
             }
-            .acp-btn-sub-apply { background: #1a1a2e; color: #fff; }
-            .acp-btn-sub-apply:hover { background: #2d2d4e; }
-            .acp-btn-sub-apply:disabled { background: #999; cursor: not-allowed; }
+            .acp-btn-sub-apply { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); }
+            .acp-btn-sub-apply:hover { background: var(--color-btn-primary-hover); }
+            .acp-btn-sub-apply:disabled { background: var(--color-btn-disabled); cursor: not-allowed; }
         `;
         document.head.appendChild(s);
     }
@@ -205,7 +211,7 @@ const AnsiComposerPicker = (() => {
         const n = typeof val === 'string'
             ? (_aliasData && _aliasData[val] !== undefined ? _aliasData[val] : null)
             : val;
-        return n !== null ? AnsiColors.toHex(n) : '#888';
+        return n !== null ? AnsiColors.toHex(n) : 'var(--color-text-faint)';
     }
 
     function pendingToCode(val) {
@@ -283,7 +289,7 @@ const AnsiComposerPicker = (() => {
         selStrip.className = 'acp-sel-strip';
         selStrip.innerHTML = selText
             ? ansitags.parse(selText)
-            : '<span style="color:#555;font-style:italic">No selection \u2014 entire input will be wrapped</span>';
+            : '<span style="color:var(--color-text-muted);font-style:italic">No selection \u2014 entire input will be wrapped</span>';
 
         // Channels
         const channels = document.createElement('div');
@@ -434,8 +440,8 @@ const AnsiComposerPicker = (() => {
             const sw  = document.getElementById('acp-sub-' + which + '-sw');
             if (!sw) return;
             const hex = pendingToHex(val);
-            sw.style.background  = hex || '#1a1a1a';
-            sw.style.borderColor = val !== null ? '#aaa' : '#ccc';
+            sw.style.background  = hex || 'var(--color-code-bg)';
+            sw.style.borderColor = val !== null ? 'var(--color-empty-text)' : 'var(--color-border-medium)';
         }
 
         function syncRings() {

@@ -13,7 +13,7 @@ const AnsiColors = (() => {
 
     function toHex(n) {
         n = parseInt(n, 10);
-        if (n < 16) return _base16[n] || '#888';
+        if (n < 16) return _base16[n] || 'var(--color-text-faint)';
         if (n > 231) {
             const v = 8 + 10 * (n - 232);
             const h = v.toString(16).padStart(2, '0');

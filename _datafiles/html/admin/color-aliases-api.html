@@ -2,45 +2,45 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .api-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .api-entry { border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .api-entry { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     .api-entry summary {
         display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem;
-        cursor: pointer; background: #fafafa; list-style: none; font-size: 0.875rem;
+        cursor: pointer; background: var(--color-surface-alt); list-style: none; font-size: 0.875rem;
         user-select: none;
     }
     .api-entry summary::-webkit-details-marker { display: none; }
-    .api-entry[open] summary { background: #f0f0f8; border-bottom: 1px solid #ddd; }
+    .api-entry[open] summary { background: var(--color-api-summary-hover); border-bottom: 1px solid var(--color-border); }
     .method {
         font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem;
-        border-radius: 3px; text-transform: uppercase; white-space: nowrap; color: #fff;
+        border-radius: 3px; text-transform: uppercase; white-space: nowrap; color: var(--color-surface-white);
     }
-    .method-get    { background: #1e6e34; }
-    .method-patch  { background: #8a5a00; }
-    .method-delete { background: #8a0000; }
-    .api-path { font-family: monospace; font-size: 0.82rem; color: #1a1a2e; }
-    .api-desc { margin-left: auto; font-size: 0.8rem; color: #666; }
+    .method-get    { background: var(--color-success-text); }
+    .method-patch  { background: var(--color-method-patch-bg); }
+    .method-delete { background: var(--color-error-text); }
+    .api-path { font-family: monospace; font-size: 0.82rem; color: var(--color-primary); }
+    .api-desc { margin-left: auto; font-size: 0.8rem; color: var(--color-text-subtle); }
     .api-body { padding: 1rem 1.25rem; font-size: 0.875rem; line-height: 1.6; }
-    .api-body p { margin-bottom: 0.75rem; color: #333; }
+    .api-body p { margin-bottom: 0.75rem; color: var(--color-text-strong); }
     .curl-block {
-        background: #1a1a2e; color: #ccc; font-family: monospace; font-size: 0.8rem;
+        background: var(--color-code-bg); color: var(--color-code-text); font-family: monospace; font-size: 0.8rem;
         padding: 0.75rem 1rem; border-radius: 4px; white-space: pre-wrap; word-break: break-all;
         margin: 0.5rem 0 1rem;
     }
-    .kw   { color: #79c0ff; }
-    .flag { color: #d2a8ff; }
-    .str  { color: #a5d6ff; }
+    .kw   { color: var(--color-api-kw); }
+    .flag { color: var(--color-api-flag); }
+    .str  { color: var(--color-api-str); }
     .response-examples { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
-    .resp-entry { border: 1px solid #eee; border-radius: 4px; overflow: hidden; }
-    .resp-entry summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; cursor: pointer; background: #fafafa; list-style: none; font-size: 0.8rem; }
+    .resp-entry { border: 1px solid var(--color-border-light); border-radius: 4px; overflow: hidden; }
+    .resp-entry summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; cursor: pointer; background: var(--color-surface-alt); list-style: none; font-size: 0.8rem; }
     .resp-entry summary::-webkit-details-marker { display: none; }
-    .resp-entry[open] summary { background: #f5f5f5; border-bottom: 1px solid #eee; }
+    .resp-entry[open] summary { background: var(--color-page-bg); border-bottom: 1px solid var(--color-border-light); }
     .resp-body { padding: 0.5rem 0.75rem; }
     .resp-label { font-size: 0.75rem; font-weight: 600; }
-    .status-ok  { background: #e6f4ea; color: #1e6e34; padding: 0.15rem 0.45rem; border-radius: 3px; }
-    .status-err { background: #fde8e8; color: #8a0000; padding: 0.15rem 0.45rem; border-radius: 3px; }
+    .status-ok  { background: var(--color-success-bg); color: var(--color-success-text); padding: 0.15rem 0.45rem; border-radius: 3px; }
+    .status-err { background: var(--color-error-bg); color: var(--color-error-text); padding: 0.15rem 0.45rem; border-radius: 3px; }
 </style>
 
 <h1>Color Aliases API Reference</h1>
@@ -78,7 +78,7 @@
         <div class="api-body">
             <p>Sets a single alias to the given ANSI 256-color code. If the alias already exists it is overwritten. The change is persisted to <code>ansi-aliases.yaml</code> and aliases are reloaded immediately.</p>
             <p><strong>Body fields:</strong></p>
-            <ul style="margin:0 0 0.75rem 1.25rem; font-size:0.85rem; color:#333;">
+            <ul style="margin:0 0 0.75rem 1.25rem; font-size:0.85rem; color:var(--color-text-strong);">
                 <li><code>alias</code> (string, required) - alias name</li>
                 <li><code>value</code> (integer 0–255, required) - ANSI color code</li>
             </ul>

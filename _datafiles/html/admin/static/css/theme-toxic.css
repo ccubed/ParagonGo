@@ -1,0 +1,191 @@
+/* Toxic - acid green on near-black, cyberpunk hazmat */
+:root {
+    /* Primary brand */
+    --color-primary:            #39ff14;
+    --color-primary-hover:      #2dd10f;
+    --color-primary-on:         #080c00;
+
+    /* Navigation */
+    --color-nav-bg:             #080c00;
+    --color-nav-link:           #6adf30;
+    --color-nav-link-hover:     #39ff14;
+    --color-nav-border:         #001400;
+    --color-nav-dropdown-bg:    #0c1400;
+    --color-nav-dropdown-hover: #182800;
+
+    /* Page surface */
+    --color-page-bg:            #060a00;
+    --color-surface:            #0c1400;
+    --color-surface-alt:        #101c00;
+    --color-surface-raised:     #182800;
+
+    /* Text */
+    --color-text:               #c8ff80;
+    --color-text-muted:         #7ab840;
+    --color-text-subtle:        #5a9020;
+    --color-text-faint:         #3a6010;
+    --color-text-placeholder:   #284808;
+    --color-text-secondary:     #306010;
+    --color-text-tertiary:      #a0e060;
+    --color-text-strong:        #e0ff90;
+
+    /* Borders */
+    --color-border:             #1e3800;
+    --color-border-light:       #142800;
+    --color-border-medium:      #2a5000;
+    --color-border-strong:      #386800;
+    --color-border-faint:       #0c1400;
+
+    /* Active list item */
+    --color-active-bg:          #39ff14;
+    --color-active-text:        #080c00;
+    --color-active-id:          #182800;
+
+    /* Hover row */
+    --color-row-hover:          #101c00;
+
+    /* Focus outline */
+    --color-focus:              #39ff14;
+
+    /* Buttons */
+    --color-btn-primary-bg:     #39ff14;
+    --color-btn-primary-text:   #080c00;
+    --color-btn-primary-hover:  #2dd10f;
+    --color-btn-disabled:       #2a5000;
+    --color-btn-cancel-bg:      #182800;
+    --color-btn-cancel-text:    #7ab840;
+    --color-btn-cancel-hover:   #1e3800;
+
+    /* New/create button */
+    --color-btn-new-bg:         var(--color-success-text);
+    --color-btn-new-text:       #080c00;
+    --color-btn-new-hover:      #2dd10f;
+
+    /* Save button (inline edit) */
+    --color-btn-save-bg:        #2dd10f;
+    --color-btn-save-text:      #080c00;
+    --color-btn-save-hover:     #39ff14;
+
+    /* Danger */
+    --color-danger:             #ff3030;
+
+    /* Status: success */
+    --color-success-bg:         #0c2000;
+    --color-success-text:       #39ff14;
+
+    /* Status: error */
+    --color-error-bg:           #200800;
+    --color-error-text:         #ff5030;
+
+    /* Status: warning */
+    --color-warning-bg:         #1e1800;
+    --color-warning-text:       #e0c030;
+
+    /* Status: info */
+    --color-info-bg:            #001820;
+    --color-info-text:          #30d0ff;
+
+    /* Chips / badges */
+    --color-chip-bg:            #182800;
+    --color-chip-text:          #6adf30;
+    --color-chip-active-bg:     #39ff14;
+    --color-chip-active-text:   #080c00;
+
+    /* Script badge */
+    --color-badge-script-bg:    #1e1800;
+    --color-badge-script-text:  #e0c030;
+
+    /* Hostile badge */
+    --color-badge-hostile-bg:   #200800;
+    --color-badge-hostile-text: #ff5030;
+
+    /* Accent (range sliders, links) */
+    --color-accent:             #39ff14;
+    --color-accent-link:        #6adf30;
+
+    /* Surfaces - explicit white (panels, cards, sidebars, inputs) */
+    --color-surface-white:      var(--color-surface);
+
+    /* Danger button */
+    --color-btn-danger-bg:      #c02000;
+    --color-btn-danger-text:    #fff;
+    --color-btn-danger-hover:   #901800;
+
+    /* Delete button */
+    --color-btn-delete-bg:      var(--color-surface-raised);
+    --color-btn-delete-border:  #502020;
+
+    /* Hover tint */
+    --color-hover-tint:         #182800;
+    --color-hover-tint-border:  #39ff14;
+
+    /* Code / terminal blocks */
+    --color-code-bg:            #020400;
+    --color-code-text:          #39ff14;
+
+    /* API reference pages */
+    --color-api-entry-bg:       var(--color-surface);
+    --color-api-summary-hover:  var(--color-surface-alt);
+    --color-api-kw:             #39ff14;
+    --color-api-str:            #30d0ff;
+    --color-api-flag:           #e0c030;
+
+    /* Overlay & shadow */
+    --color-overlay:            rgba(0,0,0,0.6);
+    --color-shadow:             rgba(0,0,0,0.5);
+
+    /* Code syntax highlighting */
+    --color-code-comment:       #3a6010;
+    --color-code-keyword:       #ff5030;
+    --color-code-symbol:        #e0c030;
+    --color-code-link:          #39ff14;
+    --color-code-addition:      #6adf30;
+
+    /* Method badges (API reference) */
+    --color-method-put-bg:      #181028;
+    --color-method-put-text:    #c0a0e0;
+    --color-method-patch-bg:    #e0c030;
+
+    /* Inline empty/muted states */
+    --color-empty-text:         var(--color-text-placeholder);
+}
+
+/* Dark surface overrides */
+.sidebar, .editor-panel, .card, .runtime-card, .section-block, .section-panel,
+.api-entry, .config-table-wrap, .section-card, #pending-panel, .user-display,
+.picker-wrap, .script-editor-wrap, .select-dialog-backdrop > div,
+.dialog-inner, .zone-edit-dialog > div {
+    background: var(--color-surface) !important; color: var(--color-text);
+}
+thead th { background: var(--color-surface-raised) !important; color: var(--color-text-muted) !important; }
+tbody tr:hover { background: var(--color-row-hover) !important; }
+.pager button { background: var(--color-surface) !important; color: var(--color-text) !important; }
+.pager button:hover:not(:disabled) { background: var(--color-surface-alt) !important; }
+input[type="text"], input[type="number"], input[type="search"],
+input[type="password"], input[type="email"], select, textarea {
+    background: var(--color-surface-raised) !important; color: var(--color-text) !important;
+    border-color: var(--color-border-medium) !important; color-scheme: dark;
+}
+input[type="range"] { color-scheme: dark; }
+.tab-btn.active { background: var(--color-surface) !important; color: var(--color-primary) !important; border-color: var(--color-primary) !important; }
+.resp-entry summary:hover, .api-entry[open] summary { background: var(--color-surface-alt) !important; }
+.statmod-known-item, .pending-item, .prefix-hint { background: var(--color-surface-raised) !important; }
+.toggle-knob { background: var(--color-surface) !important; }
+.item-picker-display, .shop-picker-display, .music-picker-display, .picker-display { background: var(--color-surface-raised) !important; color: var(--color-text-muted) !important; }
+.edit-form input[type="text"] { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.script-editor-container, .hljs, pre, code { background: var(--color-surface-raised) !important; }
+.select-dialog-list, .picker-list, .picker-row { background: var(--color-surface) !important; color: var(--color-text) !important; }
+.picker-row:hover, .select-dialog-row:hover { background: var(--color-row-hover) !important; }
+.zone-modal-content, .rank-table-wrap { background: var(--color-surface) !important; }
+.shop-picker-wrap.eq-disabled { background: var(--color-surface-raised) !important; }
+.btn-zone-edit { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.btn-zone-edit:hover, .btn-search:hover, .view-tab:hover { background: var(--color-hover-tint) !important; border-color: var(--color-hover-tint-border) !important; }
+.btn-remove { background: var(--color-surface-raised) !important; color: var(--color-error-text) !important; border-color: var(--color-border-medium) !important; }
+.btn-remove:hover { background: var(--color-error-bg) !important; }
+.btn-cancel, .btn-discard, .btn-delete { background: var(--color-btn-cancel-bg) !important; color: var(--color-btn-cancel-text) !important; border-color: var(--color-border-medium) !important; }
+.btn-cancel:hover, .btn-discard:hover, .btn-delete:hover { background: var(--color-btn-cancel-hover) !important; }
+.conv-block, .info-callout { background: var(--color-surface-raised) !important; border-color: var(--color-border) !important; color: var(--color-text) !important; }
+.slot-item { background: var(--color-surface-raised) !important; color: var(--color-text-tertiary) !important; }
+.quest-progress-item { background: var(--color-surface-raised) !important; border-color: var(--color-border) !important; }
+.turn-cmd-input, .conv-speaker-sel { background: var(--color-surface-raised) !important; color: var(--color-text) !important; }
+.view-tab.active { background: var(--color-primary) !important; color: var(--color-primary-on) !important; }

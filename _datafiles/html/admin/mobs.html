@@ -2,93 +2,93 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     /* layout */
     .page-layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 860px) { .page-layout { grid-template-columns: 1fr; } }
 
     /* sidebar */
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 0.5rem; }
-    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
-    .sidebar-header select { padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; background: #fff; max-width: 110px; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); display: flex; align-items: center; gap: 0.5rem; }
+    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
+    .sidebar-header select { padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; background: var(--color-surface-white); max-width: 110px; }
     .mob-list { overflow-y: auto; max-height: 72vh; }
     .mob-row {
-        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem;
     }
     .mob-row:last-child { border-bottom: none; }
-    .mob-row:hover { background: #f5f7ff; }
-    .mob-row.active { background: #1a1a2e; color: #fff; }
-    .mob-row.active .mob-id { color: #8899cc; }
-    .mob-id { font-size: 0.75rem; color: #999; font-family: monospace; flex-shrink: 0; }
+    .mob-row:hover { background: var(--color-row-hover); }
+    .mob-row.active { background: var(--color-primary); color: var(--color-surface-white); }
+    .mob-row.active .mob-id { color: var(--color-active-id); }
+    .mob-id { font-size: 0.75rem; color: var(--color-text-secondary); font-family: monospace; flex-shrink: 0; }
     .mob-zone-badge {
         font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 3px;
-        background: #e8eaf6; color: #3949ab; flex-shrink: 0; margin-left: auto;
+        background: var(--color-chip-bg); color: var(--color-chip-text); flex-shrink: 0; margin-left: auto;
     }
-    .mob-row.active .mob-zone-badge { background: #3949ab; color: #fff; }
+    .mob-row.active .mob-zone-badge { background: var(--color-chip-text); color: var(--color-surface-white); }
     .mob-script-badge {
         font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px;
-        background: #fff3e0; color: #8a4a00; flex-shrink: 0;
+        background: var(--color-warning-bg); color: var(--color-warning-text); flex-shrink: 0;
     }
-    .mob-row.active .mob-script-badge { background: #8a4a00; color: #fff; }
+    .mob-row.active .mob-script-badge { background: var(--color-warning-text); color: var(--color-surface-white); }
     .mob-hostile-badge {
         font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px;
-        background: #fde8e8; color: #8a0000; flex-shrink: 0;
+        background: var(--color-error-bg); color: var(--color-error-text); flex-shrink: 0;
     }
-    .mob-row.active .mob-hostile-badge { background: #8a0000; color: #fff; }
-    .no-mobs { padding: 1.5rem; text-align: center; color: #888; font-size: 0.85rem; }
+    .mob-row.active .mob-hostile-badge { background: var(--color-error-text); color: var(--color-surface-white); }
+    .no-mobs { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
 
     /* new mob btn */
     .btn-new {
         margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px;
-        background: #1e6e34; color: #fff; font-size: 0.85rem; font-weight: 600;
+        background: var(--color-success-text); color: var(--color-surface-white); font-size: 0.85rem; font-weight: 600;
         cursor: pointer; text-align: center;
     }
-    .btn-new:hover { background: #145728; }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
 
     /* editor panel */
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     /* status */
     .status-bar {
         display: none; padding: 0.55rem 0.9rem; border-radius: 4px;
         font-size: 0.85rem; margin-bottom: 1rem;
     }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     /* form */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
     .form-grid .span2 { grid-column: 1 / -1; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"],
     .field input[type="number"],
     .field select,
     .field textarea {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 80px; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
     /* range sliders */
     .range-wrap { display: flex; align-items: center; gap: 0.6rem; }
-    .range-wrap input[type="range"] { flex: 1; accent-color: #1a1a2e; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--color-primary); }
     .range-val {
         font-family: monospace; font-size: 0.85rem; font-weight: 600;
-        min-width: 2.5rem; text-align: center; color: #1a1a2e;
+        min-width: 2.5rem; text-align: center; color: var(--color-primary);
     }
 
     /* section cards */
     .section-card {
         grid-column: 1 / -1;
-        border: 1px solid #e0e0e0; border-radius: 6px;
+        border: 1px solid var(--color-border-strong); border-radius: 6px;
         padding: 1rem 1.1rem 0.75rem;
-        background: #fafafa;
+        background: var(--color-surface-alt);
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem;
     }
     .section-card + .section-card { margin-top: 0.25rem; }
@@ -97,93 +97,93 @@
     /* section headings inside editor */
     .section-title {
         font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.06em; color: #444; padding: 0 0 0.5rem;
-        border-bottom: 2px solid #1a1a2e; margin-bottom: 0.25rem; grid-column: 1 / -1;
+        letter-spacing: 0.06em; color: var(--color-text-tertiary); padding: 0 0 0.5rem;
+        border-bottom: 2px solid var(--color-primary); margin-bottom: 0.25rem; grid-column: 1 / -1;
     }
 
     /* tags editor */
     .tags-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
     .tag-chip {
         display: inline-flex; align-items: center; gap: 0.3rem;
-        background: #e8eaf6; color: #3949ab; border-radius: 12px;
+        background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 12px;
         padding: 0.2rem 0.6rem; font-size: 0.8rem;
     }
-    .tag-chip button { background: none; border: none; cursor: pointer; color: #3949ab; font-size: 0.85rem; line-height: 1; padding: 0; }
-    .tag-chip button:hover { color: #c00; }
-    .tag-add-input { width: 140px; padding: 0.25rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; }
+    .tag-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.85rem; line-height: 1; padding: 0; }
+    .tag-chip button:hover { color: var(--color-danger); }
+    .tag-add-input { width: 140px; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; }
     .btn-add-sm {
-        font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed #aaa;
-        background: none; border-radius: 4px; cursor: pointer; color: #555; margin-top: 0.25rem;
+        font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed var(--color-text-placeholder);
+        background: none; border-radius: 4px; cursor: pointer; color: var(--color-text-muted); margin-top: 0.25rem;
     }
-    .btn-add-sm:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .btn-add-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
     /* buff ids */
     .buff-ids-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
     .buff-chip {
         display: inline-flex; align-items: center; gap: 0.3rem;
-        background: #e8eaf6; color: #3949ab; border-radius: 12px;
+        background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 12px;
         padding: 0.2rem 0.6rem; font-size: 0.8rem;
     }
-    .buff-chip button { background: none; border: none; cursor: pointer; color: #3949ab; font-size: 0.85rem; line-height: 1; padding: 0; }
-    .buff-chip button:hover { color: #c00; }
+    .buff-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.85rem; line-height: 1; padding: 0; }
+    .buff-chip button:hover { color: var(--color-danger); }
 
     .btn-icon {
         background: none; border: none; cursor: pointer; font-size: 1rem;
-        color: #888; padding: 0 0.2rem; line-height: 1;
+        color: var(--color-text-faint); padding: 0 0.2rem; line-height: 1;
     }
-    .btn-icon:hover { color: #c00; }
+    .btn-icon:hover { color: var(--color-danger); }
 
     /* shop picker display */
     .shop-picker-wrap { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-    .shop-picker-display { font-size: 0.82rem; color: #333; font-family: monospace; }
-    .shop-picker-display.empty { color: #aaa; font-style: italic; font-family: inherit; }
-    .shop-picker-wrap.eq-disabled { background: #e8e8e8; border-radius: 4px; padding: 0.2rem 0.5rem; opacity: 0.6; cursor: not-allowed; }
+    .shop-picker-display { font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace; }
+    .shop-picker-display.empty { color: var(--color-text-placeholder); font-style: italic; font-family: inherit; }
+    .shop-picker-wrap.eq-disabled { background: var(--color-border-strong); border-radius: 4px; padding: 0.2rem 0.5rem; opacity: 0.6; cursor: not-allowed; }
     .shop-picker-wrap.eq-disabled * { pointer-events: none; }
-    .shop-picker-wrap.eq-disabled .shop-picker-display { color: #888; font-style: normal; font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+    .shop-picker-wrap.eq-disabled .shop-picker-display { color: var(--color-text-faint); font-style: normal; font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
     .shop-entries { display: flex; flex-direction: column; gap: 0.75rem; }
     .shop-card {
-        border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem 0.9rem;
-        background: #fafafa; position: relative;
+        border: 1px solid var(--color-border); border-radius: 6px; padding: 0.75rem 0.9rem;
+        background: var(--color-surface-alt); position: relative;
     }
     .shop-card-header {
         display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;
     }
     .shop-card-header select {
-        padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.82rem; background: #fff; font-weight: 600;
+        padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.82rem; background: var(--color-surface-white); font-weight: 600;
     }
     .shop-card-type-badge {
         font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 3px;
         font-weight: 600; text-transform: uppercase;
     }
-    .shop-type-item   { background: #e6f4ea; color: #1e6e34; }
-    .shop-type-mob    { background: #e3f2fd; color: #0d47a1; }
-    .shop-type-buff   { background: #f3e5f5; color: #6a1b9a; }
-    .shop-type-pet    { background: #fff3e0; color: #8a4a00; }
+    .shop-type-item   { background: var(--color-success-bg); color: var(--color-success-text); }
+    .shop-type-mob    { background: var(--color-info-bg); color: var(--color-info-text); }
+    .shop-type-buff   { background: var(--color-method-put-bg); color: var(--color-method-put-text); }
+    .shop-type-pet    { background: var(--color-warning-bg); color: var(--color-warning-text); }
     .shop-card-remove {
         position: absolute; top: 0.5rem; right: 0.6rem;
         background: none; border: none; cursor: pointer; font-size: 1.1rem;
-        color: #999; line-height: 1;
+        color: var(--color-text-secondary); line-height: 1;
     }
-    .shop-card-remove:hover { color: #c00; }
+    .shop-card-remove:hover { color: var(--color-danger); }
     .shop-card-fields {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 0.5rem 0.75rem;
     }
     .shop-field label {
-        display: block; font-size: 0.72rem; font-weight: 600; color: #666;
+        display: block; font-size: 0.72rem; font-weight: 600; color: var(--color-text-subtle);
         margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.02em;
     }
     .shop-field input, .shop-field select {
-        width: 100%; padding: 0.3rem 0.5rem; border: 1px solid #ccc;
-        border-radius: 4px; font-size: 0.82rem; background: #fff;
+        width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium);
+        border-radius: 4px; font-size: 0.82rem; background: var(--color-surface-white);
     }
-    .shop-field .field-hint { font-size: 0.7rem; color: #999; margin-top: 0.1rem; }
+    .shop-field .field-hint { font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 0.1rem; }
 
     /* script editor */
     .script-toggle {
         display: flex; align-items: center; gap: 0.6rem; cursor: pointer;
-        font-size: 0.85rem; color: #1a1a2e; font-weight: 600; padding: 0.5rem 0;
+        font-size: 0.85rem; color: var(--color-primary); font-weight: 600; padding: 0.5rem 0;
         user-select: none;
     }
     .script-toggle::before { content: "\25B6"; font-size: 0.65rem; transition: transform 0.15s; }
@@ -192,28 +192,28 @@
     .script-area.open { display: block; }
     .script-area textarea {
         width: 100%; min-height: 660px; font-family: monospace; font-size: 0.82rem;
-        padding: 0.6rem 0.75rem; border: 1px solid #ccc; border-radius: 4px;
-        resize: vertical; background: #1a1a2e; color: #c9d1d9; line-height: 1.55;
+        padding: 0.6rem 0.75rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        resize: vertical; background: var(--color-primary); color: var(--color-code-text); line-height: 1.55;
     }
-    .script-area textarea:focus { outline: 2px solid #4a6fa5; outline-offset: 1px; }
-    .script-hint { font-size: 0.75rem; color: #888; margin-top: 0.3rem; }
+    .script-area textarea:focus { outline: 2px solid var(--color-accent-link); outline-offset: 1px; }
+    .script-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.3rem; }
 
     /* action bar */
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
     .btn { padding: 0.45rem 1.1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .btn-danger { background: #c0392b; color: #fff; }
-    .btn-danger:hover { background: #a93226; }
-    .btn-secondary { background: #eee; color: #333; }
-    .btn-secondary:hover { background: #ddd; }
-    .mob-id-display { font-family: monospace; font-size: 0.82rem; color: #888; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-danger { background: var(--color-btn-danger-bg); color: var(--color-surface-white); }
+    .btn-danger:hover { background: var(--color-btn-danger-hover); }
+    .btn-secondary { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-secondary:hover { background: var(--color-border); }
+    .mob-id-display { font-family: monospace; font-size: 0.82rem; color: var(--color-text-faint); margin-left: auto; }
 
     /* editor header */
     .editor-header { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem; }
     .editor-header h2 { font-size: 1.1rem; flex: 1; }
-    .editor-header .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 3px; background: #e8eaf6; color: #3949ab; }
+    .editor-header .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 3px; background: var(--color-chip-bg); color: var(--color-chip-text); }
 </style>
 
 <h1>Mobs</h1>
@@ -365,7 +365,7 @@
                     <div class="field" id="f-formrace-wrap" style="display:none;">
                         <label>Current Form</label>
                         <input type="text" id="f-formrace" readonly
-                               style="background:#f0f0f0; cursor:default;" />
+                               style="background:var(--color-border-faint); cursor:default;" />
                     </div>
 
                     <div class="field span2">
@@ -495,7 +495,7 @@
             </div>
 
             <!-- Script editor -->
-            <div style="margin-top:1.25rem; border-top: 1px solid #eee; padding-top: 1rem;">
+            <div style="margin-top:1.25rem; border-top: 1px solid var(--color-border-light); padding-top: 1rem;">
                 <div class="script-toggle" id="script-toggle" onclick="toggleScript()">Script</div>
                 <div class="script-area" id="script-area">
                     <textarea id="f-script" spellcheck="false" placeholder="// JavaScript for this mob's events (onAsk, onGive, onIdle, onShow)&#10;// Leave blank to delete the script file."></textarea>
@@ -1008,10 +1008,32 @@
     // Shop entries
     // -------------------------------------------------------------------------
     function detectShopType(entry) {
-        if (entry.PetType) return 'pet';
-        if (entry.BuffId)  return 'buff';
-        if (entry.MobId)   return 'mob';
+        if ('PetType' in entry) return 'pet';
+        if ('BuffId' in entry)  return 'buff';
+        if ('MobId' in entry)   return 'mob';
         return 'item';
+    }
+
+    const _shopNameCache = {};
+    async function resolveShopName(type, id) {
+        if (!id) return null;
+        const key = type + ':' + id;
+        if (_shopNameCache[key] !== undefined) return _shopNameCache[key];
+        if (type === 'item') {
+            const res = await AdminAPI.get('/admin/api/v1/items');
+            for (const e of (res.ok && res.data && res.data.data) || [])
+                _shopNameCache['item:' + e.ItemId] = e.Name;
+        } else if (type === 'buff') {
+            const res = await AdminAPI.get('/admin/api/v1/buffs');
+            const specs = (res.ok && res.data && res.data.data && res.data.data.specs) || {};
+            for (const e of Object.values(specs))
+                _shopNameCache['buff:' + e.BuffId] = e.Name;
+        } else if (type === 'mob') {
+            const res = await AdminAPI.get('/admin/api/v1/mobs');
+            for (const e of (res.ok && res.data && res.data.data) || [])
+                _shopNameCache['mob:' + e.MobId] = (e.Character && e.Character.Name) || '(unnamed)';
+        }
+        return _shopNameCache[key] || null;
     }
 
     const shopTypeMeta = {
@@ -1055,6 +1077,12 @@
             ? ('#' + initialId + (initialName ? ' ' + initialName : ''))
             : 'none selected';
 
+        if (initialId && !initialName) {
+            resolveShopName(type, initialId).then(name => {
+                if (name) display.textContent = '#' + initialId + ' ' + name;
+            });
+        }
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn-add-sm';
@@ -1097,6 +1125,12 @@
         display.textContent = initialId
             ? ('#' + initialId + (initialName ? ' ' + initialName : ''))
             : 'none';
+
+        if (initialId && !initialName) {
+            resolveShopName('item', initialId).then(name => {
+                if (name) display.textContent = '#' + initialId + ' ' + name;
+            });
+        }
 
         const pickBtn = document.createElement('button');
         pickBtn.type = 'button';

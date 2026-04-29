@@ -2,37 +2,37 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 2rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
     .api-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .api-entry { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .api-entry { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     .api-entry summary { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.65rem 1rem; cursor: pointer; user-select: none; list-style: none; }
     .api-entry summary::-webkit-details-marker { display: none; }
-    .api-entry summary::before { content: "\25B6"; font-size: 0.65rem; color: #888; transition: transform 0.15s; flex-shrink: 0; }
+    .api-entry summary::before { content: "\25B6"; font-size: 0.65rem; color: var(--color-text-faint); transition: transform 0.15s; flex-shrink: 0; }
     .api-entry[open] summary::before { transform: rotate(90deg); }
-    .api-entry summary:hover { background: #fafafa; }
+    .api-entry summary:hover { background: var(--color-surface-alt); }
     .method { font-family: monospace; font-size: 0.8rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; flex-shrink: 0; }
-    .method-get    { background: #e6f4ea; color: #1e6e34; }
-    .method-put    { background: #f3e5f5; color: #6a1b9a; }
-    .method-delete { background: #fde8e8; color: #8a0000; }
-    .api-path { font-family: monospace; font-size: 0.9rem; color: #1a1a2e; }
-    .api-desc { font-size: 0.85rem; color: #555; margin-left: auto; text-align: right; }
-    .api-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid #eee; background: #fafafa; }
-    .api-body p { font-size: 0.85rem; color: #444; margin-bottom: 0.5rem; }
-    .curl-block { background: #1a1a2e; color: #c9d1d9; font-family: monospace; font-size: 0.82rem; padding: 0.85rem 1rem; border-radius: 5px; white-space: pre; overflow-x: auto; line-height: 1.6; margin-bottom: 0.5rem; }
-    .curl-block .kw   { color: #79c0ff; }
-    .curl-block .str  { color: #a5d6ff; }
-    .curl-block .flag { color: #d2a8ff; }
+    .method-get    { background: var(--color-success-bg); color: var(--color-success-text); }
+    .method-put    { background: var(--color-method-put-bg); color: var(--color-method-put-text); }
+    .method-delete { background: var(--color-error-bg); color: var(--color-error-text); }
+    .api-path { font-family: monospace; font-size: 0.9rem; color: var(--color-primary); }
+    .api-desc { font-size: 0.85rem; color: var(--color-text-muted); margin-left: auto; text-align: right; }
+    .api-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
+    .api-body p { font-size: 0.85rem; color: var(--color-text-tertiary); margin-bottom: 0.5rem; }
+    .curl-block { background: var(--color-code-bg); color: var(--color-code-text); font-family: monospace; font-size: 0.82rem; padding: 0.85rem 1rem; border-radius: 5px; white-space: pre; overflow-x: auto; line-height: 1.6; margin-bottom: 0.5rem; }
+    .curl-block .kw   { color: var(--color-api-kw); }
+    .curl-block .str  { color: var(--color-api-str); }
+    .curl-block .flag { color: var(--color-api-flag); }
     .response-examples { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
-    .resp-entry { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
-    .resp-entry summary { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.45rem 0.75rem; cursor: pointer; user-select: none; list-style: none; background: #f5f5f5; font-size: 0.82rem; }
+    .resp-entry { border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden; }
+    .resp-entry summary { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.45rem 0.75rem; cursor: pointer; user-select: none; list-style: none; background: var(--color-page-bg); font-size: 0.82rem; }
     .resp-entry summary::-webkit-details-marker { display: none; }
-    .resp-entry summary::before { content: "\25B6"; font-size: 0.6rem; color: #888; transition: transform 0.15s; flex-shrink: 0; }
+    .resp-entry summary::before { content: "\25B6"; font-size: 0.6rem; color: var(--color-text-faint); transition: transform 0.15s; flex-shrink: 0; }
     .resp-entry[open] summary::before { transform: rotate(90deg); }
-    .resp-entry summary:hover { background: #efefef; }
-    .resp-body { padding: 0.6rem 0.75rem 0.75rem; border-top: 1px solid #eee; background: #fafafa; }
-    .status-ok  { background: #e6f4ea; color: #1e6e34; }
-    .status-err { background: #fde8e8; color: #8a0000; }
-    .resp-label { font-size: 0.8rem; color: #444; }
+    .resp-entry summary:hover { background: var(--color-api-summary-hover); }
+    .resp-body { padding: 0.6rem 0.75rem 0.75rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
+    .status-ok  { background: var(--color-success-bg); color: var(--color-success-text); }
+    .status-err { background: var(--color-error-bg); color: var(--color-error-text); }
+    .resp-label { font-size: 0.8rem; color: var(--color-text-tertiary); }
 </style>
 
 <h1>Attack Messages API Reference</h1>

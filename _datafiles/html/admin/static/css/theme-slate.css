@@ -1,0 +1,151 @@
+/* Slate - cool blue-grey, professional */
+:root {
+    /* Primary brand */
+    --color-primary:            #2c3e50;
+    --color-primary-hover:      #3d5166;
+    --color-primary-on:         #fff;
+
+    /* Navigation */
+    --color-nav-bg:             #2c3e50;
+    --color-nav-link:           #a8bbd0;
+    --color-nav-link-hover:     #fff;
+    --color-nav-border:         #1a2a38;
+    --color-nav-dropdown-bg:    #2c3e50;
+    --color-nav-dropdown-hover: #3d5166;
+
+    /* Page surface */
+    --color-page-bg:            #ecf0f1;
+    --color-surface:            #fff;
+    --color-surface-alt:        #f7f9fa;
+    --color-surface-raised:     #ecf0f1;
+
+    /* Text */
+    --color-text:               #1c2833;
+    --color-text-muted:         #566573;
+    --color-text-subtle:        #6d7f8b;
+    --color-text-faint:         #8d9eaa;
+    --color-text-placeholder:   #aab5bc;
+    --color-text-secondary:     #9aa8b2;
+    --color-text-tertiary:      #4a5a66;
+    --color-text-strong:        #2c3e50;
+
+    /* Borders */
+    --color-border:             #d5dde2;
+    --color-border-light:       #e8edf0;
+    --color-border-medium:      #c5cfd6;
+    --color-border-strong:      #bdc8d0;
+    --color-border-faint:       #eef1f3;
+
+    /* Active list item */
+    --color-active-bg:          #2c3e50;
+    --color-active-text:        #fff;
+    --color-active-id:          #7fb3d3;
+
+    /* Hover row */
+    --color-row-hover:          #eaf2f8;
+
+    /* Focus outline */
+    --color-focus:              #2980b9;
+
+    /* Buttons */
+    --color-btn-primary-bg:     #2c3e50;
+    --color-btn-primary-text:   #fff;
+    --color-btn-primary-hover:  #3d5166;
+    --color-btn-disabled:       #9aa8b2;
+    --color-btn-cancel-bg:      #c5cfd6;
+    --color-btn-cancel-text:    #2c3e50;
+    --color-btn-cancel-hover:   #b0bec5;
+
+    /* New/create button */
+    --color-btn-new-bg:         var(--color-success-text);
+    --color-btn-new-text:       #fff;
+    --color-btn-new-hover:      #1a5c2a;
+
+    /* Save button (inline edit) */
+    --color-btn-save-bg:        #1e7a3a;
+    --color-btn-save-text:      #fff;
+    --color-btn-save-hover:     #1a5c2a;
+
+    /* Danger */
+    --color-danger:             #c0392b;
+
+    /* Status: success */
+    --color-success-bg:         #eafaf1;
+    --color-success-text:       #1e8449;
+
+    /* Status: error */
+    --color-error-bg:           #fdedec;
+    --color-error-text:         #922b21;
+
+    /* Status: warning */
+    --color-warning-bg:         #fef9e7;
+    --color-warning-text:       #9a7d0a;
+
+    /* Status: info */
+    --color-info-bg:            #eaf4fb;
+    --color-info-text:          #1a6fa8;
+
+    /* Chips / badges */
+    --color-chip-bg:            #d6eaf8;
+    --color-chip-text:          #1a6fa8;
+    --color-chip-active-bg:     #2980b9;
+    --color-chip-active-text:   #fff;
+
+    /* Script badge */
+    --color-badge-script-bg:    #fef9e7;
+    --color-badge-script-text:  #9a7d0a;
+
+    /* Hostile badge */
+    --color-badge-hostile-bg:   #fdedec;
+    --color-badge-hostile-text: #922b21;
+
+    /* Accent (range sliders, links) */
+    --color-accent:             #2980b9;
+    --color-accent-link:        #2980b9;
+
+    /* Surfaces - explicit white (panels, cards, sidebars, inputs) */
+    --color-surface-white:      #fff;
+
+    /* Danger button */
+    --color-btn-danger-bg:      #c0392b;
+    --color-btn-danger-text:    #fff;
+    --color-btn-danger-hover:   #a93226;
+
+    /* Delete button (white bg, red text) */
+    --color-btn-delete-bg:      #fff;
+    --color-btn-delete-border:  #e0a0a0;
+
+    /* Hover tint */
+    --color-hover-tint:         #e8eaff;
+    --color-hover-tint-border:  #7986cb;
+
+    /* Code / terminal blocks */
+    --color-code-bg:            #2c3e50;
+    --color-code-text:          #c9d1d9;
+
+    /* API reference pages */
+    --color-api-entry-bg:       #fff;
+    --color-api-summary-hover:  #ecf0f1;
+    --color-api-kw:             #79c0ff;
+    --color-api-str:            #a5d6ff;
+    --color-api-flag:           #d2a8ff;
+
+    /* Overlay & shadow */
+    --color-overlay:            rgba(0,0,0,0.45);
+    --color-shadow:             rgba(0,0,0,0.35);
+
+    /* Code syntax highlighting */
+    --color-code-comment:       #8b949e;
+    --color-code-keyword:       #ff7b72;
+    --color-code-symbol:        #ffa657;
+    --color-code-link:          #7ee787;
+    --color-code-addition:      #aff5b4;
+
+    /* Method badges (API reference) */
+    --color-method-put-bg:      #f3e5f5;
+    --color-method-put-text:    #6a1b9a;
+    --color-method-patch-bg:    #9a7d0a;
+
+    /* Inline empty/muted states */
+    --color-empty-text:         var(--color-text-placeholder);
+}

@@ -2,85 +2,85 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .page-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 800px) { .page-layout { grid-template-columns: 1fr; } }
 
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid #eee; }
-    .sidebar-header input[type="search"] { width: 100%; padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); }
+    .sidebar-header input[type="search"] { width: 100%; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
     .spell-list { overflow-y: auto; max-height: 72vh; }
     .spell-row {
-        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem;
     }
     .spell-row:last-child { border-bottom: none; }
-    .spell-row:hover { background: #f5f7ff; }
-    .spell-row.active { background: #1a1a2e; color: #fff; }
-    .spell-id { font-size: 0.75rem; color: #999; font-family: monospace; flex-shrink: 0; }
-    .spell-row.active .spell-id { color: #8899cc; }
+    .spell-row:hover { background: var(--color-row-hover); }
+    .spell-row.active { background: var(--color-primary); color: var(--color-surface-white); }
+    .spell-id { font-size: 0.75rem; color: var(--color-text-secondary); font-family: monospace; flex-shrink: 0; }
+    .spell-row.active .spell-id { color: var(--color-active-id); }
     .spell-type-badge {
         font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px;
         flex-shrink: 0; margin-left: auto; font-weight: 600; text-transform: uppercase;
     }
-    .spell-type-harm { background: #fde8e8; color: #8a0000; }
-    .spell-type-help { background: #e6f4ea; color: #1e6e34; }
-    .spell-type-neutral { background: #e8eaf6; color: #3949ab; }
+    .spell-type-harm { background: var(--color-error-bg); color: var(--color-error-text); }
+    .spell-type-help { background: var(--color-success-bg); color: var(--color-success-text); }
+    .spell-type-neutral { background: var(--color-chip-bg); color: var(--color-chip-text); }
     .spell-row.active .spell-type-badge { opacity: 0.85; }
     .spell-script-badge {
         font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px;
-        background: #fff3e0; color: #8a4a00; flex-shrink: 0;
+        background: var(--color-warning-bg); color: var(--color-warning-text); flex-shrink: 0;
     }
-    .spell-row.active .spell-script-badge { background: #8a4a00; color: #fff; }
-    .no-spells { padding: 1.5rem; text-align: center; color: #888; font-size: 0.85rem; }
+    .spell-row.active .spell-script-badge { background: var(--color-warning-text); color: var(--color-surface-white); }
+    .no-spells { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
 
-    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: #1e6e34; color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center; }
-    .btn-new:hover { background: #145728; }
+    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: var(--color-success-text); color: var(--color-surface-white); font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
 
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
     .form-grid .span2 { grid-column: 1 / -1; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"], .field input[type="number"], .field select, .field textarea {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 80px; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
-    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; padding: 0.5rem 0 0.4rem; border-bottom: 1px solid #eee; margin-bottom: 0.75rem; grid-column: 1 / -1; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.5rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.75rem; grid-column: 1 / -1; }
 
     .range-wrap { display: flex; align-items: center; gap: 0.6rem; }
-    .range-wrap input[type="range"] { flex: 1; accent-color: #1a1a2e; }
-    .range-val { font-family: monospace; font-size: 0.85rem; font-weight: 600; min-width: 2.5rem; text-align: center; color: #1a1a2e; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--color-primary); }
+    .range-val { font-family: monospace; font-size: 0.85rem; font-weight: 600; min-width: 2.5rem; text-align: center; color: var(--color-primary); }
 
-    .script-toggle { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: #1a1a2e; font-weight: 600; padding: 0.5rem 0; user-select: none; }
+    .script-toggle { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: var(--color-primary); font-weight: 600; padding: 0.5rem 0; user-select: none; }
     .script-toggle::before { content: "\25B6"; font-size: 0.65rem; transition: transform 0.15s; }
     .script-toggle.open::before { transform: rotate(90deg); }
     .script-area { display: none; margin-top: 0.5rem; }
     .script-area.open { display: block; }
-    .script-area textarea { width: 100%; min-height: 660px; font-family: monospace; font-size: 0.82rem; padding: 0.6rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; resize: vertical; background: #1a1a2e; color: #c9d1d9; line-height: 1.55; }
-    .script-area textarea:focus { outline: 2px solid #4a6fa5; outline-offset: 1px; }
-    .script-hint { font-size: 0.75rem; color: #888; margin-top: 0.3rem; }
+    .script-area textarea { width: 100%; min-height: 660px; font-family: monospace; font-size: 0.82rem; padding: 0.6rem 0.75rem; border: 1px solid var(--color-border-medium); border-radius: 4px; resize: vertical; background: var(--color-primary); color: var(--color-code-text); line-height: 1.55; }
+    .script-area textarea:focus { outline: 2px solid var(--color-accent-link); outline-offset: 1px; }
+    .script-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.3rem; }
 
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
     .btn { padding: 0.45rem 1.1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .btn-danger { background: #c0392b; color: #fff; }
-    .btn-danger:hover { background: #a93226; }
-    .btn-secondary { background: #eee; color: #333; }
-    .btn-secondary:hover { background: #ddd; }
-    .spell-id-display { font-family: monospace; font-size: 0.82rem; color: #888; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-danger { background: var(--color-btn-danger-bg); color: var(--color-surface-white); }
+    .btn-danger:hover { background: var(--color-btn-danger-hover); }
+    .btn-secondary { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-secondary:hover { background: var(--color-border); }
+    .spell-id-display { font-family: monospace; font-size: 0.82rem; color: var(--color-text-faint); margin-left: auto; }
 
     .editor-header { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem; }
     .editor-header h2 { font-size: 1.1rem; flex: 1; }
@@ -172,7 +172,7 @@
             </div>
 
             <!-- Script editor -->
-            <div style="margin-top:1.25rem; border-top: 1px solid #eee; padding-top: 1rem;">
+            <div style="margin-top:1.25rem; border-top: 1px solid var(--color-border-light); padding-top: 1rem;">
                 <div class="script-toggle" id="script-toggle" onclick="toggleScript()">Script</div>
                 <div class="script-area" id="script-area">
                     <textarea id="f-script" spellcheck="false" placeholder="// JavaScript for spell events&#10;// Leave blank to delete the script file."></textarea>
@@ -291,7 +291,7 @@
         const idField = document.getElementById('f-spellid');
         idField.value = spec.SpellId || '';
         idField.readOnly = !isNew;
-        idField.style.background = isNew ? '#fff' : '#f0f0f0';
+        idField.style.background = isNew ? 'var(--color-surface-white)' : 'var(--color-border-faint)';
 
         setVal('f-name',        spec.Name        || '');
         setVal('f-description', spec.Description || '');
@@ -387,7 +387,7 @@
 
         const idField = document.getElementById('f-spellid');
         idField.readOnly = true;
-        idField.style.background = '#f0f0f0';
+        idField.style.background = 'var(--color-border-faint)';
 
         filterSpells();
         setActiveRow(saved.SpellId);

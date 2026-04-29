@@ -2,82 +2,82 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     /* toolbar */
     .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .refresh-rate { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: #555; }
-    .refresh-rate input[type="range"] { width: 120px; accent-color: #1a1a2e; cursor: pointer; }
-    .refresh-rate-label { min-width: 2.5rem; font-size: 0.82rem; color: #1a1a2e; font-weight: 600; }
-    .refresh-countdown { font-size: 0.78rem; color: #888; min-width: 9rem; }
-    .last-updated { font-size: 0.78rem; color: #aaa; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .refresh-rate { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: var(--color-text-muted); }
+    .refresh-rate input[type="range"] { width: 120px; accent-color: var(--color-primary); cursor: pointer; }
+    .refresh-rate-label { min-width: 2.5rem; font-size: 0.82rem; color: var(--color-primary); font-weight: 600; }
+    .refresh-countdown { font-size: 0.78rem; color: var(--color-text-faint); min-width: 9rem; }
+    .last-updated { font-size: 0.78rem; color: var(--color-text-placeholder); margin-left: auto; }
 
     /* status */
     .status-bar { display: none; padding: 0.5rem 0.85rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.error { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.error { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     /* runtime card grid - for UnitCount metrics from the Go section */
     .runtime-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
-    .runtime-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1rem 1.1rem; }
-    .runtime-card .rc-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 0.35rem; }
-    .runtime-card .rc-value { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; line-height: 1.1; }
-    .runtime-card .rc-unit { font-size: 0.72rem; color: #aaa; margin-top: 0.2rem; }
+    .runtime-card { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1rem 1.1rem; }
+    .runtime-card .rc-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-faint); margin-bottom: 0.35rem; }
+    .runtime-card .rc-value { font-size: 1.6rem; font-weight: 700; color: var(--color-primary); line-height: 1.1; }
+    .runtime-card .rc-unit { font-size: 0.72rem; color: var(--color-text-placeholder); margin-top: 0.2rem; }
 
     /* section blocks */
     .sections { display: flex; flex-direction: column; gap: 1.5rem; }
-    .section-block { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .section-block { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     .section-head {
         display: flex; align-items: baseline; gap: 0.75rem;
-        padding: 0.65rem 1rem; background: #1a1a2e; color: #fff;
+        padding: 0.65rem 1rem; background: var(--color-primary); color: var(--color-surface-white);
     }
     .section-head .sec-name { font-size: 0.9rem; font-weight: 700; }
-    .section-head .sec-total { font-size: 0.8rem; color: #8899cc; margin-left: auto; }
+    .section-head .sec-total { font-size: 0.8rem; color: var(--color-active-id); margin-left: auto; }
 
     /* metrics table */
     .metrics-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .metrics-table th {
-        background: #f0f0f0; padding: 0.45rem 0.9rem; text-align: left;
+        background: var(--color-border-faint); padding: 0.45rem 0.9rem; text-align: left;
         font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
-        font-weight: 600; color: #555; border-bottom: 1px solid #ddd;
+        font-weight: 600; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border);
     }
-    .metrics-table td { padding: 0.5rem 0.9rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .metrics-table td { padding: 0.5rem 0.9rem; border-bottom: 1px solid var(--color-border-faint); vertical-align: middle; }
     .metrics-table tr:last-child td { border-bottom: none; }
-    .metrics-table tr:hover td { background: #f5f7ff; }
+    .metrics-table tr:hover td { background: var(--color-row-hover); }
 
-    .metric-name { font-family: monospace; color: #1a1a2e; }
-    .metric-size { font-family: monospace; font-weight: 600; color: #1a1a2e; white-space: nowrap; }
-    .metric-count { font-size: 0.8rem; color: #888; white-space: nowrap; }
+    .metric-name { font-family: monospace; color: var(--color-primary); }
+    .metric-size { font-family: monospace; font-weight: 600; color: var(--color-primary); white-space: nowrap; }
+    .metric-count { font-size: 0.8rem; color: var(--color-text-faint); white-space: nowrap; }
 
     /* bar column */
     .bar-cell { width: 200px; min-width: 120px; }
-    .bar-track { background: #eee; border-radius: 3px; height: 8px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 3px; background: #4a6fa5; transition: width 0.35s ease; }
-    .bar-fill.bar-large { background: #c0392b; }
-    .bar-fill.bar-medium { background: #e67e22; }
+    .bar-track { background: var(--color-border-light); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; background: var(--color-accent-link); transition: width 0.35s ease; }
+    .bar-fill.bar-large { background: var(--color-danger); }
+    .bar-fill.bar-medium { background: var(--color-warning-text); }
 
     /* tooltip */
-    .has-tip { cursor: help; border-bottom: 1px dashed #aaa; display: inline; }
+    .has-tip { cursor: help; border-bottom: 1px dashed var(--color-text-placeholder); display: inline; }
     .tip {
         display: none; position: absolute; z-index: 200;
-        background: #1a1a2e; color: #e0e0e0;
+        background: var(--color-primary); color: var(--color-border-strong);
         font-size: 0.78rem; font-family: system-ui, sans-serif; font-weight: 400;
         line-height: 1.45; max-width: 280px;
         padding: 0.5rem 0.75rem; border-radius: 5px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+        box-shadow: 0 3px 10px var(--color-shadow);
         pointer-events: none; white-space: normal;
     }
     .tip::after {
         content: ''; position: absolute; top: 100%; left: 14px;
-        border: 5px solid transparent; border-top-color: #1a1a2e;
+        border: 5px solid transparent; border-top-color: var(--color-primary);
     }
 
     /* loading skeleton */
     .skeleton-row td { padding: 0.55rem 0.9rem; }
-    .skel { background: #eee; border-radius: 3px; height: 14px; animation: pulse 1.2s ease-in-out infinite; }
+    .skel { background: var(--color-border-light); border-radius: 3px; height: 14px; animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 </style>
 
@@ -366,7 +366,7 @@
         for (let s = 0; s < 3; s++) {
             const block = document.createElement('div');
             block.className = 'section-block';
-            block.innerHTML = '<div class="section-head"><span class="sec-name" style="background:#2d2d4e;color:#2d2d4e;border-radius:3px;">Loading section</span></div>';
+            block.innerHTML = '<div class="section-head"><span class="sec-name" style="background:var(--color-primary-hover);color:var(--color-primary-hover);border-radius:3px;">Loading section</span></div>';
             const table = document.createElement('table');
             table.className = 'metrics-table';
             table.innerHTML = '<thead><tr><th>Metric</th><th>Size</th><th>Items</th><th class="bar-cell">Relative size</th></tr></thead>';

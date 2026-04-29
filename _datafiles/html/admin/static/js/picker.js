@@ -51,64 +51,66 @@ const Picker = (() => {
         style.id = 'picker-styles';
         style.textContent = `
             .pk-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+                position: fixed; inset: 0; background: var(--color-overlay);
                 display: flex; align-items: center; justify-content: center;
                 z-index: 9999;
             }
             .pk-modal {
-                background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+                background: var(--color-surface); border-radius: 8px; box-shadow: 0 8px 32px var(--color-shadow);
                 width: 640px; max-width: 96vw; max-height: 82vh;
                 display: flex; flex-direction: column; overflow: hidden;
             }
             .pk-header {
-                padding: 0.85rem 1rem 0.7rem; border-bottom: 1px solid #e5e5e5;
+                padding: 0.85rem 1rem 0.7rem; border-bottom: 1px solid var(--color-border);
                 display: flex; align-items: center; justify-content: space-between;
                 flex-shrink: 0;
             }
-            .pk-title { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+            .pk-title { font-size: 1rem; font-weight: 700; color: var(--color-text); }
             .pk-close {
                 background: none; border: none; font-size: 1.25rem; cursor: pointer;
-                color: #888; line-height: 1; padding: 0 0.2rem;
+                color: var(--color-text-faint); line-height: 1; padding: 0 0.2rem;
             }
-            .pk-close:hover { color: #333; }
-            .pk-search-wrap { padding: 0.6rem 1rem; border-bottom: 1px solid #eee; flex-shrink: 0; }
+            .pk-close:hover { color: var(--color-text); }
+            .pk-search-wrap { padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-border-light); flex-shrink: 0; }
             .pk-search {
-                width: 100%; padding: 0.4rem 0.65rem; border: 1px solid #ccc;
+                width: 100%; padding: 0.4rem 0.65rem; border: 1px solid var(--color-border-medium);
                 border-radius: 4px; font-size: 0.875rem;
+                background: var(--color-surface-raised); color: var(--color-text);
             }
-            .pk-search:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
-            .pk-table-wrap { overflow-y: auto; flex: 1; }
+            .pk-search:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; border-color: transparent; }
+            .pk-table-wrap { overflow-y: auto; flex: 1; background: var(--color-surface); }
             .pk-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-            .pk-table thead { position: sticky; top: 0; background: #f5f5f5; z-index: 1; }
+            .pk-table thead { position: sticky; top: 0; background: var(--color-page-bg); z-index: 1; }
             .pk-table th {
                 padding: 0.4rem 0.75rem; text-align: left; font-size: 0.72rem;
                 font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-                color: #666; border-bottom: 1px solid #e0e0e0; white-space: nowrap;
+                color: var(--color-text-subtle); border-bottom: 1px solid var(--color-border-strong); white-space: nowrap;
             }
             .pk-table th.pk-col-check { width: 2rem; }
-            .pk-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+            .pk-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--color-border-faint); vertical-align: middle; color: var(--color-text); }
             .pk-table tr:last-child td { border-bottom: none; }
             .pk-table tbody tr { cursor: pointer; }
-            .pk-table tbody tr:hover { background: #f5f7ff; }
-            .pk-table tbody tr.pk-highlighted { background: #eef0ff; }
-            .pk-table tbody tr.pk-row-selected { background: #1a1a2e; color: #fff; }
-            .pk-table tbody tr.pk-row-selected td { color: #fff; }
-            .pk-table tbody tr.pk-row-selected input[type="checkbox"] { accent-color: #fff; }
+            .pk-table tbody tr:hover { background: var(--color-row-hover); }
+            .pk-table tbody tr.pk-highlighted { background: var(--color-row-hover); }
+            .pk-table tbody tr.pk-row-selected { background: var(--color-active-bg); color: var(--color-active-text); }
+            .pk-table tbody tr.pk-row-selected td { color: var(--color-active-text); }
+            .pk-table tbody tr.pk-row-selected input[type="checkbox"] { accent-color: var(--color-active-text); }
             .pk-cell-mono { font-family: monospace; }
-            .pk-empty { padding: 2.5rem 1rem; text-align: center; color: #aaa; font-size: 0.875rem; }
-            .pk-loading { padding: 2.5rem 1rem; text-align: center; color: #888; font-size: 0.875rem; }
+            .pk-empty { padding: 2.5rem 1rem; text-align: center; color: var(--color-text-placeholder); font-size: 0.875rem; }
+            .pk-loading { padding: 2.5rem 1rem; text-align: center; color: var(--color-text-faint); font-size: 0.875rem; }
             .pk-footer {
-                padding: 0.65rem 1rem; border-top: 1px solid #eee;
+                padding: 0.65rem 1rem; border-top: 1px solid var(--color-border-light);
                 display: flex; justify-content: flex-end; gap: 0.5rem; flex-shrink: 0;
+                background: var(--color-surface);
             }
             .pk-btn {
                 padding: 0.4rem 1rem; border-radius: 4px; font-size: 0.85rem;
                 font-weight: 600; cursor: pointer; border: 1px solid transparent;
             }
-            .pk-btn-cancel { background: #f0f0f0; color: #444; border-color: #ccc; }
-            .pk-btn-cancel:hover { background: #e5e5e5; }
-            .pk-btn-confirm { background: #1a1a2e; color: #fff; }
-            .pk-btn-confirm:hover { background: #2d2d4e; }
+            .pk-btn-cancel { background: var(--color-btn-cancel-bg); color: var(--color-btn-cancel-text); border-color: var(--color-border-medium); }
+            .pk-btn-cancel:hover { background: var(--color-btn-cancel-hover); }
+            .pk-btn-confirm { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); }
+            .pk-btn-confirm:hover { background: var(--color-btn-primary-hover); }
         `;
         document.head.appendChild(style);
     }

@@ -1,0 +1,376 @@
+/* Dusk - deep dark UI, violet accents */
+:root {
+    /* Primary brand */
+    --color-primary:            #6c5ce7;
+    --color-primary-hover:      #5a4bd4;
+    --color-primary-on:         #fff;
+
+    /* Navigation */
+    --color-nav-bg:             #13111f;
+    --color-nav-link:           #9d93c4;
+    --color-nav-link-hover:     #e0d8ff;
+    --color-nav-border:         #0a0914;
+    --color-nav-dropdown-bg:    #1e1b2e;
+    --color-nav-dropdown-hover: #2d2845;
+
+    /* Page surface */
+    --color-page-bg:            #141220;
+    --color-surface:            #1e1b2e;
+    --color-surface-alt:        #252238;
+    --color-surface-raised:     #2a2640;
+
+    /* Text */
+    --color-text:               #e0d8ff;
+    --color-text-muted:         #a098c8;
+    --color-text-subtle:        #8880b0;
+    --color-text-faint:         #6a6490;
+    --color-text-placeholder:   #504a70;
+    --color-text-secondary:     #5c5880;
+    --color-text-tertiary:      #b8b0e0;
+    --color-text-strong:        #c8c0f0;
+
+    /* Borders */
+    --color-border:             #2e2a48;
+    --color-border-light:       #252238;
+    --color-border-medium:      #3a3558;
+    --color-border-strong:      #403c60;
+    --color-border-faint:       #1e1b2e;
+
+    /* Active list item */
+    --color-active-bg:          #6c5ce7;
+    --color-active-text:        #fff;
+    --color-active-id:          #a29bfe;
+
+    /* Hover row */
+    --color-row-hover:          #252238;
+
+    /* Focus outline */
+    --color-focus:              #6c5ce7;
+
+    /* Buttons */
+    --color-btn-primary-bg:     #6c5ce7;
+    --color-btn-primary-text:   #fff;
+    --color-btn-primary-hover:  #5a4bd4;
+    --color-btn-disabled:       #3a3558;
+    --color-btn-cancel-bg:      #2e2a48;
+    --color-btn-cancel-text:    #a098c8;
+    --color-btn-cancel-hover:   #3a3558;
+
+    /* New/create button */
+    --color-btn-new-bg:         var(--color-success-text);
+    --color-btn-new-text:       #fff;
+    --color-btn-new-hover:      #1a7040;
+
+    /* Save button (inline edit) */
+    --color-btn-save-bg:        #1e8048;
+    --color-btn-save-text:      #fff;
+    --color-btn-save-hover:     #1a7040;
+
+    /* Danger */
+    --color-danger:             #ff6b6b;
+
+    /* Status: success */
+    --color-success-bg:         #1a2e20;
+    --color-success-text:       #4ade80;
+
+    /* Status: error */
+    --color-error-bg:           #2e1a1a;
+    --color-error-text:         #ff6b6b;
+
+    /* Status: warning */
+    --color-warning-bg:         #2e2510;
+    --color-warning-text:       #fbbf24;
+
+    /* Status: info */
+    --color-info-bg:            #1a2030;
+    --color-info-text:          #60a5fa;
+
+    /* Chips / badges */
+    --color-chip-bg:            #2d2845;
+    --color-chip-text:          #a29bfe;
+    --color-chip-active-bg:     #6c5ce7;
+    --color-chip-active-text:   #fff;
+
+    /* Script badge */
+    --color-badge-script-bg:    #2e2510;
+    --color-badge-script-text:  #fbbf24;
+
+    /* Hostile badge */
+    --color-badge-hostile-bg:   #2e1a1a;
+    --color-badge-hostile-text: #ff6b6b;
+
+    /* Accent (range sliders, links) */
+    --color-accent:             #6c5ce7;
+    --color-accent-link:        #a29bfe;
+
+    /* Surfaces - explicit white (panels, cards, sidebars, inputs) */
+    --color-surface-white:      var(--color-surface);
+
+    /* Danger button */
+    --color-btn-danger-bg:      #c0392b;
+    --color-btn-danger-text:    #fff;
+    --color-btn-danger-hover:   #a93226;
+
+    /* Delete button */
+    --color-btn-delete-bg:      var(--color-surface-raised);
+    --color-btn-delete-border:  #5a3030;
+
+    /* Hover tint */
+    --color-hover-tint:         #2d2845;
+    --color-hover-tint-border:  #6c5ce7;
+
+    /* Code / terminal blocks */
+    --color-code-bg:            #0d0b18;
+    --color-code-text:          #c9d1d9;
+
+    /* API reference pages */
+    --color-api-entry-bg:       var(--color-surface);
+    --color-api-summary-hover:  var(--color-surface-alt);
+    --color-api-kw:             #79c0ff;
+    --color-api-str:            #a5d6ff;
+    --color-api-flag:           #d2a8ff;
+
+    /* Overlay & shadow */
+    --color-overlay:            rgba(0,0,0,0.6);
+    --color-shadow:             rgba(0,0,0,0.5);
+
+    /* Code syntax highlighting */
+    --color-code-comment:       #6a6490;
+    --color-code-keyword:       #ff7b72;
+    --color-code-symbol:        #ffa657;
+    --color-code-link:          #7ee787;
+    --color-code-addition:      #aff5b4;
+
+    /* Method badges (API reference) */
+    --color-method-put-bg:      #2a2040;
+    --color-method-put-text:    #c0a0e0;
+    --color-method-patch-bg:    #fbbf24;
+
+    /* Inline empty/muted states */
+    --color-empty-text:         var(--color-text-placeholder);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark surface overrides - replace hardcoded surface/white backgrounds */
+/* ------------------------------------------------------------------ */
+
+/* Panels, sidebars, cards, editor panels, API entries */
+.sidebar,
+.editor-panel,
+.card,
+.runtime-card,
+.section-block,
+.section-panel,
+.api-entry,
+.config-table-wrap,
+.section-card,
+#pending-panel,
+.user-display,
+.picker-wrap,
+.script-editor-wrap,
+.select-dialog-backdrop > div,
+.dialog-inner,
+.zone-edit-dialog > div {
+    background: var(--color-surface) !important;
+    color: var(--color-text);
+}
+
+/* Table header */
+thead th {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text-muted) !important;
+}
+
+/* Table row hover */
+tbody tr:hover {
+    background: var(--color-row-hover) !important;
+}
+
+/* Pager buttons */
+.pager button {
+    background: var(--color-surface) !important;
+    color: var(--color-text) !important;
+}
+.pager button:hover:not(:disabled) {
+    background: var(--color-surface-alt) !important;
+}
+
+/* All text inputs, selects, textareas */
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+select,
+textarea {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border-medium) !important;
+    color-scheme: dark;
+}
+
+/* Range slider track */
+input[type="range"] {
+    color-scheme: dark;
+}
+
+/* Active tab button */
+.tab-btn.active {
+    background: var(--color-surface) !important;
+    color: var(--color-primary) !important;
+}
+
+/* API summary hover */
+.resp-entry summary:hover,
+.api-entry[open] summary {
+    background: var(--color-surface-alt) !important;
+}
+
+/* Stat mod items */
+.statmod-known-item {
+    background: var(--color-surface-raised) !important;
+}
+
+/* Toggle switch knob */
+.toggle-knob {
+    background: var(--color-surface) !important;
+}
+
+/* Item/shop/music picker displays */
+.item-picker-display,
+.shop-picker-display,
+.music-picker-display,
+.picker-display {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text-muted) !important;
+}
+.item-picker-display.has-value,
+.shop-picker-display:not(.empty),
+.picker-display:not(.empty) {
+    color: var(--color-text) !important;
+}
+
+/* Pending items */
+.pending-item {
+    background: var(--color-surface-raised) !important;
+}
+
+/* Inline edit input */
+.edit-form input[type="text"] {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text) !important;
+}
+
+/* Prefix hint box */
+.prefix-hint {
+    background: var(--color-surface-raised) !important;
+}
+
+/* Code / script editor */
+.script-editor-container,
+.hljs,
+pre,
+code {
+    background: var(--color-surface-raised) !important;
+}
+
+/* Dropdown menus from select-dialog / picker */
+.select-dialog-list,
+.picker-list,
+.picker-row {
+    background: var(--color-surface) !important;
+    color: var(--color-text) !important;
+}
+.picker-row:hover,
+.select-dialog-row:hover {
+    background: var(--color-row-hover) !important;
+}
+
+/* Zone edit modal overlay content */
+.zone-modal-content {
+    background: var(--color-surface) !important;
+}
+
+/* Disabled equipment slots */
+.shop-picker-wrap.eq-disabled {
+    background: var(--color-surface-raised) !important;
+}
+
+/* btn-zone-edit */
+.btn-zone-edit {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text) !important;
+}
+.btn-zone-edit:hover {
+    background: var(--color-surface-alt) !important;
+}
+
+/* btn-remove (white bg with red text) */
+.btn-remove {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-error-text) !important;
+    border-color: var(--color-border-medium) !important;
+}
+.btn-remove:hover {
+    background: var(--color-error-bg) !important;
+}
+
+/* btn-cancel / btn-discard / btn-delete */
+.btn-cancel,
+.btn-discard,
+.btn-delete {
+    background: var(--color-btn-cancel-bg) !important;
+    color: var(--color-btn-cancel-text) !important;
+    border-color: var(--color-border-medium) !important;
+}
+.btn-cancel:hover,
+.btn-discard:hover,
+.btn-delete:hover {
+    background: var(--color-btn-cancel-hover) !important;
+}
+
+/* Conversations editor areas */
+.conv-block,
+.info-callout {
+    background: var(--color-surface-raised) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text) !important;
+}
+
+/* Hover tint (was #e8eaff / #f0f4ff) */
+.btn-zone-edit:hover,
+.btn-search:hover,
+.view-tab:hover {
+    background: var(--color-hover-tint) !important;
+    border-color: var(--color-hover-tint-border) !important;
+}
+
+/* Slot items (races) */
+.slot-item {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text-tertiary) !important;
+}
+
+/* Quest progress items */
+.quest-progress-item {
+    background: var(--color-surface-raised) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Conversations turn inputs */
+.turn-cmd-input,
+.conv-speaker-sel {
+    background: var(--color-surface-raised) !important;
+    color: var(--color-text) !important;
+}
+
+/* Rank tables */
+.rank-table-wrap {
+    background: var(--color-surface) !important;
+}
+
+/* view-tab active */
+.view-tab.active {
+    background: var(--color-primary) !important;
+    color: var(--color-primary-on) !important;
+}

@@ -4,59 +4,119 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GoMud Admin</title>
+    <title>MUD Admin</title>
+    <link rel="stylesheet" id="theme-stylesheet" href="/admin/static/css/theme-default.css">
     <link rel="stylesheet" href="/admin/static/css/highlight.css">
+    <script>
+    (function(){
+        var c=document.cookie.split(';');
+        for(var i=0;i<c.length;i++){
+            var p=c[i].trim().split('=');
+            if(p[0]==='gomud_admin_theme'&&p[1]){
+                var id=decodeURIComponent(p[1]);
+                var ok=['default','slate','ember','dusk','forest','crypt','bubblegum','arctic','toxic','parchment','synthwave'];
+                if(ok.indexOf(id)>=0){
+                    document.getElementById('theme-stylesheet').href='/admin/static/css/theme-'+id+'.css';
+                }
+            }
+        }
+    })();
+    </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.5; color: #1a1a1a; background: #f5f5f5; }
-        nav { background: #1a1a2e; color: #e0e0e0; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; }
-        nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; }
-        nav a { color: #b0b8d0; text-decoration: none; font-size: 0.9rem; }
-        nav a:hover { color: #fff; }
+        body { font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.5; color: var(--color-text); background: var(--color-page-bg); }
+        nav { background: var(--color-nav-bg); color: var(--color-nav-link); padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; }
+        nav .brand { font-weight: 700; font-size: 1.1rem; color: var(--color-nav-link-hover); text-decoration: none; }
+        nav a { color: var(--color-nav-link); text-decoration: none; font-size: 0.9rem; }
+        nav a:hover { color: var(--color-nav-link-hover); }
         .nav-spacer { flex: 1; }
         .nav-clear-cache {
-            background: none; border: 1px solid #444; border-radius: 3px;
-            color: #b0b8d0; font-size: 0.75rem; cursor: pointer;
+            background: none; border: 1px solid var(--color-text-tertiary); border-radius: 3px;
+            color: var(--color-nav-link); font-size: 0.75rem; cursor: pointer;
             padding: 0.2rem 0.55rem; white-space: nowrap;
         }
-        .nav-clear-cache:hover { border-color: #aaa; color: #fff; }
-        .nav-clear-cache.done { border-color: #4a4; color: #8d8; }
+        .nav-clear-cache:hover { border-color: var(--color-text-placeholder); color: var(--color-nav-link-hover); }
+        .nav-clear-cache.done { border-color: var(--color-success-text); color: var(--color-success-text); }
         .nav-dropdown { position: relative; display: inline-block; }
         .nav-btn {
-            background: none; border: none; color: #b0b8d0; font-size: 0.9rem;
+            background: none; border: none; color: var(--color-nav-link); font-size: 0.9rem;
             cursor: pointer; padding: 0;
         }
-        .nav-btn:hover { color: #fff; }
+        .nav-btn:hover { color: var(--color-nav-link-hover); }
         .nav-dropdown-menu {
             display: none; position: absolute; top: 100%; left: 0;
-            background: #1a1a2e; border: 1px solid #333; border-radius: 4px;
+            background: var(--color-nav-dropdown-bg); border: 1px solid var(--color-nav-border); border-radius: 4px;
             min-width: 140px; z-index: 100; padding: 0.25rem 0;
         }
         .nav-dropdown:hover .nav-dropdown-menu { display: block; }
         .nav-dropdown-menu a {
             display: block; padding: 0.4rem 0.85rem;
-            color: #b0b8d0; font-size: 0.85rem; text-decoration: none;
+            color: var(--color-nav-link); font-size: 0.85rem; text-decoration: none;
         }
-        .nav-dropdown-menu a:hover { background: #2d2d4e; color: #fff; }
+        .nav-dropdown-menu a:hover { background: var(--color-nav-dropdown-hover); color: var(--color-nav-link-hover); }
         .nav-submenu { position: relative; }
         .nav-submenu-label {
             display: block; padding: 0.4rem 0.85rem;
-            color: #b0b8d0; font-size: 0.85rem; cursor: default;
+            color: var(--color-nav-link); font-size: 0.85rem; cursor: default;
             white-space: nowrap;
         }
-        .nav-submenu-label:hover { background: #2d2d4e; color: #fff; }
+        .nav-submenu-label:hover { background: var(--color-nav-dropdown-hover); color: var(--color-nav-link-hover); }
         .nav-submenu-menu {
             display: none; position: absolute; left: 100%; top: 0;
-            background: #1a1a2e; border: 1px solid #333; border-radius: 4px;
+            background: var(--color-nav-dropdown-bg); border: 1px solid var(--color-nav-border); border-radius: 4px;
             min-width: 140px; z-index: 101; padding: 0.25rem 0;
         }
         .nav-submenu:hover .nav-submenu-menu { display: block; }
         .nav-submenu-menu a {
             display: block; padding: 0.4rem 0.85rem;
-            color: #b0b8d0; font-size: 0.85rem; text-decoration: none;
+            color: var(--color-nav-link); font-size: 0.85rem; text-decoration: none;
         }
-        .nav-submenu-menu a:hover { background: #2d2d4e; color: #fff; }
+        .nav-submenu-menu a:hover { background: var(--color-nav-dropdown-hover); color: var(--color-nav-link-hover); }
         main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Universal input base styles */
+        input[type="text"],
+        input[type="number"],
+        input[type="search"],
+        input[type="password"],
+        input[type="email"],
+        select,
+        textarea {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--color-border-medium);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--color-surface-white);
+            color: var(--color-text);
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="search"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 1px;
+            border-color: transparent;
+        }
+        textarea { resize: vertical; }
+
+        .picker-display {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--color-border-medium);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            background: var(--color-surface-alt);
+            min-height: 2rem;
+            display: flex;
+            align-items: center;
+        }
+        .picker-display.empty {
+            color: var(--color-text-placeholder);
+            font-style: italic;
+        }
     </style>
     <script src="/admin/static/js/highlight.js"></script>
     <script src="/admin/static/js/api.js"></script>
@@ -68,10 +128,11 @@
     <script src="/admin/static/js/ansitags.js"></script>
     <script src="/admin/static/js/ansi-composer.js"></script>
     <script src="/admin/static/js/dice-roll-helper.js"></script>
+    <script src="/admin/static/js/theme-switcher.js"></script>
 </head>
 <body>
     <nav>
-        <a class="brand" href="/admin/">GoMud Admin</a>
+        <a class="brand" href="/admin/">MUD Admin</a>
         {{range .NAV}}
           {{if .SubMenus}}
             <div class="nav-dropdown">

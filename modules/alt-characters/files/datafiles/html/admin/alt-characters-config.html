@@ -2,54 +2,54 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
 
     #status-bar { display: none; padding: 0.6rem 1rem; border-radius: 4px; font-size: 0.875rem; margin-bottom: 1rem; }
-    #status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    #status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    #status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    #status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
-    .config-table-wrap { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .config-table-wrap { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     col.col-key   { width: 38%; }
     col.col-value { width: 62%; }
-    thead th { background: #f0f0f0; text-align: left; padding: 0.6rem 0.9rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #555; border-bottom: 1px solid #ddd; }
-    tbody tr { border-bottom: 1px solid #eee; }
+    thead th { background: var(--color-border-faint); text-align: left; padding: 0.6rem 0.9rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
+    tbody tr { border-bottom: 1px solid var(--color-border-light); }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #fafafa; }
+    tbody tr:hover { background: var(--color-surface-alt); }
     td { padding: 0.55rem 0.9rem; font-size: 0.875rem; vertical-align: middle; overflow: hidden; }
-    td.key-cell { font-family: monospace; font-size: 0.82rem; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    td.key-cell { font-family: monospace; font-size: 0.82rem; color: var(--color-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     td.value-cell { max-width: 0; overflow: hidden; }
 
     .value-display { cursor: pointer; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .value-display:hover { text-decoration: underline dotted #888; }
+    .value-display:hover { text-decoration: underline dotted var(--color-text-faint); }
     .edit-form { display: none; align-items: center; gap: 0.4rem; width: 100%; }
     .edit-form.active { display: flex; }
-    .edit-form input[type="text"] { flex: 1; padding: 0.3rem 0.5rem; border: 1px solid #aaa; border-radius: 3px; font-size: 0.875rem; font-family: inherit; }
-    .btn-save { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: #1a6e34; color: #fff; }
-    .btn-save:hover { background: #145728; }
-    .btn-cancel { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: #ccc; color: #333; }
-    .btn-cancel:hover { background: #bbb; }
+    .edit-form input[type="text"] { flex: 1; padding: 0.3rem 0.5rem; border: 1px solid var(--color-text-placeholder); border-radius: 3px; font-size: 0.875rem; font-family: inherit; }
+    .btn-save { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: var(--color-btn-save-bg); color: var(--color-surface-white); }
+    .btn-save:hover { background: var(--color-btn-new-hover); }
+    .btn-cancel { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: var(--color-border-medium); color: var(--color-text-strong); }
+    .btn-cancel:hover { background: var(--color-btn-cancel-hover); }
 
-    #pending-panel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: 1.25rem; }
+    #pending-panel { display: none; background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1rem; margin-bottom: 1.25rem; }
     #pending-panel h3 { font-size: 1rem; margin-bottom: 0.75rem; }
     #pending-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem; }
-    .pending-item { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 0.35rem 0.65rem; }
-    .pending-key { font-family: monospace; font-size: 0.82rem; color: #1a1a2e; flex: 1; }
-    .pending-arrow { color: #888; }
-    .pending-val { color: #1e6e34; font-weight: 600; }
-    .pending-remove { background: none; border: none; cursor: pointer; color: #888; font-size: 1rem; line-height: 1; padding: 0 0.2rem; }
-    .pending-remove:hover { color: #c00; }
+    .pending-item { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem; background: var(--color-surface-alt); border: 1px solid var(--color-border-light); border-radius: 4px; padding: 0.35rem 0.65rem; }
+    .pending-key { font-family: monospace; font-size: 0.82rem; color: var(--color-primary); flex: 1; }
+    .pending-arrow { color: var(--color-text-faint); }
+    .pending-val { color: var(--color-success-text); font-weight: 600; }
+    .pending-remove { background: none; border: none; cursor: pointer; color: var(--color-text-faint); font-size: 1rem; line-height: 1; padding: 0 0.2rem; }
+    .pending-remove:hover { color: var(--color-danger); }
     .pending-actions { display: flex; gap: 0.5rem; }
-    .btn-discard { background: #eee; color: #333; }
-    .btn-discard:hover { background: #ddd; }
+    .btn-discard { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-discard:hover { background: var(--color-border); }
 
-    .no-keys { padding: 2rem; text-align: center; color: #888; font-size: 0.9rem; }
-    tr.desc-row td { padding: 0.1rem 0.9rem 0.5rem; font-size: 0.78rem; color: #777; font-style: italic; border-bottom: 1px solid #eee; }
+    .no-keys { padding: 2rem; text-align: center; color: var(--color-text-faint); font-size: 0.9rem; }
+    tr.desc-row td { padding: 0.1rem 0.9rem 0.5rem; font-size: 0.78rem; color: var(--color-text-faint); font-style: italic; border-bottom: 1px solid var(--color-border-light); }
 </style>
 <h1>alt-characters - Module Config</h1>
 <p class="subtitle">Configuration keys for the <strong>alt-characters</strong> module. Click any value to edit it inline. Changes are staged until you apply them.</p>
@@ -70,7 +70,7 @@
         <colgroup><col class="col-key" /><col class="col-value" /></colgroup>
         <thead><tr><th>Key</th><th>Value</th></tr></thead>
         <tbody id="config-body">
-            <tr><td colspan="2" style="padding:1.5rem;text-align:center;color:#888;">Loading...</td></tr>
+            <tr><td colspan="2" style="padding:1.5rem;text-align:center;color:var(--color-text-faint);">Loading...</td></tr>
         </tbody>
     </table>
 </div>

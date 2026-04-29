@@ -2,75 +2,75 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .page-layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 860px) { .page-layout { grid-template-columns: 1fr; } }
 
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 0.5rem; }
-    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); display: flex; align-items: center; gap: 0.5rem; }
+    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
     .quest-list { overflow-y: auto; max-height: 72vh; }
     .quest-row {
-        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem;
     }
     .quest-row:last-child { border-bottom: none; }
-    .quest-row:hover { background: #f5f7ff; }
-    .quest-row.active { background: #1a1a2e; color: #fff; }
-    .quest-id { font-size: 0.75rem; color: #999; font-family: monospace; flex-shrink: 0; }
-    .quest-row.active .quest-id { color: #8899cc; }
-    .secret-badge { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: #fff3e0; color: #8a4a00; flex-shrink: 0; margin-left: auto; }
-    .quest-row.active .secret-badge { background: #8a4a00; color: #fff; }
-    .no-quests { padding: 1.5rem; text-align: center; color: #888; font-size: 0.85rem; }
+    .quest-row:hover { background: var(--color-row-hover); }
+    .quest-row.active { background: var(--color-primary); color: var(--color-surface-white); }
+    .quest-id { font-size: 0.75rem; color: var(--color-text-secondary); font-family: monospace; flex-shrink: 0; }
+    .quest-row.active .quest-id { color: var(--color-active-id); }
+    .secret-badge { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--color-warning-bg); color: var(--color-warning-text); flex-shrink: 0; margin-left: auto; }
+    .quest-row.active .secret-badge { background: var(--color-warning-text); color: var(--color-surface-white); }
+    .no-quests { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
 
-    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: #1e6e34; color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center; }
-    .btn-new:hover { background: #145728; }
+    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: var(--color-success-text); color: var(--color-surface-white); font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
 
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
     .form-grid .span2 { grid-column: 1 / -1; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"], .field input[type="number"], .field select, .field textarea {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 70px; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
-    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; padding: 0.5rem 0 0.4rem; border-bottom: 1px solid #eee; margin-bottom: 0.75rem; grid-column: 1 / -1; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.5rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.75rem; grid-column: 1 / -1; }
 
     /* steps editor */
     .steps-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .step-card {
-        border: 1px solid #e0e0e0; border-radius: 5px; padding: 0.65rem 0.75rem;
-        background: #fafafa; display: grid; grid-template-columns: 120px 1fr 1fr auto; gap: 0.5rem; align-items: start;
+        border: 1px solid var(--color-border-strong); border-radius: 5px; padding: 0.65rem 0.75rem;
+        background: var(--color-surface-alt); display: grid; grid-template-columns: 120px 1fr 1fr auto; gap: 0.5rem; align-items: start;
     }
     .step-card.step-locked {
-        background: #f0f1ff; border-color: #7986cb;
+        background: var(--color-row-hover); border-color: var(--color-hover-tint-border);
     }
-    .step-card input, .step-card textarea { padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; font-family: inherit; width: 100%; }
+    .step-card input, .step-card textarea { padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; font-family: inherit; width: 100%; }
     .step-card textarea { min-height: 52px; resize: vertical; }
     .step-card.step-locked input[data-locked="true"] {
-        background: #e8eaf6; color: #3949ab; font-weight: 600;
-        border-color: #9fa8da; cursor: default;
+        background: var(--color-chip-bg); color: var(--color-chip-text); font-weight: 600;
+        border-color: var(--color-chip-text); cursor: default;
     }
-    .step-num { font-size: 0.75rem; font-weight: 700; color: #888; padding-top: 0.4rem; }
-    .step-locked .step-num { color: #3949ab; }
-    .step-lock-icon { font-size: 0.75rem; color: #7986cb; padding-top: 0.25rem; text-align: center; user-select: none; }
-    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: #888; padding: 0 0.2rem; line-height: 1; }
-    .btn-icon:hover { color: #c00; }
-    .btn-add-sm { font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed #aaa; background: none; border-radius: 4px; cursor: pointer; color: #555; margin-top: 0.25rem; }
-    .btn-add-sm:hover { border-color: #1a1a2e; color: #1a1a2e; }
-    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: #aaa; padding: 0 0.15rem; line-height: 1; }
-    .btn-icon:hover { color: #c00; }
+    .step-num { font-size: 0.75rem; font-weight: 700; color: var(--color-text-faint); padding-top: 0.4rem; }
+    .step-locked .step-num { color: var(--color-chip-text); }
+    .step-lock-icon { font-size: 0.75rem; color: var(--color-hover-tint-border); padding-top: 0.25rem; text-align: center; user-select: none; }
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-faint); padding: 0 0.2rem; line-height: 1; }
+    .btn-icon:hover { color: var(--color-danger); }
+    .btn-add-sm { font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed var(--color-text-placeholder); background: none; border-radius: 4px; cursor: pointer; color: var(--color-text-muted); margin-top: 0.25rem; }
+    .btn-add-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-placeholder); padding: 0 0.15rem; line-height: 1; }
+    .btn-icon:hover { color: var(--color-danger); }
 
     /* reward section */
     .reward-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem 1rem; }
@@ -80,28 +80,28 @@
     /* action bar */
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
     .btn { padding: 0.45rem 1.1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .btn-danger { background: #c0392b; color: #fff; }
-    .btn-danger:hover { background: #a93226; }
-    .btn-secondary { background: #eee; color: #333; }
-    .btn-secondary:hover { background: #ddd; }
-    .quest-id-display { font-family: monospace; font-size: 0.82rem; color: #888; margin-left: auto; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-danger { background: var(--color-btn-danger-bg); color: var(--color-surface-white); }
+    .btn-danger:hover { background: var(--color-btn-danger-hover); }
+    .btn-secondary { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-secondary:hover { background: var(--color-border); }
+    .quest-id-display { font-family: monospace; font-size: 0.82rem; color: var(--color-text-faint); margin-left: auto; }
 
     .editor-header { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem; }
     .editor-header h2 { font-size: 1.1rem; flex: 1; }
-    .editor-header .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 3px; background: #fff3e0; color: #8a4a00; }
+    .editor-header .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 3px; background: var(--color-warning-bg); color: var(--color-warning-text); }
 
     /* lookup hints */
     .lookup-row { display: flex; gap: 0.5rem; align-items: center; }
     .lookup-row input { flex: 1; }
-    .lookup-hint { font-size: 0.75rem; color: #888; font-style: italic; }
+    .lookup-hint { font-size: 0.75rem; color: var(--color-text-faint); font-style: italic; }
 
     /* picker display */
     .reward-picker-wrap { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.15rem; }
-    .reward-picker-display { font-size: 0.82rem; color: #333; font-family: monospace; }
-    .reward-picker-display.empty { color: #aaa; font-style: italic; font-family: inherit; }
+    .reward-picker-display { font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace; }
+    .reward-picker-display.empty { color: var(--color-text-placeholder); font-style: italic; font-family: inherit; }
 </style>
 
 <h1>Quests</h1>
@@ -152,7 +152,7 @@
                 <div class="section-title">Steps</div>
 
                 <div class="field span2">
-                    <div style="font-size:0.75rem;color:#888;margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--color-text-faint);margin-bottom:0.5rem;">
                         Every quest requires a <strong>start</strong> step (first) and an <strong>end</strong> step (last) - these are locked and cannot be removed.
                         Add optional intermediate steps between them. Progress tokens are formed as <code>questId-stepId</code>.
                     </div>

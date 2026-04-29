@@ -2,71 +2,71 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .page-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 800px) { .page-layout { grid-template-columns: 1fr; } }
 
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid #eee; }
-    .sidebar-header input[type="search"] { width: 100%; padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); }
+    .sidebar-header input[type="search"] { width: 100%; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
     .pet-list { overflow-y: auto; max-height: 72vh; }
     .pet-row {
-        padding: 0.5rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.5rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.875rem;
     }
     .pet-row:last-child { border-bottom: none; }
-    .pet-row:hover { background: #f5f7ff; }
-    .pet-row.active { background: #1a1a2e; color: #fff; }
-    .pet-type-id { font-size: 0.75rem; color: #999; font-family: monospace; flex-shrink: 0; }
-    .pet-row.active .pet-type-id { color: #8899cc; }
-    .no-pets { padding: 1.5rem; text-align: center; color: #888; font-size: 0.85rem; }
-    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: #1e6e34; color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: block; text-align: center; }
-    .btn-new:hover { background: #145728; }
+    .pet-row:hover { background: var(--color-row-hover); }
+    .pet-row.active { background: var(--color-primary); color: var(--color-surface-white); }
+    .pet-type-id { font-size: 0.75rem; color: var(--color-text-secondary); font-family: monospace; flex-shrink: 0; }
+    .pet-row.active .pet-type-id { color: var(--color-active-id); }
+    .no-pets { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
+    .btn-new { margin: 0.6rem 0.9rem; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: var(--color-success-text); color: var(--color-surface-white); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: block; text-align: center; }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
 
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #aaa; text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
     .form-grid .span2 { grid-column: 1 / -1; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .field input[type="text"], .field input[type="number"], .field select, .field textarea {
-        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; font-family: inherit; background: #fff;
+        width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; font-family: inherit; background: var(--color-surface-white);
     }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 70px; }
-    .field-hint { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+    .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
-    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; padding: 0.75rem 0 0.4rem; border-bottom: 1px solid #eee; margin-bottom: 0.75rem; grid-column: 1 / -1; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.75rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.75rem; grid-column: 1 / -1; }
 
     /* stat mods */
     .statmods-list { display: flex; flex-direction: column; gap: 0.4rem; }
     .statmod-row { display: flex; gap: 0.5rem; align-items: center; }
-    .statmod-row select { flex: 2; padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; background: #fff; }
-    .statmod-row input[type="number"] { flex: 1; padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.82rem; width: auto; }
-    .statmod-row .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: #aaa; padding: 0 0.15rem; line-height: 1; }
-    .statmod-row .btn-icon:hover { color: #c00; }
+    .statmod-row select { flex: 2; padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; background: var(--color-surface-white); }
+    .statmod-row input[type="number"] { flex: 1; padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; width: auto; }
+    .statmod-row .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-placeholder); padding: 0 0.15rem; line-height: 1; }
+    .statmod-row .btn-icon:hover { color: var(--color-danger); }
 
     /* buff chips */
     .buff-ids-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
-    .buff-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: #e8eaf6; color: #3949ab; border-radius: 12px; padding: 0.2rem 0.6rem; font-size: 0.8rem; }
-    .buff-chip button { background: none; border: none; cursor: pointer; color: #3949ab; font-size: 0.85rem; line-height: 1; padding: 0; }
-    .buff-chip button:hover { color: #c00; }
+    .buff-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 12px; padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+    .buff-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.85rem; line-height: 1; padding: 0; }
+    .buff-chip button:hover { color: var(--color-danger); }
 
-    .btn-add-sm { font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed #aaa; background: none; border-radius: 4px; cursor: pointer; color: #555; }
-    .btn-add-sm:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .btn-add-sm { font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed var(--color-text-placeholder); background: none; border-radius: 4px; cursor: pointer; color: var(--color-text-muted); }
+    .btn-add-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
     .btn-row { display: flex; gap: 0.6rem; margin-top: 1.25rem; grid-column: 1 / -1; }
-    .btn-save { padding: 0.45rem 1.2rem; background: #1a1a2e; color: #fff; border: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn-save:hover { background: #2d2d4e; }
-    .btn-save:disabled { background: #999; cursor: default; }
-    .btn-delete { padding: 0.45rem 1rem; background: #fff; color: #8a0000; border: 1px solid #e0a0a0; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn-delete:hover { background: #fde8e8; }
+    .btn-save { padding: 0.45rem 1.2rem; background: var(--color-primary); color: var(--color-surface-white); border: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { background: var(--color-primary-hover); }
+    .btn-save:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-delete { padding: 0.45rem 1rem; background: var(--color-surface-white); color: var(--color-error-text); border: 1px solid var(--color-btn-delete-border); border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn-delete:hover { background: var(--color-error-bg); }
 </style>
 
 <h1>Pets</h1>
@@ -227,7 +227,7 @@
         document.getElementById('editorForm').style.display = '';
         document.getElementById('btnDelete').style.display = isNew ? 'none' : '';
         document.getElementById('fType').readOnly = !isNew;
-        document.getElementById('fType').style.background = isNew ? '' : '#f5f5f5';
+        document.getElementById('fType').style.background = isNew ? '' : 'var(--color-page-bg)';
         document.getElementById('editorTitle').textContent = isNew ? 'New Pet Type' : 'Edit: ' + (activeType || '');
 
         const p = pet || {};
@@ -395,7 +395,7 @@
             highlightRow(savedType);
             document.getElementById('btnDelete').style.display = '';
             document.getElementById('fType').readOnly = true;
-            document.getElementById('fType').style.background = '#f5f5f5';
+            document.getElementById('fType').style.background = 'var(--color-page-bg)';
             document.getElementById('editorTitle').textContent = 'Edit: ' + savedType;
             location.hash = encodeURIComponent(savedType);
         } else {

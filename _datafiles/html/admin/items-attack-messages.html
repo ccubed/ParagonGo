@@ -2,113 +2,113 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
     .page-layout { display: grid; grid-template-columns: 220px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 800px) { .page-layout { grid-template-columns: 1fr; } }
 
-    .sidebar { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     .subtype-list { overflow-y: auto; max-height: 72vh; }
     .subtype-row {
-        padding: 0.6rem 0.9rem; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        padding: 0.6rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         font-size: 0.875rem; text-transform: capitalize;
     }
-    .subtype-row:hover { background: #f5f7ff; }
-    .subtype-row.active { background: #1a1a2e; color: #fff; }
+    .subtype-row:hover { background: var(--color-row-hover); }
+    .subtype-row.active { background: var(--color-primary); color: var(--color-surface-white); }
 
-    .editor-panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; }
-    .editor-placeholder { color: #888; font-size: 0.9rem; padding: 2rem 1rem; text-align: center; }
+    .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
+    .editor-placeholder { color: var(--color-text-faint); font-size: 0.9rem; padding: 2rem 1rem; text-align: center; }
 
     .status-bar { display: none; padding: 0.55rem 0.9rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    .status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
-    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #1a1a2e; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--color-primary); margin-bottom: 1.25rem; flex-wrap: wrap; }
     .tab-btn {
-        padding: 0.5rem 0.85rem; border: none; background: #eee; color: #555;
+        padding: 0.5rem 0.85rem; border: none; background: var(--color-border-light); color: var(--color-text-muted);
         font-size: 0.82rem; font-weight: 600; cursor: pointer; border-radius: 4px 4px 0 0;
         margin-bottom: -2px; border: 2px solid transparent; border-bottom: none;
     }
-    .tab-btn:hover { background: #e0e0e0; }
-    .tab-btn.active { background: #fff; color: #1a1a2e; border-color: #1a1a2e; }
+    .tab-btn:hover { background: var(--color-border-strong); }
+    .tab-btn.active { background: var(--color-surface-white); color: var(--color-primary); border-color: var(--color-primary); }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
     .proximity-section { margin-bottom: 1.25rem; }
     .proximity-header {
         font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-        color: #1a1a2e; padding: 0.5rem 0; border-bottom: 1px solid #ddd; margin-bottom: 0.75rem;
+        color: var(--color-primary); padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); margin-bottom: 0.75rem;
         cursor: pointer; user-select: none; display: flex; align-items: center; gap: 0.5rem;
     }
-    .proximity-header .arrow { font-size: 0.6rem; color: #888; transition: transform 0.15s; }
+    .proximity-header .arrow { font-size: 0.6rem; color: var(--color-text-faint); transition: transform 0.15s; }
     .proximity-section.open .arrow { transform: rotate(90deg); }
     .proximity-body { display: none; }
     .proximity-section.open .proximity-body { display: block; }
-    .proximity-hint { font-size: 0.75rem; color: #888; font-weight: normal; text-transform: none; letter-spacing: normal; }
+    .proximity-hint { font-size: 0.75rem; color: var(--color-text-faint); font-weight: normal; text-transform: none; letter-spacing: normal; }
 
     .target-group { margin-bottom: 1rem; padding-left: 0.5rem; }
     .target-label {
-        font-size: 0.78rem; font-weight: 600; color: #555; margin-bottom: 0.4rem;
+        font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.4rem;
         text-transform: uppercase; letter-spacing: 0.03em;
     }
     .msg-list { list-style: none; padding: 0; margin: 0 0 0.4rem 0; }
     .msg-item {
         display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0;
-        border-bottom: 1px solid #f5f5f5; font-size: 0.84rem;
+        border-bottom: 1px solid var(--color-page-bg); font-size: 0.84rem;
     }
     .msg-index {
-        font-size: 0.72rem; color: #999; font-family: monospace; min-width: 1.5rem;
+        font-size: 0.72rem; color: var(--color-text-secondary); font-family: monospace; min-width: 1.5rem;
         text-align: right; padding-top: 0.15rem; flex-shrink: 0;
     }
     .msg-text { flex: 1; word-break: break-word; line-height: 1.4; font-family: monospace; font-size: 0.8rem; }
     .msg-delete {
-        background: none; border: none; cursor: pointer; color: #bbb; font-size: 1rem; padding: 0 0.2rem;
+        background: none; border: none; cursor: pointer; color: var(--color-btn-cancel-hover); font-size: 1rem; padding: 0 0.2rem;
         flex-shrink: 0;
     }
-    .msg-delete:hover { color: #c00; }
+    .msg-delete:hover { color: var(--color-danger); }
 
     .msg-add-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
     .msg-add-row textarea {
-        flex: 1; padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px;
+        flex: 1; padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
         font-size: 0.82rem; font-family: monospace; resize: vertical; min-height: 2.2rem;
     }
-    .msg-add-row textarea:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
+    .msg-add-row textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .btn-add {
-        padding: 0.35rem 0.7rem; background: #1e6e34; color: #fff; border: none;
+        padding: 0.35rem 0.7rem; background: var(--color-success-text); color: var(--color-surface-white); border: none;
         border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; align-self: flex-end;
     }
-    .btn-add:hover { background: #145728; }
+    .btn-add:hover { background: var(--color-btn-new-hover); }
 
     .token-ref { margin-bottom: 1.25rem; }
     .token-ref summary {
-        font-size: 0.82rem; font-weight: 600; color: #555; cursor: pointer; user-select: none;
+        font-size: 0.82rem; font-weight: 600; color: var(--color-text-muted); cursor: pointer; user-select: none;
         text-transform: uppercase; letter-spacing: 0.03em;
     }
     .token-table { width: 100%; border-collapse: collapse; margin-top: 0.6rem; font-size: 0.8rem; }
     .token-table th {
         text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.04em; color: #666; padding: 0.3rem 0.6rem;
-        border-bottom: 2px solid #e0e0e0; white-space: nowrap;
+        letter-spacing: 0.04em; color: var(--color-text-subtle); padding: 0.3rem 0.6rem;
+        border-bottom: 2px solid var(--color-border-strong); white-space: nowrap;
     }
-    .token-table td { padding: 0.35rem 0.6rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .token-table td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--color-border-faint); vertical-align: top; }
     .token-table tr:last-child td { border-bottom: none; }
-    .token-table tr:hover td { background: #f9f9ff; }
-    .tok-name { font-family: monospace; color: #1a1a2e; white-space: nowrap; }
-    .tok-resolves { color: #444; }
-    .tok-context { color: #666; line-height: 1.45; }
+    .token-table tr:hover td { background: var(--color-row-hover); }
+    .tok-name { font-family: monospace; color: var(--color-primary); white-space: nowrap; }
+    .tok-resolves { color: var(--color-text-tertiary); }
+    .tok-context { color: var(--color-text-subtle); line-height: 1.45; }
     .tok-badge {
         display: inline-block; font-size: 0.68rem; padding: 0.1rem 0.4rem; border-radius: 3px;
         white-space: nowrap; margin-top: 0.15rem;
     }
-    .badge-always  { background: #e6f4ea; color: #1e6e34; }
-    .badge-separate { background: #e3f2fd; color: #0d47a1; }
-    .badge-limited { background: #fff3e0; color: #8a4a00; }
+    .badge-always  { background: var(--color-success-bg); color: var(--color-success-text); }
+    .badge-separate { background: var(--color-info-bg); color: var(--color-info-text); }
+    .badge-limited { background: var(--color-warning-bg); color: var(--color-warning-text); }
 
-    .empty-msg { font-size: 0.82rem; color: #aaa; font-style: italic; padding: 0.3rem 0; }
+    .empty-msg { font-size: 0.82rem; color: var(--color-text-placeholder); font-style: italic; padding: 0.3rem 0; }
 
     .msg-add-warning {
-        display: none; font-size: 0.78rem; color: #8a0000; background: #fde8e8;
-        border: 1px solid #f5c6c6; border-radius: 4px; padding: 0.3rem 0.55rem;
+        display: none; font-size: 0.78rem; color: var(--color-error-text); background: var(--color-error-bg);
+        border: 1px solid var(--color-danger); border-radius: 4px; padding: 0.3rem 0.55rem;
         margin-top: 0.3rem; line-height: 1.4;
     }
     .msg-add-warning.visible { display: block; }
@@ -117,8 +117,8 @@
         display: none;
         font-family: monospace;
         font-size: 0.8rem;
-        background: #000;
-        color: #ccc;
+        background: var(--color-code-bg);
+        color: var(--color-border-medium);
         border-radius: 4px;
         padding: 0.3rem 0.55rem;
         margin-top: 0.3rem;
@@ -130,9 +130,9 @@
     .ansi-tooltip {
         display: none;
         position: fixed;
-        background: #000;
-        color: #ccc;
-        border: 1px solid #444;
+        background: var(--color-code-bg);
+        color: var(--color-border-medium);
+        border: 1px solid var(--color-text-tertiary);
         border-radius: 4px;
         padding: 0.35rem 0.6rem;
         font-size: 0.82rem;

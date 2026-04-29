@@ -708,12 +708,13 @@ func CreateZone(zoneName string) (roomId int, err error) {
 
 	zoneInfo := NewZoneConfig(zoneName)
 
-	zoneFolder := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), "/", "rooms", "/", ZoneToFolder(zoneName))
+	roomsBasePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), "/", "rooms")
+	zoneFolder := util.FilePath(roomsBasePath, "/", ZoneToFolder(zoneName))
 	if err := os.Mkdir(zoneFolder, 0755); err != nil {
 		return 0, err
 	}
 
-	if err := fileloader.SaveFlatFile[*ZoneConfig](zoneFolder, zoneInfo); err != nil {
+	if err := fileloader.SaveFlatFile[*ZoneConfig](roomsBasePath, zoneInfo); err != nil {
 		return 0, err
 	}
 

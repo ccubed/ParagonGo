@@ -2,79 +2,79 @@
 
 <style>
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; margin-bottom: 2rem; font-size: 0.9rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
 
     /* ---- panels ---- */
-    .panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.25rem; margin-bottom: 2rem; }
-    .panel h2 { font-size: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+    .panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; margin-bottom: 2rem; }
+    .panel h2 { font-size: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--color-border-light); padding-bottom: 0.5rem; }
     .form-row { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.85rem; }
-    .form-row label { font-size: 0.82rem; font-weight: 600; color: #444; }
+    .form-row label { font-size: 0.82rem; font-weight: 600; color: var(--color-text-tertiary); }
     .form-row input[type="text"],
     .form-row input[type="number"],
     .form-row textarea {
-        padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
+        padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
         font-size: 0.875rem; font-family: inherit; width: 100%;
     }
     .form-row textarea { resize: vertical; min-height: 80px; }
-    .form-hint { font-size: 0.78rem; color: #888; }
+    .form-hint { font-size: 0.78rem; color: var(--color-text-faint); }
 
     /* ---- buttons ---- */
     .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-primary:disabled { background: #999; cursor: default; }
-    .btn-danger { background: #8a0000; color: #fff; font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-danger { background: var(--color-error-text); color: var(--color-surface-white); font-size: 0.8rem; padding: 0.2rem 0.6rem; }
     .btn-danger:hover { background: #b00000; }
-    .btn-link { background: none; border: none; color: #1a1a2e; font-size: 0.82rem; cursor: pointer; text-decoration: underline; padding: 0; }
-    .btn-link:hover { color: #444; }
+    .btn-link { background: none; border: none; color: var(--color-primary); font-size: 0.82rem; cursor: pointer; text-decoration: underline; padding: 0; }
+    .btn-link:hover { color: var(--color-text-tertiary); }
 
     /* ---- status bar ---- */
     #status-bar { display: none; padding: 0.6rem 1rem; border-radius: 4px; font-size: 0.875rem; margin-bottom: 1rem; }
-    #status-bar.success { background: #e6f4ea; color: #1e6e34; display: block; }
-    #status-bar.error   { background: #fde8e8; color: #8a0000; display: block; }
+    #status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    #status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
     /* ---- picker display ---- */
     .picker-display-wrap { display: flex; gap: 0.4rem; align-items: center; }
     .picker-display {
-        flex: 1; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px;
-        font-size: 0.875rem; background: #fff; color: #aaa; font-style: italic;
+        flex: 1; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.875rem; background: var(--color-surface-white); color: var(--color-text-placeholder); font-style: italic;
         min-height: 2.1rem; display: flex; align-items: center;
     }
-    .picker-display.has-value { color: #1a1a2e; font-style: normal; font-family: monospace; }
+    .picker-display.has-value { color: var(--color-primary); font-style: normal; font-family: monospace; }
     .btn-pick {
-        padding: 0.35rem 0.65rem; border: 1px solid #ccc; border-radius: 4px;
-        background: #f5f5f5; cursor: pointer; font-size: 0.875rem; line-height: 1;
+        padding: 0.35rem 0.65rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        background: var(--color-page-bg); cursor: pointer; font-size: 0.875rem; line-height: 1;
         flex-shrink: 0; font-weight: 600;
     }
-    .btn-pick:hover { background: #e8eaff; border-color: #7986cb; }
+    .btn-pick:hover { background: var(--color-hover-tint); border-color: var(--color-hover-tint-border); }
     .btn-clear {
-        padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px;
-        background: #f5f5f5; cursor: pointer; font-size: 1rem; line-height: 1;
-        flex-shrink: 0; color: #888;
+        padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        background: var(--color-page-bg); cursor: pointer; font-size: 1rem; line-height: 1;
+        flex-shrink: 0; color: var(--color-text-faint);
     }
-    .btn-clear:hover { background: #fde8e8; border-color: #e57373; color: #c00; }
+    .btn-clear:hover { background: var(--color-error-bg); border-color: #e57373; color: var(--color-danger); }
     .lookup-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
 
     /* ---- inbox table ---- */
-    .table-wrap { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .table-wrap { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
-        background: #f0f0f0; text-align: left; padding: 0.55rem 0.9rem;
+        background: var(--color-border-faint); text-align: left; padding: 0.55rem 0.9rem;
         font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
-        color: #555; border-bottom: 1px solid #ddd; white-space: nowrap;
+        color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); white-space: nowrap;
     }
-    tbody tr.summary-row { border-bottom: 1px solid #eee; }
+    tbody tr.summary-row { border-bottom: 1px solid var(--color-border-light); }
     tbody tr.summary-row:last-of-type { border-bottom: none; }
-    tbody tr.summary-row:hover { background: #fafafa; }
-    tbody tr.detail-row { border-bottom: 1px solid #eee; background: #f9f9ff; }
-    tbody tr.detail-row td { padding: 0.75rem 1.25rem; font-size: 0.85rem; color: #333; }
+    tbody tr.summary-row:hover { background: var(--color-surface-alt); }
+    tbody tr.detail-row { border-bottom: 1px solid var(--color-border-light); background: var(--color-row-hover); }
+    tbody tr.detail-row td { padding: 0.75rem 1.25rem; font-size: 0.85rem; color: var(--color-text-strong); }
     .detail-body { white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 0.25rem 0; }
-    .detail-meta { font-size: 0.78rem; color: #666; margin-top: 0.4rem; }
+    .detail-meta { font-size: 0.78rem; color: var(--color-text-subtle); margin-top: 0.4rem; }
     td { padding: 0.5rem 0.9rem; font-size: 0.85rem; vertical-align: middle; }
-    .badge-unread { background: #e6f4ea; color: #1e6e34; font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; }
-    .badge-read   { background: #f0f0f0; color: #888;    font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; }
-    .badge-attach { background: #fff3e0; color: #8a4a00; font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.25rem; }
-    .no-results { padding: 1.5rem; text-align: center; color: #888; font-size: 0.9rem; }
+    .badge-unread { background: var(--color-success-bg); color: var(--color-success-text); font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; }
+    .badge-read   { background: var(--color-border-faint); color: var(--color-text-faint);    font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; }
+    .badge-attach { background: var(--color-warning-bg); color: var(--color-warning-text); font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.25rem; }
+    .no-results { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.9rem; }
 </style>
 
 <h1>Mudmail</h1>
@@ -140,7 +140,7 @@
                 </tr>
             </thead>
             <tbody id="mail-body">
-                <tr><td colspan="5" style="padding:1.5rem;text-align:center;color:#888;">Enter a User ID above and click Load.</td></tr>
+                <tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--color-text-faint);">Enter a User ID above and click Load.</td></tr>
             </tbody>
         </table>
         <div class="no-results" id="no-results" style="display:none;">No messages for this user.</div>
@@ -213,7 +213,7 @@
         display.textContent = 'no user selected';
         display.className = 'picker-display';
         document.getElementById('mail-body').innerHTML =
-            '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:#888;">Pick a user above to view their inbox.</td></tr>';
+            '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--color-text-faint);">Pick a user above to view their inbox.</td></tr>';
         document.getElementById('no-results').style.display = 'none';
     };
 
@@ -226,7 +226,7 @@
         openDetails.clear();
 
         document.getElementById('mail-body').innerHTML =
-            '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:#888;">Loading...</td></tr>';
+            '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--color-text-faint);">Loading...</td></tr>';
         document.getElementById('no-results').style.display = 'none';
 
         const res = await AdminAPI.get('/admin/api/v1/mudmail?user_id=' + uid);
@@ -281,7 +281,7 @@
             detailTr.className = 'detail-row';
             detailTr.id = detailId;
             detailTr.style.display = 'none';
-            detailTr.innerHTML = `<td colspan="5"><em style="color:#888;">Loading...</em></td>`;
+            detailTr.innerHTML = `<td colspan="5"><em style="color:var(--color-text-faint);">Loading...</em></td>`;
             tbody.appendChild(detailTr);
         }
     }
@@ -308,7 +308,7 @@
         );
         if (!res.ok) {
             detailTr.querySelector('td').innerHTML =
-                '<span style="color:#8a0000;">Failed to load: ' + escHtml(res.error || 'unknown error') + '</span>';
+                '<span style="color:var(--color-error-text);">Failed to load: ' + escHtml(res.error || 'unknown error') + '</span>';
             return;
         }
 

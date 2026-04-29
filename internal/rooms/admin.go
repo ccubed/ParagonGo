@@ -12,15 +12,16 @@ import (
 )
 
 type RoomSummary struct {
-	RoomId     int    `json:"RoomId"`
-	Zone       string `json:"Zone"`
-	Title      string `json:"Title"`
-	Biome      string `json:"Biome"`
-	ExitCount  int    `json:"ExitCount"`
-	SpawnCount int    `json:"SpawnCount"`
-	IsBank     bool   `json:"IsBank,omitempty"`
-	Pvp        bool   `json:"Pvp,omitempty"`
-	HasScript  bool   `json:"HasScript,omitempty"`
+	RoomId        int    `json:"RoomId"`
+	Zone          string `json:"Zone"`
+	Title         string `json:"Title"`
+	Biome         string `json:"Biome"`
+	ExitCount     int    `json:"ExitCount"`
+	SpawnCount    int    `json:"SpawnCount"`
+	IsBank        bool   `json:"IsBank,omitempty"`
+	Pvp           bool   `json:"Pvp,omitempty"`
+	HasScript     bool   `json:"HasScript,omitempty"`
+	TrainingCount int    `json:"TrainingCount,omitempty"`
 }
 
 type PaginatedRooms struct {
@@ -70,8 +71,8 @@ func GetPaginatedRoomSummaries(zone string, search string, page int, perPage int
 		if perPage < 1 {
 			perPage = 50
 		}
-		if perPage > 200 {
-			perPage = 200
+		if perPage > 1000 {
+			perPage = 1000
 		}
 	}
 
@@ -145,15 +146,16 @@ func GetPaginatedRoomSummaries(zone string, search string, page int, perPage int
 			continue
 		}
 		rooms = append(rooms, RoomSummary{
-			RoomId:     r.RoomId,
-			Zone:       r.Zone,
-			Title:      r.Title,
-			Biome:      r.Biome,
-			ExitCount:  len(r.Exits),
-			SpawnCount: len(r.SpawnInfo),
-			IsBank:     r.IsBank,
-			Pvp:        r.Pvp,
-			HasScript:  r.GetScript() != "",
+			RoomId:        r.RoomId,
+			Zone:          r.Zone,
+			Title:         r.Title,
+			Biome:         r.Biome,
+			ExitCount:     len(r.Exits),
+			SpawnCount:    len(r.SpawnInfo),
+			IsBank:        r.IsBank,
+			Pvp:           r.Pvp,
+			HasScript:     r.GetScript() != "",
+			TrainingCount: len(r.SkillTraining),
 		})
 	}
 

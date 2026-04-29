@@ -33,55 +33,58 @@ const SelectDialog = (() => {
         style.id = 'select-dialog-styles';
         style.textContent = `
             .sd-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+                position: fixed; inset: 0; background: var(--color-overlay);
                 display: flex; align-items: center; justify-content: center;
                 z-index: 9999;
             }
             .sd-modal {
-                background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+                background: var(--color-surface); border-radius: 8px; box-shadow: 0 8px 32px var(--color-shadow);
                 width: 480px; max-width: 95vw; max-height: 80vh;
                 display: flex; flex-direction: column; overflow: hidden;
             }
             .sd-header {
-                padding: 0.85rem 1rem 0.7rem; border-bottom: 1px solid #e5e5e5;
+                padding: 0.85rem 1rem 0.7rem; border-bottom: 1px solid var(--color-border);
                 display: flex; align-items: center; justify-content: space-between;
             }
-            .sd-title { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+            .sd-title { font-size: 1rem; font-weight: 700; color: var(--color-text); }
             .sd-close {
                 background: none; border: none; font-size: 1.25rem; cursor: pointer;
-                color: #888; line-height: 1; padding: 0 0.2rem;
+                color: var(--color-text-faint); line-height: 1; padding: 0 0.2rem;
             }
-            .sd-close:hover { color: #333; }
-            .sd-search-wrap { padding: 0.6rem 1rem; border-bottom: 1px solid #eee; }
+            .sd-close:hover { color: var(--color-text); }
+            .sd-search-wrap { padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-border-light); }
             .sd-search {
-                width: 100%; padding: 0.4rem 0.65rem; border: 1px solid #ccc;
+                width: 100%; padding: 0.4rem 0.65rem; border: 1px solid var(--color-border-medium);
                 border-radius: 4px; font-size: 0.875rem;
+                background: var(--color-surface-raised); color: var(--color-text);
             }
-            .sd-search:focus { outline: 2px solid #1a1a2e; outline-offset: 1px; border-color: transparent; }
-            .sd-list { overflow-y: auto; flex: 1; padding: 0.35rem 0; }
+            .sd-search:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; border-color: transparent; }
+            .sd-list { overflow-y: auto; flex: 1; padding: 0.35rem 0; background: var(--color-surface); }
             .sd-item {
                 padding: 0.5rem 1rem; cursor: pointer; font-size: 0.875rem;
                 display: flex; align-items: center; gap: 0.6rem; user-select: none;
+                color: var(--color-text);
             }
-            .sd-item:hover { background: #f5f7ff; }
-            .sd-item.sd-selected { background: #1a1a2e; color: #fff; }
-            .sd-item input[type="checkbox"] { accent-color: #1a1a2e; flex-shrink: 0; }
+            .sd-item:hover { background: var(--color-row-hover); }
+            .sd-item.sd-selected { background: var(--color-active-bg); color: var(--color-active-text); }
+            .sd-item input[type="checkbox"] { accent-color: var(--color-focus); flex-shrink: 0; }
             .sd-item-detail { margin-left: auto; flex-shrink: 0; display: flex; gap: 1px; align-items: center; font-size: 0.8rem; }
             .sd-item-detail span { display: inline-block; width: 8px; height: 14px; border-radius: 1px; }
-            .sd-empty { padding: 2rem 1rem; text-align: center; color: #aaa; font-size: 0.85rem; }
-            .sd-loading { padding: 2rem 1rem; text-align: center; color: #888; font-size: 0.85rem; }
+            .sd-empty { padding: 2rem 1rem; text-align: center; color: var(--color-text-placeholder); font-size: 0.85rem; }
+            .sd-loading { padding: 2rem 1rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
             .sd-footer {
-                padding: 0.65rem 1rem; border-top: 1px solid #eee;
+                padding: 0.65rem 1rem; border-top: 1px solid var(--color-border-light);
                 display: flex; justify-content: flex-end; gap: 0.5rem;
+                background: var(--color-surface);
             }
             .sd-btn {
                 padding: 0.4rem 1rem; border-radius: 4px; font-size: 0.85rem;
                 font-weight: 600; cursor: pointer; border: 1px solid transparent;
             }
-            .sd-btn-cancel { background: #f0f0f0; color: #444; border-color: #ccc; }
-            .sd-btn-cancel:hover { background: #e5e5e5; }
-            .sd-btn-confirm { background: #1a1a2e; color: #fff; }
-            .sd-btn-confirm:hover { background: #2d2d4e; }
+            .sd-btn-cancel { background: var(--color-btn-cancel-bg); color: var(--color-btn-cancel-text); border-color: var(--color-border-medium); }
+            .sd-btn-cancel:hover { background: var(--color-btn-cancel-hover); }
+            .sd-btn-confirm { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-text); }
+            .sd-btn-confirm:hover { background: var(--color-btn-primary-hover); }
         `;
         document.head.appendChild(style);
     }
