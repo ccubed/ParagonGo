@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -263,6 +265,12 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// Build the full file path.
 	fullPath := filepath.Join(httpRoot, reqPath)
+
+	if filepath.Base(fullPath) == "_all.js" {
+		if serveConcatenatedJS(w, r, filepath.Dir(fullPath)) {
+			return
+		}
+	}
 
 	// If the path is a directory, look for an index.html.
 	info, err := os.Stat(fullPath)
@@ -752,12 +760,70 @@ func Shutdown() {
 	}
 }
 
+func serveConcatenatedJS(w http.ResponseWriter, r *http.Request, dir string) bool {
+	var names []string
+
+	if raw := r.URL.RawQuery; raw != "" {
+		seen := map[string]bool{}
+		for _, name := range strings.Split(raw, ",") {
+			if strings.ContainsAny(name, `/\`) || name != filepath.Base(name) {
+				continue
+			}
+			if name == "" || name == "." || name == "_all.js" || !strings.HasSuffix(name, ".js") {
+				continue
+			}
+			if seen[name] {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+				continue
+			}
+			seen[name] = true
+			names = append(names, name)
+		}
+	} else {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return false
+		}
+		for _, e := range entries {
+			if !e.IsDir() && strings.HasSuffix(e.Name(), ".js") && e.Name() != "_all.js" {
+				names = append(names, e.Name())
+			}
+		}
+		sort.Strings(names)
+	}
+
+	if len(names) == 0 {
+		return false
+	}
+
+	var buf bytes.Buffer
+	for _, name := range names {
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			continue
+		}
+		buf.Write(data)
+		buf.WriteByte('\n')
+	}
+
+	w.Header().Set("Content-Type", "application/javascript")
+	w.Write(buf.Bytes())
+	return true
+}
+
 // serveAdminStaticFile serves static assets from the admin HTML directory.
 // The full URL path relative to /admin/ is preserved so subdirectories work.
 func serveAdminStaticFile(w http.ResponseWriter, r *http.Request) {
 	adminRoot := filepath.Clean(configs.GetFilePathsConfig().AdminHtml.String())
 	rel := strings.TrimPrefix(r.URL.Path, "/admin")
 	fullPath := filepath.Join(adminRoot, filepath.Clean(rel))
+	if filepath.Base(fullPath) == "_all.js" {
+		if serveConcatenatedJS(w, r, filepath.Dir(fullPath)) {
+			return
+		}
+	}
 	http.ServeFile(w, r, fullPath)
 }
 

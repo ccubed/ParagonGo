@@ -1,6 +1,5 @@
-_datafiles/html/public/static/js/xterm.4.19.0.js
-_datafiles/html/public/static/js/xterm-addon-fit.js
-_datafiles/html/public/static/js/winbox.bundle.min.js
+_datafiles/html/public/static/js/xterm/xterm.4.19.0.js
+_datafiles/html/public/static/js/xterm/xterm-addon-fit.js
 _datafiles/html/admin/static/js/htmx.2.0.3.js
 _datafiles/html/admin/static/js/highlight.js
 _datafiles/html/admin/static/js/ansitags.js
