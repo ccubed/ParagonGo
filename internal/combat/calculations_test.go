@@ -110,10 +110,10 @@ func TestHitChance(t *testing.T) {
 		wantMin        int
 		wantMax        int
 	}{
-		{0, 0, 25, 25},     // equal -> min (25)
-		{100, 0, 100, 100}, // full advantage -> max (100)
-		{50, 0, 50, 50},    // half delta -> floor(0.5*100)=50
-		{0, 100, 25, 25},   // no advantage -> min (25)
+		{0, 0, 50, 50},     // equal -> min (25)
+		{100, 0, 150, 150}, // full advantage -> max (100)
+		{50, 0, 100, 100},  // half delta -> floor(0.5*100)=50
+		{0, 100, 50, 50},   // no advantage -> min (25)
 	}
 	for _, tt := range tests {
 		got := hitChance(tt.atkSpd, tt.defSpd)

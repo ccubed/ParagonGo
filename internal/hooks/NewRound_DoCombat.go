@@ -451,6 +451,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				}
 			}
 
+			if roundResult.DamageToSource != 0 {
+				events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
+			}
+			if roundResult.DamageToTarget != 0 {
+				events.AddToQueue(events.CharacterVitalsChanged{UserId: defUser.UserId})
+			}
+
 			if user.Character.Health <= 0 || defUser.Character.Health <= 0 {
 				defUser.Character.EndAggro()
 				user.Character.EndAggro()
@@ -596,6 +603,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				}
 
 				defMob.Command(fmt.Sprintf("attack @%d", user.UserId)) // @ means player
+			}
+
+			if roundResult.DamageToSource != 0 {
+				events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 			}
 
 			if user.Character.Health <= 0 || defMob.Character.Health <= 0 {
@@ -925,6 +936,10 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 						}
 					}
 				}
+			}
+
+			if roundResult.DamageToTarget != 0 {
+				events.AddToQueue(events.CharacterVitalsChanged{UserId: defUser.UserId})
 			}
 
 			if mob.Character.Health <= 0 || defUser.Character.Health <= 0 {

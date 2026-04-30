@@ -14,101 +14,165 @@
 
 (function() {
 
+    const SEGMENT_COUNT = 20;
+
     injectStyles(`
         #vitals-bars {
             height: 100%;
-        }
-
-        #health-bar {
-            position: relative;
-            width: 100%;
-            height: 50%;
-            background: linear-gradient(to right, var(--t-hp-low) 0%, var(--t-hp-mid) 50%, var(--t-hp-high) 100%);
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
-            overflow: hidden;
-            margin: 0 2px;
-        }
-
-        #health-bar .health-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--t-bar-empty);
-            float: right;
-            transition: width 0.4s ease-out;
-        }
-
-        #health-bar .health-text {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            font-family: monospace;
-            font-size: 0.85em;
-            color: var(--t-text-white);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
+            gap: 6px;
+            padding: 4px 6px;
+            box-sizing: border-box;
         }
 
-        #mana-bar {
-            position: relative;
-            width: 100%;
-            height: 50%;
-            background: linear-gradient(to right, var(--t-mana-from) 0%, var(--t-mana-to) 100%);
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
-            overflow: hidden;
-            margin: 0;
-        }
-
-        #mana-bar .mana-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--t-bar-empty);
-            float: right;
-            transition: width 0.4s ease-out;
-        }
-
-        #mana-bar .mana-text {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+        .vitals-row {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vitals-label-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 0 1px;
+        }
+
+        .vitals-label {
             font-family: monospace;
-            font-size: 0.85em;
-            color: var(--t-text-white);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
+            font-size: 0.7em;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--t-text-secondary);
+        }
+
+        .vitals-value {
+            font-family: monospace;
+            font-size: 0.72em;
+            color: var(--t-text-muted);
+            letter-spacing: 0.04em;
+        }
+
+        .vitals-track {
+            display: flex;
+            gap: 2px;
+            height: 14px;
+            align-items: stretch;
+        }
+
+        .vitals-segment {
+            flex: 1;
+            border-radius: 2px;
+            transition: background 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+            position: relative;
+        }
+
+        /* HP segments - filled color driven by fill level */
+        .vitals-segment.hp-filled-high {
+            background: var(--t-hp-high);
+            box-shadow: 0 0 4px color-mix(in srgb, var(--t-hp-high) 50%, transparent);
+        }
+
+        .vitals-segment.hp-filled-mid {
+            background: var(--t-hp-mid);
+            box-shadow: 0 0 4px color-mix(in srgb, var(--t-hp-mid) 40%, transparent);
+        }
+
+        .vitals-segment.hp-filled-low {
+            background: var(--t-hp-low);
+            box-shadow: 0 0 5px color-mix(in srgb, var(--t-hp-low) 55%, transparent);
+        }
+
+        /* Mana segments */
+        .vitals-segment.mp-filled {
+            background: linear-gradient(to bottom, var(--t-mana-to), var(--t-mana-from));
+            box-shadow: 0 0 4px color-mix(in srgb, var(--t-mana-to) 45%, transparent);
+        }
+
+        /* Empty segments */
+        .vitals-segment.seg-empty {
+            background: var(--t-bar-empty);
+            box-shadow: none;
+            opacity: 0.55;
+        }
+
+        /* Inset groove effect on empty */
+        .vitals-segment.seg-empty::after {
+            content: '';
+            display: block;
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 60%);
+        }
+
+        /* Pulse animation on low HP */
+        @keyframes vitals-pulse-low {
+            0%   { opacity: 1; }
+            50%  { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .vitals-track.hp-critical .vitals-segment.hp-filled-low {
+            animation: vitals-pulse-low 1.1s ease-in-out infinite;
         }
     `);
 
     // -----------------------------------------------------------------------
     // DOM factory
-    // Creates the vitals bar elements and appends them to document.body
-    // (hidden until WinBox mounts them).
     // -----------------------------------------------------------------------
+    function makeSegments(count, trackClass) {
+        const track = document.createElement('div');
+        track.className = 'vitals-track ' + trackClass;
+        for (let i = 0; i < count; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'vitals-segment seg-empty';
+            track.appendChild(seg);
+        }
+        return track;
+    }
+
     function createDOM() {
         const container = document.createElement('div');
         container.id = 'vitals-bars';
 
-        const healthBar = document.createElement('div');
-        healthBar.id = 'health-bar';
-        healthBar.innerHTML =
-            '<div class="health-fill" style="width:100%;"></div>' +
-            '<span class="health-text">100%</span>';
+        // HP row
+        const hpRow = document.createElement('div');
+        hpRow.className = 'vitals-row';
 
-        const manaBar = document.createElement('div');
-        manaBar.id = 'mana-bar';
-        manaBar.innerHTML =
-            '<div class="mana-fill" style="width:100%;"></div>' +
-            '<span class="mana-text">100%</span>';
+        const hpLabelRow = document.createElement('div');
+        hpLabelRow.className = 'vitals-label-row';
+        hpLabelRow.innerHTML =
+            '<span class="vitals-label">HP</span>' +
+            '<span class="vitals-value" id="vitals-hp-value">-- / --</span>';
 
-        container.appendChild(healthBar);
-        container.appendChild(manaBar);
+        const hpTrack = makeSegments(SEGMENT_COUNT, 'hp-track');
+        hpTrack.id = 'vitals-hp-track';
 
-        // Must be in the DOM before WinBox mounts it
+        hpRow.appendChild(hpLabelRow);
+        hpRow.appendChild(hpTrack);
+
+        // MP row
+        const mpRow = document.createElement('div');
+        mpRow.className = 'vitals-row';
+
+        const mpLabelRow = document.createElement('div');
+        mpLabelRow.className = 'vitals-label-row';
+        mpLabelRow.innerHTML =
+            '<span class="vitals-label">MP</span>' +
+            '<span class="vitals-value" id="vitals-mp-value">-- / --</span>';
+
+        const mpTrack = makeSegments(SEGMENT_COUNT, 'mp-track');
+        mpTrack.id = 'vitals-mp-track';
+
+        mpRow.appendChild(mpLabelRow);
+        mpRow.appendChild(mpTrack);
+
+        container.appendChild(hpRow);
+        container.appendChild(mpRow);
+
         document.body.appendChild(container);
         return container;
     }
@@ -119,7 +183,7 @@
     const win = new VirtualWindow('Vitals', {
         dock:          'left',
         defaultDocked: true,
-        dockedHeight:  60,
+        dockedHeight:  100,
         factory() {
             const el = createDOM();
             return {
@@ -130,39 +194,62 @@
                 x:          0,
                 y:          0,
                 width:      300,
-                height:     20 + 40,
+                height:     20 + 100,
                 header:     20,
-                bottom:     60,
+                bottom:     72,
             };
         },
     });
+
+    // -----------------------------------------------------------------------
+    // Segment update helpers
+    // -----------------------------------------------------------------------
+    function hpClass(pct) {
+        if (pct > 60) return 'hp-filled-high';
+        if (pct > 25) return 'hp-filled-mid';
+        return 'hp-filled-low';
+    }
+
+    function updateTrack(trackEl, filledCount, filledClass, isCritical) {
+        const segs = trackEl.children;
+        for (let i = 0; i < segs.length; i++) {
+            const seg = segs[i];
+            if (i < filledCount) {
+                seg.className = 'vitals-segment ' + filledClass;
+            } else {
+                seg.className = 'vitals-segment seg-empty';
+            }
+        }
+        if (isCritical !== undefined) {
+            trackEl.classList.toggle('hp-critical', isCritical);
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Update logic
     // -----------------------------------------------------------------------
     function updateBars() {
         const vitals = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Vitals;
-        if (!vitals) {
-            return;
-        }
+        if (!vitals) return;
 
         win.open();
-        if (!win.isOpen()) {
-            return;
-        }
+        if (!win.isOpen()) return;
 
-        const hp  = Math.max(0, Math.min(100, Math.floor(vitals.hp  / vitals.hp_max  * 100)));
-        const sp  = Math.max(0, Math.min(100, Math.floor(vitals.sp  / vitals.sp_max  * 100)));
+        const hpPct = Math.max(0, Math.min(100, vitals.hp_max > 0 ? Math.floor(vitals.hp / vitals.hp_max * 100) : 0));
+        const mpPct = Math.max(0, Math.min(100, vitals.sp_max > 0 ? Math.floor(vitals.sp / vitals.sp_max * 100) : 0));
 
-        const healthFill = document.querySelector('#health-bar .health-fill');
-        const healthText = document.querySelector('#health-bar .health-text');
-        healthFill.style.width  = (100 - hp) + '%';
-        healthText.textContent  = vitals.hp + '/' + vitals.hp_max + ' hp';
+        const hpFilled = Math.round(hpPct / 100 * SEGMENT_COUNT);
+        const mpFilled = Math.round(mpPct / 100 * SEGMENT_COUNT);
 
-        const manaFill = document.querySelector('#mana-bar .mana-fill');
-        const manaText = document.querySelector('#mana-bar .mana-text');
-        manaFill.style.width  = (100 - sp) + '%';
-        manaText.textContent  = vitals.sp + '/' + vitals.sp_max + ' mp';
+        const hpTrack = document.getElementById('vitals-hp-track');
+        const mpTrack = document.getElementById('vitals-mp-track');
+        const hpVal   = document.getElementById('vitals-hp-value');
+        const mpVal   = document.getElementById('vitals-mp-value');
+
+        if (hpTrack) updateTrack(hpTrack, hpFilled, hpClass(hpPct), hpPct <= 25);
+        if (mpTrack) updateTrack(mpTrack, mpFilled, 'mp-filled');
+        if (hpVal)  hpVal.textContent  = vitals.hp + ' / ' + vitals.hp_max;
+        if (mpVal)  mpVal.textContent  = vitals.sp + ' / ' + vitals.sp_max;
     }
 
     // -----------------------------------------------------------------------
@@ -172,9 +259,6 @@
         window:       win,
         gmcpHandlers: ['Char.Vitals', 'Char'],
         onGMCP(namespace) {
-            // Both Char and Char.Vitals route here.
-            // The GMCP store is already updated before onGMCP is called,
-            // so we just check for Vitals data and render.
             updateBars();
         },
     });

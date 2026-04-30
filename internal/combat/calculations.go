@@ -60,11 +60,12 @@ func damageBonus(atkStr, defStr int) int {
 
 // hitChance returns a hit probability in [ToHitMin, ToHitMax] based on the
 // Speed stat delta between attacker and defender.
+// Base chance to hit is 50, and modified from there.
 func hitChance(atkSpd, defSpd int) int {
 	cfg := configs.GetCombatConfig()
 	minHit := int(cfg.ToHitMin)
 	maxHit := int(cfg.ToHitMax)
-	actual := int(math.Floor(statDelta(atkSpd, defSpd) * float64(maxHit)))
+	actual := 50 + int(math.Floor(statDelta(atkSpd, defSpd)*float64(maxHit)))
 	if actual < minHit {
 		actual = minHit
 	}

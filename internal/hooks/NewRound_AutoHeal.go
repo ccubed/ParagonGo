@@ -39,6 +39,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		}
 
 		healthStart := user.Character.Health
+		manaStart := user.Character.Mana
 
 		if user.Character.Health < 1 {
 
@@ -65,7 +66,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		}
 
 		// If it has changed, send an update
-		if user.Character.Health-healthStart != 0 {
+		if user.Character.Health != healthStart || user.Character.Mana != manaStart {
 
 			// Trigger a redraw, but only if the users prompt has changed.
 			events.AddToQueue(events.RedrawPrompt{UserId: user.UserId, OnlyIfChanged: true}, 100)

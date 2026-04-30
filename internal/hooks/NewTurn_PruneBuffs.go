@@ -48,6 +48,8 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 
 					user.Character.Validate()
 
+					events.AddToQueue(events.CharacterVitalsChanged{UserId: uId})
+
 					if logOff {
 						mudlog.Info("MEDITATION LOGOFF")
 						events.AddToQueue(events.System{Command: "logoff", Data: uId})

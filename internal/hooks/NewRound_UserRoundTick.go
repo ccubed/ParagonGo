@@ -127,7 +127,12 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 				}
 
 				// Recalculate all stats at the end of the round tick
+				hBefore := user.Character.Health
+				mBefore := user.Character.Mana
 				user.Character.Validate()
+				if user.Character.Health != hBefore || user.Character.Mana != mBefore {
+					events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
+				}
 
 				// Only do this every 15 rounds to keep spam down.
 				if evt.RoundNumber%15 == 0 {

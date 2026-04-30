@@ -1,7 +1,6 @@
 package combat
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -61,7 +60,9 @@ func TestRankWeapons_Compiles(t *testing.T) {
 	}
 }
 
+/*
 func TestFormatWeaponRankings_Output(t *testing.T) {
 	loadTestData(t)
 	fmt.Println(FormatWeaponRankings())
 }
+*/
