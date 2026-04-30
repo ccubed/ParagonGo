@@ -266,13 +266,12 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// Build the full file path.
 	fullPath := filepath.Join(httpRoot, reqPath)
 
-	if strings.HasPrefix(filepath.Base(fullPath), "_all.") {
-		concatSuffix := strings.TrimPrefix(filepath.Base(fullPath), "_all")
-		// Limit files for now
-		if concatSuffix != ".css" && concatSuffix != ".js" {
-			return
-		}
-		if serveConcatenated(w, r, filepath.Dir(fullPath), concatSuffix) {
+	fileExt := filepath.Ext(fullPath)
+	fileBase := filepath.Base(fullPath)
+
+	// Limit files for now
+	if fileBase == "_all.css" || fileBase == "_all.js" {
+		if serveConcatenated(w, r, filepath.Dir(fullPath), fileExt) {
 			return
 		}
 	}
@@ -287,8 +286,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		fullPath = filepath.Join(fullPath, "index.html")
 	}
 
-	fileExt := filepath.Ext(fullPath)
-	fileBase := filepath.Base(fullPath)
+	fileExt = filepath.Ext(fullPath)
+	fileBase = filepath.Base(fullPath)
 
 	// All template files to load from the filesystem
 	templateFiles := []string{}
@@ -771,11 +770,12 @@ func serveConcatenated(w http.ResponseWriter, r *http.Request, dir string, suffi
 	if raw := r.URL.RawQuery; raw != "" {
 		seen := map[string]bool{}
 		for _, name := range strings.Split(raw, ",") {
+
 			if strings.ContainsAny(name, `/\`) || name != filepath.Base(name) {
 				continue
 			}
 
-			if name == "" || name == "." || !strings.HasPrefix(name, "_all.") || !strings.HasSuffix(name, suffix) {
+			if name == "" || name == "." || strings.HasPrefix(name, "_all.") || !strings.HasSuffix(name, suffix) {
 				continue
 			}
 			if seen[name] {
@@ -831,16 +831,15 @@ func serveAdminStaticFile(w http.ResponseWriter, r *http.Request) {
 	rel := strings.TrimPrefix(r.URL.Path, "/admin")
 	fullPath := filepath.Join(adminRoot, filepath.Clean(rel))
 
-	if strings.HasPrefix(filepath.Base(fullPath), "_all.") {
-		concatSuffix := strings.TrimPrefix(filepath.Base(fullPath), "_all")
-		// Limit files for now
-		if concatSuffix != ".css" && concatSuffix != ".js" {
-			return
-		}
-		if serveConcatenated(w, r, filepath.Dir(fullPath), concatSuffix) {
+	fileExt := filepath.Ext(fullPath)
+	fileBase := filepath.Base(fullPath)
+
+	if fileBase == "_all.css" || fileBase == "_all.js" {
+		if serveConcatenated(w, r, filepath.Dir(fullPath), fileExt) {
 			return
 		}
 	}
+
 	http.ServeFile(w, r, fullPath)
 }
 
