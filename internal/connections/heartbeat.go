@@ -31,6 +31,7 @@ type heartbeatManager struct {
 	config   HeartbeatConfig
 	stopChan chan struct{}
 	wg       sync.WaitGroup
+	stopOnce sync.Once
 }
 
 func newHeartbeatManager(cd *ConnectionDetails, config HeartbeatConfig) *heartbeatManager {
@@ -105,6 +106,8 @@ func (hm *heartbeatManager) writePing() error {
 }
 
 func (hm *heartbeatManager) stop() {
-	close(hm.stopChan)
+	hm.stopOnce.Do(func() {
+		close(hm.stopChan)
+	})
 	hm.wg.Wait()
 }

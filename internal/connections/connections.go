@@ -133,6 +133,7 @@ func Kick(id ConnectionId, reason string) (err error) {
 		// keep track of the number of disconnects
 		disconnectCounter++
 		// remove the connection from the map
+		delete(netConnections, id)
 		mudlog.Info("connection kicked", "connectionId", id, "remoteAddr", cd.RemoteAddr().String(), `reason`, reason)
 
 		return nil
