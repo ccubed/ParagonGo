@@ -1,3 +1,12 @@
+/**
+ * mapper-ui.js -- UI controls and panels for the map editor.
+ *
+ * Owns the tab bar, zoom/spacing controls, camera easing, Z-level buttons,
+ * room info panel, tooltip, stats line, zone dropdown, local room creation,
+ * coordinate conversion, and save/discard workflow. All DOM interaction
+ * funnels through a `dom` refs object set at init time so the module stays
+ * decoupled from specific element IDs.
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperState, MapperRender, MapperEvents, MapperCtxMenu, AdminAPI,
    symbolForRoom, colorForSymbol, escapeHtml, smoothstep,
@@ -8,7 +17,7 @@
 var MapperUI = (function() {
 
     // =====================================================================
-    // DOM references (set via init)
+    //  DOM references (set via init)
     // =====================================================================
 
     var dom = {
@@ -44,7 +53,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Tab switching
+    //  Tab switching
     // =====================================================================
 
     function switchTab(tab) {
@@ -53,6 +62,7 @@ var MapperUI = (function() {
         document.querySelectorAll('.mapper-tabs .tab-btn').forEach(function(b) {
             b.classList.toggle('active', b.dataset.tab === tab);
         });
+        // Spacing slider only applies to the 3D projection
         if (dom.spacingCtrlEl) dom.spacingCtrlEl.style.display = tab === '3d' ? '' : 'none';
         MapperRender.resizeCanvas();
         updateZButtons();
@@ -60,7 +70,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Zoom / controls
+    //  Zoom / spacing controls
     // =====================================================================
 
     function zoomIn() {
@@ -85,6 +95,10 @@ var MapperUI = (function() {
         MapperRender.render();
     }
 
+    // =====================================================================
+    //  Camera centering and easing
+    // =====================================================================
+
     function centerCamera() {
         MapperState.camera.panOffsetX = 0;
         MapperState.camera.panOffsetY = 0;
@@ -98,20 +112,27 @@ var MapperUI = (function() {
         }
     }
 
+    /** Smoothly animate the camera to (tx, ty, tz) using requestAnimationFrame. */
     function setCameraTarget(tx, ty, tz) {
         var cam = MapperState.camera;
         cam.panOffsetX = 0;
         cam.panOffsetY = 0;
         if (typeof tz === 'undefined') tz = cam.cameraZ;
+
+        // Skip animation when easing is disabled
         if (CENTER_EASE_DURATION <= 0) {
             cam.cameraX = tx; cam.cameraY = ty; cam.cameraZ = tz;
             MapperRender.render();
             return;
         }
+
+        // Cancel any in-progress ease before starting a new one
         if (cam.easeRafId !== null) { cancelAnimationFrame(cam.easeRafId); cam.easeRafId = null; }
+
         cam.easeStartX = cam.cameraX; cam.easeStartY = cam.cameraY; cam.easeStartZ = cam.cameraZ;
         cam.easeTargetX = tx; cam.easeTargetY = ty; cam.easeTargetZ = tz;
         cam.easeStartTime = null;
+
         function step(ts) {
             if (cam.easeStartTime === null) cam.easeStartTime = ts;
             var t = Math.min((ts - cam.easeStartTime) / 1000 / CENTER_EASE_DURATION, 1);
@@ -126,15 +147,18 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Z-level controls
+    //  Z-level buttons
     // =====================================================================
 
     function updateZButtons() {
         if (!dom.zButtonsEl) return;
         dom.zButtonsEl.innerHTML = '';
         if (MapperState.data.zLevels.length <= 1) return;
+
         var cam = MapperState.camera;
         var current = cam.activeTab === '3d' ? cam.activeZ3d : cam.activeZ2d;
+
+        // Reverse so the highest Z is at the top, matching spatial intuition
         MapperState.data.zLevels.slice().reverse().forEach(function(z) {
             var btn = document.createElement('button');
             btn.textContent = z;
@@ -159,7 +183,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Info panel
+    //  Info panel (single room detail or multi-select summary)
     // =====================================================================
 
     function updateInfoPanel() {
@@ -176,7 +200,7 @@ var MapperUI = (function() {
 
         var html = '';
 
-        // Multi-select summary
+        // --- Multi-select summary ---
         if (MapperState.selected.size > 1) {
             var ids = Array.from(MapperState.selected).sort(function(a, b) { return a - b; });
             html = '<div class="info-row"><span class="info-label">Selected</span><span class="info-value">' + ids.length + ' rooms</span></div>';
@@ -190,7 +214,7 @@ var MapperUI = (function() {
             return;
         }
 
-        // Single room detail
+        // --- Single room detail ---
         var selectedRoomId = Array.from(MapperState.selected)[0];
         var room = MapperState.data.rooms.get(selectedRoomId);
         if (!room) {
@@ -234,7 +258,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Tooltip
+    //  Tooltip
     // =====================================================================
 
     function showTooltip(mx, my, room, id) {
@@ -257,6 +281,7 @@ var MapperUI = (function() {
         positionTooltip(mx, my);
     }
 
+    /** Keep the tooltip on-screen by flipping sides when it would overflow. */
     function positionTooltip(mx, my) {
         if (!dom.tooltip) return;
         var ttW = dom.tooltip.offsetWidth, ttH = dom.tooltip.offsetHeight;
@@ -271,6 +296,7 @@ var MapperUI = (function() {
         dom.tooltip.style.top  = top + 'px';
     }
 
+    /** Brief delay before hiding prevents flicker when moving between rooms. */
     function hideTooltip() {
         if (!dom.tooltip) return;
         var cam = MapperState.camera;
@@ -280,7 +306,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Loading indicator
+    //  Loading indicator
     // =====================================================================
 
     function showLoading(show) {
@@ -289,7 +315,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Stats display
+    //  Stats display
     // =====================================================================
 
     function updateStats() {
@@ -307,7 +333,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Zone dropdown
+    //  Zone dropdown
     // =====================================================================
 
     function populateZoneDropdown() {
@@ -324,7 +350,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Local room creation (deferred save)
+    //  Local room creation (deferred until save)
     // =====================================================================
 
     function createRoomAt(gx, gy, gz) {
@@ -338,9 +364,13 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Coordinate conversion for saving
+    //  Server coordinate conversion
     // =====================================================================
 
+    /**
+     * Translate world-space coordinates back to zone-relative server
+     * coordinates by subtracting the zone offset applied at load time.
+     */
     function toServerCoords(room) {
         if (!room) return { x: 0, y: 0, z: 0 };
         var data = MapperState.data;
@@ -351,7 +381,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Save / Discard
+    //  Save / Discard
     // =====================================================================
 
     async function saveAllChanges() {
@@ -364,7 +394,7 @@ var MapperUI = (function() {
             await AdminAPI.delete('/admin/api/v1/rooms/' + dirty.deletedRooms[i]);
         }
 
-        // 2. Create new rooms on server
+        // 2. Create new rooms on server and build a temp-to-real ID map
         var tempToReal = new Map();
         for (var entry of dirty.createdRooms) {
             var tempId = entry[0], info = entry[1];
@@ -402,7 +432,9 @@ var MapperUI = (function() {
             }
         }
 
-        // 4. Handle exit changes (grouped by room: removals and additions)
+        // 4. Apply exit changes (grouped by room: removals then additions)
+        //    We merge against the server's current exit map so we don't
+        //    clobber exits that were not touched locally.
         var exitChangesByRoom = new Map();
         dirty.exitRemovals.forEach(function(er) {
             var rId = er.roomId < 0 ? (tempToReal.get(er.roomId) || er.roomId) : er.roomId;
@@ -450,7 +482,7 @@ var MapperUI = (function() {
     }
 
     // =====================================================================
-    // Public API
+    //  Public API
     // =====================================================================
 
     return {

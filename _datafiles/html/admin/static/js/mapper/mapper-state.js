@@ -2,11 +2,32 @@
 /* globals MapperEvents, AdminAPI, symbolForRoom, colorForSymbol, escapeHtml, isDirectionalExit, DIRECTION_DELTAS, isExitConstraintSatisfied, buildDragConstraints, breakExitLocally, BIOME_SYMBOLS, biomeEnvMap */
 'use strict';
 
+/**
+ * MapperState — single source of truth for the admin map editor.
+ *
+ * Owns all mutable state: room/zone data, camera, selection, dirty-change
+ * tracking, and the various modal interaction modes (exit-draw, quick-build,
+ * room-drag).  Renderer and input modules read from and write to these
+ * objects; MapperState never touches the DOM beyond the changelog panel.
+ *
+ * Public API (returned IIFE object):
+ *   State objects  — data, selected, dirty, camera, roomDrag, exitDrawMode,
+ *                    quickBuildMode, hoveredRoomId, hoveredGridCell, selRect,
+ *                    mouseState
+ *   Mutations      — isDirty, updateSaveButtons, logChange, roomLabel,
+ *                    clearDirty, moveRoomLocally, breakExitLocally,
+ *                    addExitLocally, deleteRoomLocally, createRoomLocally,
+ *                    applyGroupMove, selectRoom, toggleRoomSelection
+ *   Data loading   — loadBiomes, loadAllRooms, buildCrossZoneGraph,
+ *                    applyZoneLayout, centerOnZone
+ *   Registration   — setDom, setRenderFn, setUpdateFns
+ */
 var MapperState = (function() {
 
-    // =====================================================================
-    // Callback registrations (break circular dependencies)
-    // =====================================================================
+    // --- Callback Registrations ---
+    // Break circular dependencies: other modules hand us their functions at
+    // init time so we can trigger renders and UI updates without importing
+    // those modules directly.
 
     var _render = function() {};
     var _updateInfoPanel = function() {};
@@ -22,9 +43,7 @@ var MapperState = (function() {
         if (fns.showLoading) _showLoading = fns.showLoading;
     }
 
-    // =====================================================================
-    // DOM references (set via setDom)
-    // =====================================================================
+    // --- DOM References ---
 
     var dom = {
         saveCtrlEl: null,
@@ -40,9 +59,7 @@ var MapperState = (function() {
         if (domRefs.clEntriesEl) dom.clEntriesEl = domRefs.clEntriesEl;
     }
 
-    // =====================================================================
-    // Data layer
-    // =====================================================================
+    // --- Data Layer ---
 
     var mapperData = {
         allZones: [],
@@ -56,18 +73,17 @@ var MapperState = (function() {
         visibleZones: new Set()
     };
 
-    // =====================================================================
-    // Selection
-    // =====================================================================
+    // --- Selection State ---
 
     var selectedRoomIds = new Set();
-    var hoveredRoomId   = null;
-    var hoveredGridCell  = null; // { gx, gy } when hovering an empty 2D cell
+    var hoveredRoomId = null;
+    var hoveredGridCell = null; // { gx, gy } when hovering an empty 2D cell
     var selRect = { active: false, startCx: 0, startCy: 0, endCx: 0, endCy: 0 };
 
-    // =====================================================================
-    // Deferred save tracking
-    // =====================================================================
+    // --- Dirty Tracking ---
+    // Accumulates local edits that haven't been persisted to the server yet.
+    // Each category is tracked separately so the save handler can batch them
+    // into the right API calls.
 
     var dirty = {
         movedRooms: new Map(),      // roomId -> { origGx, origGy, origGz }
@@ -78,9 +94,7 @@ var MapperState = (function() {
         nextTempId: -1
     };
 
-    // =====================================================================
-    // Exit drawing mode
-    // =====================================================================
+    // --- Exit Draw Mode ---
 
     var exitDrawMode = {
         active: false,
@@ -90,9 +104,7 @@ var MapperState = (function() {
         _mouseCx: 0, _mouseCy: 0
     };
 
-    // =====================================================================
-    // Quick build mode
-    // =====================================================================
+    // --- Quick Build Mode ---
 
     var quickBuildMode = {
         active: false,
@@ -100,25 +112,21 @@ var MapperState = (function() {
         sourceGx: 0, sourceGy: 0, sourceGz: 0
     };
 
-    // =====================================================================
-    // Room drag state
-    // =====================================================================
+    // --- Room Drag State ---
 
     var roomDrag = {
         active: false,
         anchorId: null,
         group: new Map(),       // roomId -> { startGx, startGy }
         deltaGx: 0, deltaGy: 0,
-        pixelDx: 0, pixelDy: 0,   // raw pixel offset from anchor's canvas position at drag start
+        pixelDx: 0, pixelDy: 0,
         anchorCanvasPx: 0, anchorCanvasPy: 0,
         droppable: false,
         brokenExits: [],
         allConstraints: []
     };
 
-    // =====================================================================
-    // Camera state
-    // =====================================================================
+    // --- Camera Primitives ---
 
     var activeTab = localStorage.getItem('mapper.activeTab') === '3d' ? '3d' : '2d';
     var zoomScale = 1.0;
@@ -137,17 +145,15 @@ var MapperState = (function() {
     })();
     var tooltipHideTimer = null;
 
-    // =====================================================================
-    // Mouse state
-    // =====================================================================
+    // --- Mouse State Primitives ---
 
     var mousedownRoomId = null;
     var mousedownPxX = 0, mousedownPxY = 0;
     var mousedownShift = false;
 
-    // =====================================================================
-    // Camera object (exposed)
-    // =====================================================================
+    // --- Camera Object (Exposed) ---
+    // Getter/setter proxy so external modules can read and write camera
+    // values while the actual variables stay private to this closure.
 
     var camera = {
         get activeTab() { return activeTab; },
@@ -200,9 +206,7 @@ var MapperState = (function() {
         set tooltipHideTimer(v) { tooltipHideTimer = v; }
     };
 
-    // =====================================================================
-    // Mouse state object (exposed)
-    // =====================================================================
+    // --- Mouse State Object (Exposed) ---
 
     var mouseState = {
         get mousedownRoomId() { return mousedownRoomId; },
@@ -215,9 +219,7 @@ var MapperState = (function() {
         set mousedownShift(v) { mousedownShift = v; }
     };
 
-    // =====================================================================
-    // Dirty tracking mutations
-    // =====================================================================
+    // --- Dirty Tracking Helpers ---
 
     function isDirty() {
         return dirty.movedRooms.size > 0 || dirty.exitRemovals.length > 0 ||
@@ -266,23 +268,28 @@ var MapperState = (function() {
         updateSaveButtons();
     }
 
-    // =====================================================================
-    // Local mutations
-    // =====================================================================
+    // --- Local Mutations ---
+    // These apply edits to the in-memory data immediately so the renderer
+    // reflects changes before the server round-trip.  Each mutation also
+    // records what changed in the `dirty` tracker so it can be persisted
+    // later.
 
     function moveRoomLocally(roomId, newGx, newGy) {
         var room = mapperData.rooms.get(roomId);
         if (!room) return;
+
         var wasTracked = dirty.movedRooms.has(roomId);
         if (!wasTracked) {
             dirty.movedRooms.set(roomId, { origGx: room.MapX, origGy: room.MapY, origGz: room.MapZ });
         }
+
         var oldGx = room.MapX, oldGy = room.MapY;
         mapperData.roomsByCoord.delete(room.MapX + ',' + room.MapY + ',' + room.MapZ);
         room.MapX = newGx;
         room.MapY = newGy;
         room.HasCoordinates = true;
         mapperData.roomsByCoord.set(newGx + ',' + newGy + ',' + room.MapZ, roomId);
+
         logChange('cl-move', '<span class="cl-action">MOVE</span> ' + roomLabel(roomId) + ' (' + oldGx + ',' + oldGy + ') &rarr; (' + newGx + ',' + newGy + ')');
         updateSaveButtons();
     }
@@ -312,20 +319,26 @@ var MapperState = (function() {
         var room = mapperData.rooms.get(roomId);
         if (!room) return;
         var label = roomLabel(roomId);
+
+        // Sever every exit that points at this room before removing it
         mapperData.rooms.forEach(function(other, otherId) {
             if (!other.Exits) return;
             for (var dir in other.Exits) {
                 if (other.Exits[dir].RoomId === roomId) breakExitLocally(otherId, dir);
             }
         });
+
         if (room.HasCoordinates) {
             mapperData.roomsByCoord.delete(room.MapX + ',' + room.MapY + ',' + room.MapZ);
         }
+
+        // Temp rooms (negative IDs) are only local -- just drop them from createdRooms
         if (roomId > 0) {
             dirty.deletedRooms.push(roomId);
         } else {
             dirty.createdRooms.delete(roomId);
         }
+
         mapperData.rooms.delete(roomId);
         selectedRoomIds.delete(roomId);
         logChange('cl-delete', '<span class="cl-action">DELETE</span> ' + label);
@@ -338,6 +351,7 @@ var MapperState = (function() {
         var tempId = dirty.nextTempId--;
         var zoneInfo = mapperData.allZones.find(function(z) { return z.Name === mapperData.currentZone; });
         var biome = zoneInfo ? zoneInfo.DefaultBiome : '';
+
         var tempRoom = {
             RoomId: tempId, Zone: mapperData.currentZone || '', Title: 'New Room',
             MapX: gx, MapY: gy, MapZ: gz,
@@ -345,12 +359,15 @@ var MapperState = (function() {
         };
         tempRoom._symbol = symbolForRoom(tempRoom);
         tempRoom._color = colorForSymbol(tempRoom._symbol, tempRoom.Biome);
+
         mapperData.rooms.set(tempId, tempRoom);
         mapperData.roomsByCoord.set(gx + ',' + gy + ',' + gz, tempId);
+
         if (!mapperData.zLevels.includes(gz)) {
             mapperData.zLevels.push(gz);
             mapperData.zLevels.sort(function(a, b) { return a - b; });
         }
+
         dirty.createdRooms.set(tempId, { gx: gx, gy: gy, gz: gz, zone: mapperData.currentZone || '' });
         logChange('cl-create', '<span class="cl-action">CREATE</span> New Room at (' + gx + ', ' + gy + ', ' + gz + ') in zone ' + escapeHtml(mapperData.currentZone || '?'));
         updateSaveButtons();
@@ -358,22 +375,25 @@ var MapperState = (function() {
         return tempId;
     }
 
+    // --- Group Move ---
+    // Relocates a set of rooms by a grid delta and automatically breaks any
+    // directional exits whose spatial constraints are no longer satisfied
+    // after the move.
+
     function applyGroupMove(group, deltaGx, deltaGy) {
-        var brokenConstraints = [];
         group.forEach(function(start, roomId) {
             var newGx = start.startGx + deltaGx;
             var newGy = start.startGy + deltaGy;
             moveRoomLocally(roomId, newGx, newGy);
         });
 
-        // Compute and break invalid exits for each room in the group
+        // Break exits that violate their directional constraints post-move
         group.forEach(function(start, roomId) {
             var room = mapperData.rooms.get(roomId);
             if (!room) return;
             var constraints = buildDragConstraints(roomId);
             constraints.forEach(function(c) {
                 if (!isExitConstraintSatisfied(c, room.MapX, room.MapY)) {
-                    brokenConstraints.push(c);
                     if (c.outgoing) {
                         var neighborId = mapperData.roomsByCoord.get(c.refX + ',' + c.refY + ',' + room.MapZ);
                         if (room.Exits) {
@@ -401,9 +421,7 @@ var MapperState = (function() {
         });
     }
 
-    // =====================================================================
-    // Selection
-    // =====================================================================
+    // --- Selection ---
 
     function selectRoom(id) {
         selectedRoomIds.clear();
@@ -419,9 +437,7 @@ var MapperState = (function() {
         _render();
     }
 
-    // =====================================================================
-    // Data loading
-    // =====================================================================
+    // --- Data Loading ---
 
     async function loadBiomes() {
         var res = await AdminAPI.get('/admin/api/v1/biomes');
@@ -449,7 +465,7 @@ var MapperState = (function() {
 
         mapperData.rawRooms = (data.Rooms || []).map(function(r) {
             r._symbol = symbolForRoom(r);
-            r._color  = colorForSymbol(r._symbol, r.Biome);
+            r._color = colorForSymbol(r._symbol, r.Biome);
             return r;
         });
 
@@ -457,6 +473,11 @@ var MapperState = (function() {
             applyZoneLayout(mapperData.currentZone);
         }
     }
+
+    // --- Cross-Zone Graph ---
+    // Builds a directed edge map between zones based on directional exits
+    // that cross zone boundaries.  Used by applyZoneLayout to BFS outward
+    // from the center zone and compute spatial offsets for neighboring zones.
 
     function buildCrossZoneGraph(rawRooms) {
         var roomById = new Map();
@@ -486,6 +507,11 @@ var MapperState = (function() {
         return edges;
     }
 
+    // --- Zone Layout ---
+    // Rebuilds the visible room set by BFS-ing from a center zone through
+    // cross-zone exits, computing coordinate offsets so adjacent zones tile
+    // seamlessly on the canvas.
+
     function applyZoneLayout(centerZone) {
         mapperData.currentZone = centerZone;
         mapperData.rooms.clear();
@@ -495,7 +521,6 @@ var MapperState = (function() {
 
         var graph = buildCrossZoneGraph(mapperData.rawRooms);
 
-        // BFS from centerZone through directional cross-zone exits
         var adj = new Map();
         graph.forEach(function(edge) {
             if (!adj.has(edge.fromZone)) adj.set(edge.fromZone, []);
@@ -520,7 +545,7 @@ var MapperState = (function() {
             });
         }
 
-        // Populate rooms for visible zones only, applying offsets
+        // Populate rooms for visible zones, applying coordinate offsets
         var zSet = new Set();
         mapperData.rawRooms.forEach(function(r) {
             if (!r.Zone || !mapperData.visibleZones.has(r.Zone)) return;
@@ -553,8 +578,6 @@ var MapperState = (function() {
         if (rootId) {
             var root = mapperData.rooms.get(rootId);
             if (root && root.HasCoordinates) {
-                // setCameraTarget will be called by the init module via the camera object
-                // For now, directly set camera values and trigger render
                 cameraX = root.MapX;
                 cameraY = root.MapY;
                 cameraZ = root.MapZ;
@@ -575,9 +598,9 @@ var MapperState = (function() {
         }
     }
 
-    // =====================================================================
-    // Public API
-    // =====================================================================
+    // --- Public API ---
+    // State objects, mutation helpers, data-loading functions, and callback
+    // registration entry points.
 
     return {
         // State objects

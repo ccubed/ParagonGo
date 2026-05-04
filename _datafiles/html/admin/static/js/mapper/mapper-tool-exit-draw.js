@@ -1,3 +1,15 @@
+/**
+ * mapper-tool-exit-draw.js -- Rubber-band line drawing mode for wiring exits.
+ *
+ * Activated from the context menu "Add Exit" item. A dashed line stretches
+ * from the source room to the cursor; clicking on a different room finishes
+ * the connection after prompting for the exit name (and optional return
+ * exit). Directional exit names are validated against the spatial
+ * relationship between the two rooms so "north" cannot point south, etc.
+ *
+ * A separate "Add Exit (By Room Number)" path skips the visual rubber-band
+ * and just prompts for a target room ID directly.
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperCtxMenu, MapperState, MapperRender,
    ROOM_SIZE_2D, CONNECTION_WIDTH_2D, CONNECTION_WIDTH_3D,
@@ -5,18 +17,16 @@
    DIRECTION_DELTAS, DIRECTIONAL_EXITS, sign, escapeHtml */
 'use strict';
 
-/**
- * Exit-draw tool -- activated via context menu "Add Exit".
- *
- * Draws a rubber-band line from source room to cursor / target room,
- * then prompts for exit name on click.
- */
 (function() {
 
-    // -----------------------------------------------------------------
-    // Exit-name validation
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Exit-name validation
+    // =====================================================================
 
+    /**
+     * Reject directional exit names that contradict the spatial relationship.
+     * Returns an error string, or null when the name is acceptable.
+     */
     function validateExitName(dir, sourceRoom, targetRoom) {
         if (!dir) return null;
         if (DIRECTIONAL_EXITS[dir]) {
@@ -33,10 +43,11 @@
         return null;
     }
 
-    // -----------------------------------------------------------------
-    // Exit draw finish / prompts
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Finish / cancel
+    // =====================================================================
 
+    /** Complete the rubber-band draw: prompt for exit names and wire them up. */
     function finishExitDraw(targetRoomId) {
         var edm = MapperState.exitDrawMode;
         if (targetRoomId === edm.sourceRoomId) {
@@ -73,10 +84,7 @@
         MapperRender.render();
     }
 
-    // -----------------------------------------------------------------
-    // Add exit by room number (prompt-only, does not use tool activation)
-    // -----------------------------------------------------------------
-
+    /** Prompt-only path that skips the visual rubber-band altogether. */
     function addExitByRoomNumber(sourceRoomId) {
         var targetIdStr = prompt('Target room number:');
         if (!targetIdStr || !targetIdStr.trim()) return;
@@ -119,13 +127,15 @@
         MapperRender.render();
     }
 
-    // -----------------------------------------------------------------
-    // Tool definition
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Tool definition
+    // =====================================================================
 
     var tool = {
         name: 'exit-draw',
         cursor: 'crosshair',
+
+        // --- Mode activation ---
 
         onActivate: function(context) {
             var sourceRoomId = context.sourceRoomId;
@@ -181,7 +191,7 @@
         },
 
         // -----------------------------------------------------------------
-        // 2D overlay: rubber-band line + target highlight
+        //  2D overlay -- rubber-band line and target highlight
         // -----------------------------------------------------------------
 
         renderOverlay2d: function(ctx, rs) {
@@ -220,7 +230,7 @@
         },
 
         // -----------------------------------------------------------------
-        // 3D overlay: rubber-band line
+        //  3D overlay -- rubber-band line (iso projection)
         // -----------------------------------------------------------------
 
         renderOverlay3d: function(ctx, rs) {
@@ -258,9 +268,9 @@
 
     MapperTools.register(tool);
 
-    // -----------------------------------------------------------------
-    // Context menu items
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Context menu items
+    // =====================================================================
 
     MapperCtxMenu.registerProvider(function(target) {
         if (target.type !== 'room') return null;

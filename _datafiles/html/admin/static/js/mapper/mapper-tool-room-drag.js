@@ -1,3 +1,22 @@
+/**
+ * mapper-tool-room-drag.js -- Two-phase drag system for moving rooms.
+ *
+ * Phase 1 ("armed"): On mousedown over a room the tool records the start
+ *   position but does NOT become the active tool yet. This lets a plain
+ *   click fall through to selection / context menu handling.
+ *
+ * Phase 2 ("promoted"): Once the cursor moves more than 4 px from the
+ *   armed position the tool promotes itself via MapperTools.activate(),
+ *   builds the drag group (single room or current selection), computes
+ *   exit constraints, and begins tracking pixel + grid deltas.
+ *
+ * On mouseup the group is committed (if the target cells are unoccupied)
+ *   and the tool deactivates back to pan.
+ *
+ * Overlay rendering draws origin markers, snap indicators (color-coded by
+ * droppability), predicted connection lines, and the rooms themselves at
+ * the current pixel offset -- in both 2D and 3D projections.
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperState, MapperRender, MapperEvents,
    BASE_STEP_2D, ROOM_SIZE_2D, SYMBOL_FONT_SIZE_2D, ROOM_BORDER_WIDTH_2D,
@@ -8,18 +27,12 @@
    buildDragConstraints, isExitConstraintSatisfied, darkenColor */
 'use strict';
 
-/**
- * Room-drag tool -- threshold-promoted from mousedown on a room.
- *
- * This tool is NOT pre-activated via the toolbar. Instead it provides an
- * `interceptMouseDown` that the init module calls. When the user drags a
- * room past 4 px the tool promotes itself to the active tool.
- *
- * State lives on MapperState.roomDrag so the renderers can read it.
- */
 (function() {
 
-    // Private armed state (before threshold promotion)
+    // =====================================================================
+    //  Armed state -- held before threshold promotion
+    // =====================================================================
+
     var armed = false;
     var armedRoomId = null;
     var armedPxX = 0;
@@ -32,12 +45,16 @@
         armedPxY = 0;
     }
 
+    // =====================================================================
+    //  Tool definition
+    // =====================================================================
+
     var tool = {
         name: 'room-drag',
         cursor: 'move',
 
         // -----------------------------------------------------------------
-        // Lifecycle
+        //  Lifecycle
         // -----------------------------------------------------------------
 
         onActivate: function() {},
@@ -53,22 +70,22 @@
         },
 
         // -----------------------------------------------------------------
-        // Intercept -- called by init before normal mousedown dispatch
-        // Returns true if we claimed/armed the event.
+        //  Intercept -- called by init BEFORE normal mousedown dispatch.
+        //  Returns true when the event is claimed (arms the drag).
         // -----------------------------------------------------------------
 
         interceptMouseDown: function(e, cx, cy, roomId) {
             if (roomId === null) return false;
-            if (e.shiftKey) return false; // shift-click = toggle selection
+            if (e.shiftKey) return false; // shift-click toggles selection
             armed = true;
             armedRoomId = roomId;
             armedPxX = e.clientX;
             armedPxY = e.clientY;
-            return true; // claimed -- caller should NOT start a pan
+            return true;
         },
 
         // -----------------------------------------------------------------
-        // Mouse handlers (active after promotion)
+        //  Mouse handlers (active after promotion)
         // -----------------------------------------------------------------
 
         onMouseDown: function() { return false; },
@@ -76,12 +93,13 @@
         onMouseMove: function(e, cx, cy, roomId, gridCell) {
             var rd = MapperState.roomDrag;
 
-            // Phase 1: armed but not yet promoted -- check threshold
+            // --- Threshold promotion: armed but not yet active ---
             if (armed && !rd.active) {
                 var movedPx = Math.abs(e.clientX - armedPxX) + Math.abs(e.clientY - armedPxY);
                 if (movedPx > 4) {
                     var anchorRoom = MapperState.data.rooms.get(armedRoomId);
                     if (anchorRoom && anchorRoom.HasCoordinates) {
+                        // Build group from selection (if anchor is selected) or just the anchor
                         var groupIds = MapperState.selected.has(armedRoomId) && MapperState.selected.size > 1
                             ? new Set(MapperState.selected) : new Set([armedRoomId]);
                         var groupMap = new Map();
@@ -94,6 +112,7 @@
                             }
                         });
 
+                        // Pre-compute exit constraints for the entire group
                         var allC = [];
                         groupSet.forEach(function(rid) {
                             allC = allC.concat(buildDragConstraints(rid, groupSet));
@@ -121,7 +140,6 @@
                         rd.brokenExits = [];
                         rd.allConstraints = allC;
 
-                        // Activate ourselves as the tool
                         MapperTools.activate('room-drag');
                         MapperRender.render();
                         return;
@@ -130,7 +148,7 @@
                 return; // still below threshold
             }
 
-            // Phase 2: actively dragging
+            // --- Active drag tracking ---
             if (!rd.active) return;
 
             rd.pixelDx = cx - rd.anchorCanvasPx;
@@ -141,9 +159,12 @@
             var newDx = gc.gx - anchorStart.startGx;
             var newDy = gc.gy - anchorStart.startGy;
 
+            // Only recheck constraints when the snapped grid delta changes
             if (newDx !== rd.deltaGx || newDy !== rd.deltaGy) {
                 rd.deltaGx = newDx;
                 rd.deltaGy = newDy;
+
+                // Collision check: ensure no group member lands on an occupied cell
                 var cZ = MapperRender.currentZ();
                 var canDrop = true;
                 rd.group.forEach(function(start, rid) {
@@ -154,6 +175,8 @@
                     if (occupant !== undefined && !rd.group.has(occupant)) canDrop = false;
                 });
                 rd.droppable = canDrop;
+
+                // Identify broken exit constraints for the overlay warning lines
                 if (canDrop && (newDx !== 0 || newDy !== 0)) {
                     var broken = [];
                     rd.allConstraints.forEach(function(c) {
@@ -170,7 +193,7 @@
         onMouseUp: function(e, cx, cy) {
             var rd = MapperState.roomDrag;
 
-            // If armed but never promoted, clear and let click through
+            // Armed but never promoted -- clear and let click fall through
             if (armed && !rd.active) {
                 clearArmed();
                 return;
@@ -196,7 +219,6 @@
                 MapperState.applyGroupMove(groupCopy, dGx, dGy);
             }
 
-            // Deactivate ourselves, return to default tool
             MapperTools.activate('pan');
             MapperRender.render();
         },
@@ -204,7 +226,8 @@
         onKeyDown: function() {},
 
         // -----------------------------------------------------------------
-        // 2D overlay: origin markers, snap indicators, connection lines, drag ghosts
+        //  2D overlay -- origin markers, snap indicators, connection lines,
+        //  and drag-ghost rooms rendered at the cursor's pixel offset
         // -----------------------------------------------------------------
 
         renderOverlay2d: function(ctx, rs) {
@@ -216,7 +239,7 @@
             var hasBroken = rd.brokenExits.length > 0;
             var hasMoved = rd.deltaGx !== 0 || rd.deltaGy !== 0;
 
-            // Origin marker (faint outline where the room was)
+            // Origin markers: faint dashed outline where each room started
             if (hasMoved) {
                 rd.group.forEach(function(start) {
                     var origP = rs.gridToCanvas2d(start.startGx, start.startGy);
@@ -228,7 +251,8 @@
                 });
             }
 
-            // Grid-snap indicator (dashed outline at the target cell)
+            // Snap indicators: dashed outline at the target cell
+            // Color: red = blocked, orange = broken exits, blue = clean drop
             if (hasMoved) {
                 rd.group.forEach(function(start) {
                     var snapP = rs.gridToCanvas2d(start.startGx + rd.deltaGx, start.startGy + rd.deltaGy);
@@ -260,7 +284,7 @@
                 ctx.setLineDash([]);
             }
 
-            // Rooms rendered solid, following cursor at pixel offset
+            // Drag-ghost rooms: solid tiles following the cursor at pixel offset
             rd.group.forEach(function(start, rid) {
                 var origP = rs.gridToCanvas2d(start.startGx, start.startGy);
                 var dragP = { px: origP.px + rd.pixelDx, py: origP.py + rd.pixelDy };
@@ -280,7 +304,7 @@
         },
 
         // -----------------------------------------------------------------
-        // 3D overlay: snap indicators and drag ghost tiles
+        //  3D overlay -- snap indicators and drag-ghost iso tiles
         // -----------------------------------------------------------------
 
         renderOverlay3d: function(ctx, rs) {
@@ -291,7 +315,7 @@
             var hasMoved3 = rd.deltaGx !== 0 || rd.deltaGy !== 0;
             var drawZ = rs.activeZ3d !== null ? rs.activeZ3d : 0;
 
-            // Grid-snap indicator at target cell
+            // Snap indicator diamonds at the target cells
             if (hasMoved3) {
                 var ghw3 = TILE_HW_3D * rs.zoomScale;
                 var ghh3 = TILE_HH_3D * rs.zoomScale;
@@ -313,7 +337,9 @@
                 ctx.setLineDash([]);
             }
 
-            // Rooms following cursor at pixel offset
+            // Drag-ghost iso tiles following the cursor at pixel offset.
+            // Draws top/left/right faces inline because the tile position
+            // is offset by raw pixel deltas rather than grid coordinates.
             rd.group.forEach(function(start, rid) {
                 var origP3 = rs.isoProject3d(start.startGx, start.startGy, drawZ, drawZ);
                 var dragSx = origP3.sx + rd.pixelDx;
@@ -327,7 +353,6 @@
                 var blocked3 = !rd.droppable && hasMoved3;
                 if (blocked3) ctx.globalAlpha = 0.5;
 
-                // Draw tile at pixel offset (manual inline to use custom sx/sy)
                 var hw3  = TILE_HW_3D * rs.zoomScale;
                 var hh3  = TILE_HH_3D * rs.zoomScale;
                 var dep3 = TILE_DEPTH_3D * rs.zoomScale;

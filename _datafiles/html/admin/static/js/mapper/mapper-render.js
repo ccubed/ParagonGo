@@ -7,27 +7,40 @@
    CONNECTION_COLOR, ABNORMAL_CONNECTION_COLOR, SELECTED_ROOM_COLOR, SELECTED_ROOM_TEXT_COLOR, SYMBOL_TEXT_COLOR,
    exitDelta, isDirectionalExit, darkenColor, smoothstep, isExitConstraintSatisfied */
 
+/**
+ * MapperRender — canvas drawing engine for the admin map editor.
+ *
+ * Handles all coordinate transforms (2D orthogonal, 3D isometric), hit
+ * testing, and the two core render paths (render2d / render3d).  Tool
+ * modules contribute visual overlays via the renderOverlay2d/3d protocol
+ * dispatched at the end of each frame.
+ *
+ * Public API (returned IIFE object):
+ *   Setup          — setCanvas, initResizeObserver, resizeCanvas
+ *   Rendering      — render, getRenderState
+ *   Coord helpers  — gridToCanvas2d, canvasToGrid2d, canvasToGrid3d,
+ *                    canvasToGrid, isoProject3d
+ *   Hit testing    — roomAtPoint, roomAtPoint2d, roomAtPoint3d,
+ *                    currentZ, gridCellOccupied
+ *   Drawing prims  — drawRoom2d, drawTile3d, drawLineBadge2d
+ */
 var MapperRender = (function() {
     'use strict';
 
-    // =====================================================================
-    // Private canvas references (set via setCanvas)
-    // =====================================================================
+    // --- Canvas References ---
 
     var canvas = null;
-    var ctx    = null;
+    var ctx = null;
 
     function setCanvas(c) {
         canvas = c;
-        ctx    = c.getContext('2d');
+        ctx = c.getContext('2d');
     }
 
-    // =====================================================================
-    // Coordinate helpers — 2D
-    // =====================================================================
+    // --- Coordinate Transforms: 2D ---
 
     function gridToCanvas2d(gx, gy) {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var midX = Math.floor(canvas.width / 2);
         var midY = Math.floor(canvas.height / 2);
         var step = BASE_STEP_2D * cam.zoomScale;
@@ -38,7 +51,7 @@ var MapperRender = (function() {
     }
 
     function canvasToGrid2d(cx, cy) {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var midX = Math.floor(canvas.width / 2);
         var midY = Math.floor(canvas.height / 2);
         var step = BASE_STEP_2D * cam.zoomScale;
@@ -48,17 +61,18 @@ var MapperRender = (function() {
         };
     }
 
-    // =====================================================================
-    // Coordinate helpers — 3D (isometric)
-    // =====================================================================
+    // --- Coordinate Transforms: 3D (Isometric) ---
 
     function canvasToGrid3d(cx, cy) {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var step = TILE_HW_3D * GRID_STEP_XY_3D * cam.spacingScale3d * cam.zoomScale;
-        var zs   = Z_STEP_3D * Math.pow(cam.spacingScale3d, Z_SPACING_EXP_3D) * cam.zoomScale;
+        var zs = Z_STEP_3D * Math.pow(cam.spacingScale3d, Z_SPACING_EXP_3D) * cam.zoomScale;
         var midX = Math.floor(canvas.width / 2);
         var midY = Math.floor(canvas.height / 2);
         var drawZ = cam.activeZ3d !== null ? cam.activeZ3d : (MapperState.data.zLevels.length > 0 ? MapperState.data.zLevels[0] : 0);
+
+        // Reverse the isometric projection: undo z-offset then solve the
+        // 2x2 system for grid-x and grid-y.
         var relZ = drawZ - cam.cameraZ;
         var sxOff = cx - midX;
         var syAdj = cy - midY + relZ * zs;
@@ -76,9 +90,9 @@ var MapperRender = (function() {
     }
 
     function isoProject3d(gx, gy, gz, drawZ) {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var step = TILE_HW_3D * GRID_STEP_XY_3D * cam.spacingScale3d * cam.zoomScale;
-        var zs   = Z_STEP_3D * Math.pow(cam.spacingScale3d, Z_SPACING_EXP_3D) * cam.zoomScale;
+        var zs = Z_STEP_3D * Math.pow(cam.spacingScale3d, Z_SPACING_EXP_3D) * cam.zoomScale;
         var midX = Math.floor(canvas.width / 2);
         var midY = Math.floor(canvas.height / 2);
         var relX = gx - cam.cameraX - cam.panOffsetX;
@@ -90,16 +104,14 @@ var MapperRender = (function() {
         };
     }
 
-    // =====================================================================
-    // Room-at-point hit-testing
-    // =====================================================================
+    // --- Hit Testing ---
 
     function roomAtPoint(cx, cy) {
         return MapperState.camera.activeTab === '2d' ? roomAtPoint2d(cx, cy) : roomAtPoint3d(cx, cy);
     }
 
     function roomAtPoint2d(cx, cy) {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var half = (ROOM_SIZE_2D * cam.zoomScale) / 2;
         var found = null;
         MapperState.data.rooms.forEach(function(room, id) {
@@ -114,10 +126,13 @@ var MapperRender = (function() {
     }
 
     function roomAtPoint3d(cx, cy) {
-        var cam     = MapperState.camera;
+        var cam = MapperState.camera;
         var targetZ = cam.activeZ3d !== null ? cam.activeZ3d : (MapperState.data.zLevels.length > 0 ? MapperState.data.zLevels[0] : 0);
-        var step    = TILE_HW_3D * GRID_STEP_XY_3D * cam.spacingScale3d * cam.zoomScale;
+        var step = TILE_HW_3D * GRID_STEP_XY_3D * cam.spacingScale3d * cam.zoomScale;
         var hw = step, hh = step / 2;
+
+        // Collect active-z rooms and sort back-to-front so the topmost
+        // (visually closest) tile wins the hit test.
         var list = [];
         MapperState.data.rooms.forEach(function(room, id) {
             if (room.HasCoordinates && room.MapZ === targetZ) {
@@ -125,6 +140,8 @@ var MapperRender = (function() {
             }
         });
         list.sort(function(a, b) { return (b.x + b.y) - (a.x + a.y); });
+
+        // Diamond point-in-rhombus test
         for (var i = 0; i < list.length; i++) {
             var item = list[i];
             var p = isoProject3d(item.x, item.y, item.z);
@@ -133,9 +150,7 @@ var MapperRender = (function() {
         return null;
     }
 
-    // =====================================================================
-    // Current Z / grid occupancy
-    // =====================================================================
+    // --- Current Z / Grid Occupancy ---
 
     function currentZ() {
         var cam = MapperState.camera;
@@ -146,23 +161,25 @@ var MapperRender = (function() {
         return MapperState.data.roomsByCoord.has(gx + ',' + gy + ',' + gz);
     }
 
-    // =====================================================================
-    // 2D badge drawing (secret / key icons on connections)
-    // =====================================================================
+    // --- 2D Drawing Primitives ---
 
+    /** Draws a small badge (secret "?" or key icon) at the midpoint of a connection line. */
     function drawLineBadge2d(mx, my, type) {
         var cam = MapperState.camera;
-        var sz   = Math.max(7, Math.round(CONNECTION_WIDTH_2D * cam.zoomScale * 2.5));
+        var sz = Math.max(7, Math.round(CONNECTION_WIDTH_2D * cam.zoomScale * 2.5));
         var half = sz / 2;
+
         ctx.save();
         ctx.fillStyle = MAP_BG_2D;
         ctx.fillRect(mx - half, my - half, sz, sz);
+
         if (type === 'secret') {
             ctx.fillStyle = '#d4a843';
             ctx.font = 'bold ' + Math.round(sz * 0.85) + 'px monospace';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('?', mx, my);
         } else {
+            // Tiny key icon: circle bow + shaft + two teeth
             var kc = '#9ab0d4', lw = Math.max(1, sz * 0.14);
             ctx.strokeStyle = kc; ctx.fillStyle = kc;
             ctx.lineWidth = lw; ctx.lineCap = 'round';
@@ -181,16 +198,13 @@ var MapperRender = (function() {
         ctx.restore();
     }
 
-    // =====================================================================
-    // 2D room drawing (module-level, not nested)
-    // =====================================================================
-
+    /** Draws a single room tile in 2D: filled square, border, symbol, and Z-arrow indicators. */
     function drawRoom2d(p, room, id) {
-        var cam          = MapperState.camera;
-        var scaledSize   = ROOM_SIZE_2D * cam.zoomScale;
+        var cam = MapperState.camera;
+        var scaledSize = ROOM_SIZE_2D * cam.zoomScale;
         var scaledBorder = ROOM_BORDER_WIDTH_2D * cam.zoomScale;
-        var scaledFont   = SYMBOL_FONT_SIZE_2D * cam.zoomScale;
-        var half         = scaledSize / 2;
+        var scaledFont = SYMBOL_FONT_SIZE_2D * cam.zoomScale;
+        var half = scaledSize / 2;
 
         var isSelected = MapperState.selected.has(id);
         var fill = isSelected ? SELECTED_ROOM_COLOR : room._color;
@@ -207,6 +221,7 @@ var MapperRender = (function() {
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(room._symbol || '•', p.px, p.py);
 
+        // Up/down arrows indicate exits to other Z levels
         var hasUp = false, hasDown = false;
         if (room.Exits) {
             for (var dir in room.Exits) {
@@ -217,7 +232,7 @@ var MapperRender = (function() {
         }
         if (hasUp || hasDown) {
             var arrowSize = Math.max(5, scaledSize * 0.28);
-            var margin    = Math.max(2, scaledSize * 0.1);
+            var margin = Math.max(2, scaledSize * 0.1);
             ctx.font = 'bold ' + arrowSize + 'px monospace';
             ctx.fillStyle = isSelected ? SELECTED_ROOM_TEXT_COLOR : SYMBOL_TEXT_COLOR;
             if (hasDown) {
@@ -231,19 +246,18 @@ var MapperRender = (function() {
         }
     }
 
-    // =====================================================================
-    // 3D tile drawing (module-level, not nested)
-    // =====================================================================
+    // --- 3D Drawing Primitives ---
 
+    /** Draws an isometric tile: diamond top face + two darkened side faces + symbol. */
     function drawTile3d(gx, gy, gz, topColor, isSelected, symbol, drawZ) {
         var cam = MapperState.camera;
-        var hw  = TILE_HW_3D * cam.zoomScale;
-        var hh  = TILE_HH_3D * cam.zoomScale;
+        var hw = TILE_HW_3D * cam.zoomScale;
+        var hh = TILE_HH_3D * cam.zoomScale;
         var dep = TILE_DEPTH_3D * cam.zoomScale;
-        var bw  = TILE_BORDER_WIDTH_3D * cam.zoomScale;
-        var p   = isoProject3d(gx, gy, gz, drawZ);
-        var sx  = p.sx, sy = p.sy;
-        var leftColor  = darkenColor(topColor, SIDE_DARKEN_3D * 0.8);
+        var bw = TILE_BORDER_WIDTH_3D * cam.zoomScale;
+        var p = isoProject3d(gx, gy, gz, drawZ);
+        var sx = p.sx, sy = p.sy;
+        var leftColor = darkenColor(topColor, SIDE_DARKEN_3D * 0.8);
         var rightColor = darkenColor(topColor, SIDE_DARKEN_3D);
 
         // Top face
@@ -277,19 +291,20 @@ var MapperRender = (function() {
         ctx.fillText(symbol || '•', sx, sy);
     }
 
-    // =====================================================================
-    // 3D bucket cache
-    // =====================================================================
+    // --- 3D Bucket Cache ---
+    // Pre-sorts rooms and edges by Z level so the render loop can draw
+    // them in correct painter's order without re-scanning every frame.
 
     var bucketCache3d = null;
 
     function buildBucketCache3d() {
-        var roomsByZ    = {};
-        var sameZEdges  = {};
+        var roomsByZ = {};
+        var sameZEdges = {};
         var crossZEdges = {};
+
         MapperState.data.zLevels.forEach(function(z) {
-            roomsByZ[z]    = [];
-            sameZEdges[z]  = [];
+            roomsByZ[z] = [];
+            sameZEdges[z] = [];
             crossZEdges[z] = [];
         });
 
@@ -298,26 +313,28 @@ var MapperRender = (function() {
             roomsByZ[room.MapZ].push({ id: id, x: room.MapX, y: room.MapY, z: room.MapZ,
                                        symbol: room._symbol, color: room._color });
         });
+
         MapperState.data.zLevels.forEach(function(z) {
             roomsByZ[z].sort(function(a, b) { return (a.x + a.y) - (b.x + b.y); });
         });
 
+        // Deduplicate edges: only process each room-pair+direction once
         var edgeSeen = new Set();
         MapperState.data.rooms.forEach(function(room, id) {
             if (!room.HasCoordinates || !room.Exits) return;
             for (var dir in room.Exits) {
-                var ex   = room.Exits[dir];
+                var ex = room.Exits[dir];
                 var dest = MapperState.data.rooms.get(ex.RoomId);
                 if (!dest || !dest.HasCoordinates) continue;
                 var key = Math.min(id, ex.RoomId) + '-' + Math.max(id, ex.RoomId) + ':' + dir;
                 if (edgeSeen.has(key)) continue;
                 edgeSeen.add(key);
-                var delta    = exitDelta(dir, room);
+                var delta = exitDelta(dir, room);
                 var abnormal = !isDirectionalExit(dir) || !delta;
-                var dz       = delta ? delta[2] : (dest.MapZ - room.MapZ);
-                var entry    = { rA: room, rB: dest, dz: dz,
-                                 dx: dest.MapX - room.MapX, dy: dest.MapY - room.MapY,
-                                 abnormal: abnormal };
+                var dz = delta ? delta[2] : (dest.MapZ - room.MapZ);
+                var entry = { rA: room, rB: dest, dz: dz,
+                              dx: dest.MapX - room.MapX, dy: dest.MapY - room.MapY,
+                              abnormal: abnormal };
                 if (abnormal || dz === 0) {
                     var z = room.MapZ;
                     if (sameZEdges[z]) sameZEdges[z].push(entry);
@@ -333,19 +350,22 @@ var MapperRender = (function() {
         bucketCache3d = { roomsByZ: roomsByZ, sameZEdges: sameZEdges, crossZEdges: crossZEdges };
     }
 
-    // =====================================================================
-    // 3D connection attachment point
-    // =====================================================================
+    // --- 3D Edge Drawing ---
 
+    /** Returns the canvas-space attach point on a tile diamond for a given exit direction. */
     function tileAttachPoint3d(sx, sy, dx, dy) {
         var cam = MapperState.camera;
         var hw = TILE_HW_3D * cam.zoomScale, hh = TILE_HH_3D * cam.zoomScale;
+
+        // Diagonal exits attach at diamond corners
         if (dx !== 0 && dy !== 0) {
-            if (dx > 0 && dy > 0) return { sx: sx,      sy: sy + hh };
-            if (dx > 0 && dy < 0) return { sx: sx + hw, sy: sy      };
-            if (dx < 0 && dy > 0) return { sx: sx - hw, sy: sy      };
+            if (dx > 0 && dy > 0) return { sx: sx, sy: sy + hh };
+            if (dx > 0 && dy < 0) return { sx: sx + hw, sy: sy };
+            if (dx < 0 && dy > 0) return { sx: sx - hw, sy: sy };
             return { sx: sx, sy: sy - hh };
         }
+
+        // Cardinal exits attach at diamond edge midpoints
         if (dx > 0) return { sx: sx + hw / 2, sy: sy + hh / 2 };
         if (dx < 0) return { sx: sx - hw / 2, sy: sy - hh / 2 };
         if (dy > 0) return { sx: sx - hw / 2, sy: sy + hh / 2 };
@@ -353,25 +373,25 @@ var MapperRender = (function() {
         return { sx: sx, sy: sy };
     }
 
-    // =====================================================================
-    // 3D edge drawing (module-level, not nested)
-    // =====================================================================
-
     function drawEdge3d(e, drawZ) {
         var cam = MapperState.camera;
         var pA = isoProject3d(e.rA.MapX, e.rA.MapY, e.rA.MapZ, drawZ);
         var pB = isoProject3d(e.rB.MapX, e.rB.MapY, e.rB.MapZ, drawZ);
         var startPt, endPt;
+
         if (e.dz !== 0) {
+            // Cross-z edges are offset horizontally to avoid overlapping tiles
             startPt = { sx: pA.sx + CROSS_Z_OFFSET_X * cam.zoomScale, sy: pA.sy };
-            endPt   = { sx: pB.sx + CROSS_Z_OFFSET_X * cam.zoomScale, sy: pB.sy };
+            endPt = { sx: pB.sx + CROSS_Z_OFFSET_X * cam.zoomScale, sy: pB.sy };
         } else {
             startPt = tileAttachPoint3d(pA.sx, pA.sy, e.dx, e.dy);
-            endPt   = tileAttachPoint3d(pB.sx, pB.sy, -e.dx, -e.dy);
+            endPt = tileAttachPoint3d(pB.sx, pB.sy, -e.dx, -e.dy);
         }
+
         ctx.beginPath(); ctx.moveTo(startPt.sx, startPt.sy);
         ctx.lineTo(endPt.sx, endPt.sy); ctx.stroke();
 
+        // Draw double arrowheads on cross-z connections
         if (e.dz !== 0) {
             var ddx = endPt.sx - startPt.sx;
             var ddy = endPt.sy - startPt.sy;
@@ -394,9 +414,9 @@ var MapperRender = (function() {
         }
     }
 
-    // =====================================================================
-    // Render state for tool overlays
-    // =====================================================================
+    // --- Tool Overlay Dispatch ---
+    // After core rendering, each registered tool gets a chance to paint its
+    // own overlay (selection rectangles, drag ghosts, exit-draw lines, etc.).
 
     function getRenderState() {
         var cam = MapperState.camera;
@@ -414,7 +434,6 @@ var MapperRender = (function() {
             gridCellOccupied: gridCellOccupied,
             drawRoom2d: drawRoom2d,
             drawTile3d: drawTile3d,
-            // 2D scaling helpers
             scaledSize: ROOM_SIZE_2D * cam.zoomScale,
             scaledBorder: ROOM_BORDER_WIDTH_2D * cam.zoomScale,
             scaledFont: SYMBOL_FONT_SIZE_2D * cam.zoomScale,
@@ -422,36 +441,30 @@ var MapperRender = (function() {
         };
     }
 
-    // =====================================================================
-    // Tool overlay dispatch
-    // =====================================================================
-
     function renderToolOverlays2d() {
-        var rs    = getRenderState();
+        var rs = getRenderState();
         var tools = MapperTools.all();
-        for (var i = 0; i < tools.length; i++) {
-            if (typeof tools[i].renderOverlay2d === 'function') {
-                tools[i].renderOverlay2d(ctx, rs);
+        for (var name in tools) {
+            if (tools[name] && typeof tools[name].renderOverlay2d === 'function') {
+                tools[name].renderOverlay2d(ctx, rs);
             }
         }
     }
 
     function renderToolOverlays3d() {
-        var rs    = getRenderState();
+        var rs = getRenderState();
         var tools = MapperTools.all();
-        for (var i = 0; i < tools.length; i++) {
-            if (typeof tools[i].renderOverlay3d === 'function') {
-                tools[i].renderOverlay3d(ctx, rs);
+        for (var name in tools) {
+            if (tools[name] && typeof tools[name].renderOverlay3d === 'function') {
+                tools[name].renderOverlay3d(ctx, rs);
             }
         }
     }
 
-    // =====================================================================
-    // 2D renderer (core edges + rooms, then tool overlays)
-    // =====================================================================
+    // --- 2D Core Renderer ---
 
     function render2d() {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var data = MapperState.data;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -461,25 +474,25 @@ var MapperRender = (function() {
         var rooms = data.rooms;
         if (rooms.size === 0) { renderToolOverlays2d(); return; }
 
-        // ------ Draw edges (two passes: normal directional first, then abnormal) ------
+        // -- Edges (two passes: normal directional first, then abnormal) --
         ctx.lineCap = 'round';
-        var drawnEdges    = new Set();
+        var drawnEdges = new Set();
         var abnormalEdges = [];
 
         // Pass 1: normal directional edges (solid lines)
         ctx.strokeStyle = CONNECTION_COLOR;
-        ctx.lineWidth   = CONNECTION_WIDTH_2D * cam.zoomScale;
+        ctx.lineWidth = CONNECTION_WIDTH_2D * cam.zoomScale;
         rooms.forEach(function(room, id) {
             if (!room.HasCoordinates || room.MapZ !== cam.activeZ2d) return;
             if (!room.Exits) return;
             for (var dir in room.Exits) {
-                var ex   = room.Exits[dir];
+                var ex = room.Exits[dir];
                 var dest = rooms.get(ex.RoomId);
                 if (!dest || !dest.HasCoordinates) continue;
                 var key = Math.min(id, ex.RoomId) + '-' + Math.max(id, ex.RoomId) + ':' + dir;
                 if (drawnEdges.has(key)) continue;
                 drawnEdges.add(key);
-                var delta       = exitDelta(dir, room);
+                var delta = exitDelta(dir, room);
                 var directional = isDirectionalExit(dir);
                 if (!directional || !delta) {
                     abnormalEdges.push({ room: room, dest: dest, dir: dir, ex: ex });
@@ -499,7 +512,7 @@ var MapperRender = (function() {
         // Pass 2: abnormal edges (yellow dotted arcs)
         if (abnormalEdges.length > 0) {
             ctx.strokeStyle = ABNORMAL_CONNECTION_COLOR;
-            ctx.lineWidth   = Math.max(1, CONNECTION_WIDTH_2D * cam.zoomScale * 0.7);
+            ctx.lineWidth = Math.max(1, CONNECTION_WIDTH_2D * cam.zoomScale * 0.7);
             ctx.setLineDash([Math.max(3, 8 * cam.zoomScale), Math.max(4, 10 * cam.zoomScale)]);
             abnormalEdges.forEach(function(ae) {
                 var pA = gridToCanvas2d(ae.room.MapX, ae.room.MapY);
@@ -516,27 +529,24 @@ var MapperRender = (function() {
             ctx.setLineDash([]);
         }
 
-        // ------ Draw rooms ------
-        var dragGroup    = MapperState.roomDrag;
+        // -- Rooms --
+        var dragGroup = MapperState.roomDrag;
         var dragGroupSet = dragGroup.active ? new Set(dragGroup.group.keys()) : new Set();
 
-        // Draw non-dragged rooms at their normal positions
         rooms.forEach(function(room, id) {
             if (!room.HasCoordinates || room.MapZ !== cam.activeZ2d) return;
             if (dragGroupSet.has(id)) return;
             drawRoom2d(gridToCanvas2d(room.MapX, room.MapY), room, id);
         });
 
-        // ------ Tool overlays ------
+        // -- Tool Overlays --
         renderToolOverlays2d();
     }
 
-    // =====================================================================
-    // 3D renderer (core edges + tiles, then tool overlays)
-    // =====================================================================
+    // --- 3D Core Renderer ---
 
     function render3d() {
-        var cam  = MapperState.camera;
+        var cam = MapperState.camera;
         var data = MapperState.data;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -546,7 +556,9 @@ var MapperRender = (function() {
 
         var drawZ = cam.activeZ3d !== null ? cam.activeZ3d : (data.zLevels.length > 0 ? data.zLevels[0] : 0);
 
-        // Build connected set for cross-z alpha
+        // Build the set of rooms on inactive Z levels that have a direct
+        // cross-z exit to the active level -- they render at a higher alpha
+        // than other inactive rooms so the spatial relationship is visible.
         var connectedToActive = new Set();
         if (!bucketCache3d) buildBucketCache3d();
         var bc = bucketCache3d;
@@ -561,16 +573,16 @@ var MapperRender = (function() {
         });
 
         ctx.lineWidth = CONNECTION_WIDTH_3D * cam.zoomScale;
-        ctx.lineCap   = 'round';
+        ctx.lineCap = 'round';
 
-        var dragGroup      = MapperState.roomDrag;
+        var dragGroup = MapperState.roomDrag;
         var dragGroupSet3d = dragGroup.active ? new Set(dragGroup.group.keys()) : new Set();
 
         data.zLevels.forEach(function(z) {
-            var zDiff     = Math.abs(z - drawZ);
+            var zDiff = Math.abs(z - drawZ);
             var baseAlpha = zDiff === 0 ? 1.0 : ALPHA_INACTIVE_3D;
 
-            // Same-z edges (normal solid, abnormal yellow dotted)
+            // Same-z edges
             (bc.sameZEdges[z] || []).forEach(function(e) {
                 ctx.globalAlpha = baseAlpha;
                 if (e.abnormal) {
@@ -592,12 +604,12 @@ var MapperRender = (function() {
                 }
             });
 
-            // Tiles (skip rooms being dragged)
+            // Tiles (skip rooms being dragged -- they are drawn by the drag tool overlay)
             (bc.roomsByZ[z] || []).forEach(function(item) {
                 if (dragGroupSet3d.has(item.id)) return;
                 var isSelected = MapperState.selected.has(item.id);
-                var topColor   = isSelected ? SELECTED_ROOM_COLOR : item.color;
-                var onActive   = zDiff === 0;
+                var topColor = isSelected ? SELECTED_ROOM_COLOR : item.color;
+                var onActive = zDiff === 0;
                 ctx.globalAlpha = onActive ? 1.0 : (connectedToActive.has(item.id) ? ALPHA_CONNECTED_3D : ALPHA_INACTIVE_3D);
                 drawTile3d(item.x, item.y, item.z, topColor, isSelected, item.symbol, drawZ);
             });
@@ -613,33 +625,28 @@ var MapperRender = (function() {
 
         ctx.globalAlpha = 1.0;
 
-        // ------ Tool overlays ------
+        // -- Tool Overlays --
         renderToolOverlays3d();
     }
 
-    // =====================================================================
-    // Render dispatch
-    // =====================================================================
+    // --- Render Dispatch ---
 
     function render() {
         if (MapperState.camera.activeTab === '3d') { bucketCache3d = null; render3d(); }
         else render2d();
     }
 
-    // =====================================================================
-    // Canvas resize
-    // =====================================================================
+    // --- Canvas Resize ---
 
     var viewport = null;
 
     function resizeCanvas() {
         if (!canvas) return;
         if (!viewport) viewport = canvas.parentElement;
-        canvas.width  = (viewport ? viewport.clientWidth  : window.innerWidth)  || 1;
+        canvas.width = (viewport ? viewport.clientWidth : window.innerWidth) || 1;
         canvas.height = (viewport ? viewport.clientHeight : window.innerHeight) || 1;
     }
 
-    // ResizeObserver setup
     var resizeObserver = null;
     function initResizeObserver() {
         if (typeof ResizeObserver === 'undefined') return;
@@ -650,21 +657,38 @@ var MapperRender = (function() {
         resizeObserver.observe(viewport);
     }
 
-    // =====================================================================
-    // Public API
-    // =====================================================================
+    // --- Public API ---
+    // Setup, rendering, coordinate helpers, hit testing, and drawing
+    // primitives used by tool overlay modules.
 
     return {
+        // Setup
         setCanvas: setCanvas,
-        render: render, resizeCanvas: resizeCanvas,
-        gridToCanvas2d: gridToCanvas2d, canvasToGrid2d: canvasToGrid2d,
-        canvasToGrid3d: canvasToGrid3d, canvasToGrid: canvasToGrid,
-        isoProject3d: isoProject3d,
-        roomAtPoint: roomAtPoint, roomAtPoint2d: roomAtPoint2d, roomAtPoint3d: roomAtPoint3d,
-        currentZ: currentZ, gridCellOccupied: gridCellOccupied,
-        drawRoom2d: drawRoom2d, drawTile3d: drawTile3d, drawLineBadge2d: drawLineBadge2d,
+        initResizeObserver: initResizeObserver,
+        resizeCanvas: resizeCanvas,
+
+        // Rendering
+        render: render,
         getRenderState: getRenderState,
-        initResizeObserver: initResizeObserver
+
+        // Coordinate transforms
+        gridToCanvas2d: gridToCanvas2d,
+        canvasToGrid2d: canvasToGrid2d,
+        canvasToGrid3d: canvasToGrid3d,
+        canvasToGrid: canvasToGrid,
+        isoProject3d: isoProject3d,
+
+        // Hit testing
+        roomAtPoint: roomAtPoint,
+        roomAtPoint2d: roomAtPoint2d,
+        roomAtPoint3d: roomAtPoint3d,
+        currentZ: currentZ,
+        gridCellOccupied: gridCellOccupied,
+
+        // Drawing primitives (used by tool overlays)
+        drawRoom2d: drawRoom2d,
+        drawTile3d: drawTile3d,
+        drawLineBadge2d: drawLineBadge2d
     };
 
 })();

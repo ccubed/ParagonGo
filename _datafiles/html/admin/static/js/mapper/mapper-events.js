@@ -1,3 +1,10 @@
+/**
+ * mapper-events.js
+ *
+ * Lightweight publish/subscribe event bus for the mapper modules.
+ * Keeps modules decoupled: producers emit named events and consumers
+ * subscribe without needing direct references to each other.
+ */
 /* jshint esversion: 11, browser: true */
 'use strict';
 

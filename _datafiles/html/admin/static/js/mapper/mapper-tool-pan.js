@@ -1,3 +1,14 @@
+/**
+ * mapper-tool-pan.js -- Default tool for panning the map canvas.
+ *
+ * Dragging on empty space pans the camera. When no drag is active the tool
+ * renders a dashed "ghost cell" outline with a "+" on whichever empty grid
+ * cell the cursor hovers, hinting that clicking will open the context menu
+ * for room creation.
+ *
+ * Pan math differs between 2D (simple pixel-to-grid ratio) and 3D (inverse
+ * isometric projection), so both paths are handled in onMouseMove.
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperState, MapperRender, MapperEvents,
    BASE_STEP_2D, TILE_HW_3D, GRID_STEP_XY_3D,
@@ -5,23 +16,13 @@
    TILE_HH_3D, ZOOM_STEP, ZOOM_MIN, ZOOM_MAX */
 'use strict';
 
-/**
- * Pan tool -- the default tool.
- *
- * Handles:
- *   - Mousedown on empty space  -> starts pan drag
- *   - Mousemove during pan      -> updates panOffsetX/Y (2D step or 3D iso inverse)
- *   - Mouseup                   -> ends pan, sets suppressClick when moved > 4 px
- *   - Ghost-cell rendering      -> dashed outline with "+" on empty hovered cells
- *   - Hover cursor              -> pointer over room, grab over empty space
- */
 (function() {
 
     var tool = {
         name: 'pan',
 
         // -----------------------------------------------------------------
-        // Lifecycle
+        //  Lifecycle
         // -----------------------------------------------------------------
 
         onActivate: function() {},
@@ -31,13 +32,12 @@
         },
 
         // -----------------------------------------------------------------
-        // Mouse handlers
+        //  Mouse handlers
         // -----------------------------------------------------------------
 
         onMouseDown: function(e, cx, cy, roomId, gridCell) {
-            // Only claim empty-space clicks (rooms handled elsewhere)
             if (roomId !== null) return false;
-            if (e.shiftKey) return false; // shift+empty = selection rect
+            if (e.shiftKey) return false; // shift+empty starts a selection rect
 
             var cam = MapperState.camera;
             cam.dragActive = true;
@@ -51,13 +51,13 @@
         onMouseMove: function(e, cx, cy, roomId, gridCell) {
             var cam = MapperState.camera;
 
-            // Active pan drag
             if (cam.dragActive) {
                 if (cam.activeTab === '2d') {
                     var step = BASE_STEP_2D * cam.zoomScale;
                     cam.panOffsetX = cam.dragStartPanX - (e.clientX - cam.dragStartPxX) / step;
                     cam.panOffsetY = cam.dragStartPanY - (e.clientY - cam.dragStartPxY) / step;
                 } else {
+                    // Invert the iso projection so pixel deltas map to grid units
                     var step3 = TILE_HW_3D * GRID_STEP_XY_3D * cam.spacingScale3d * cam.zoomScale;
                     var dsx = e.clientX - cam.dragStartPxX;
                     var dsy = e.clientY - cam.dragStartPxY;
@@ -68,10 +68,7 @@
                 return;
             }
 
-            // Hover cursor (only when no special mode active)
-            if (!MapperState.exitDrawMode.active && !MapperState.quickBuildMode.active) {
-                // cursor is set by init; we just help with ghost-cell tracking
-            }
+            // Hover cursor logic is handled by init; nothing extra needed here
         },
 
         onMouseUp: function(e, cx, cy) {
@@ -80,6 +77,7 @@
             var dx = e.clientX - cam.dragStartPxX;
             var dy = e.clientY - cam.dragStartPxY;
             cam.dragActive = false;
+            // Suppress the click event when the user clearly intended a drag
             if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
                 MapperEvents.emit('pan:suppressClick');
             }
@@ -88,11 +86,10 @@
         onKeyDown: function() {},
 
         // -----------------------------------------------------------------
-        // Overlay rendering -- 2D ghost cell
+        //  2D overlay -- ghost cell on empty hovered grid position
         // -----------------------------------------------------------------
 
         renderOverlay2d: function(ctx, rs) {
-            // Only render when no room drag and no quick build are active
             if (MapperState.roomDrag.active) return;
             if (MapperState.quickBuildMode.active) return;
             if (MapperState.exitDrawMode.active) return;
@@ -122,7 +119,7 @@
         },
 
         // -----------------------------------------------------------------
-        // Overlay rendering -- 3D ghost cell
+        //  3D overlay -- ghost cell (iso diamond on empty hovered cell)
         // -----------------------------------------------------------------
 
         renderOverlay3d: function(ctx, rs) {

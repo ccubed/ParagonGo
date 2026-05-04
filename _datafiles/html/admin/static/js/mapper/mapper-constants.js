@@ -1,52 +1,70 @@
+/**
+ * mapper-constants.js
+ *
+ * Shared constants for the admin map editor. Every rendering mode (2D and 3D),
+ * color palette, environment symbol mapping, and directional geometry table
+ * lives here so the rest of the mapper modules can stay logic-only.
+ */
 /* jshint esversion: 11, browser: true */
 'use strict';
 
-// =========================================================================
-// Constants
-// =========================================================================
+// --- Zoom & Animation ---
 
-var ZOOM_STEP = 1.25;
-var ZOOM_MIN  = 0.15;
-var ZOOM_MAX  = 5.0;
-var CENTER_EASE_DURATION = 0.2;
+var ZOOM_STEP           = 1.25;
+var ZOOM_MIN            = 0.15;
+var ZOOM_MAX            = 5.0;
+var CENTER_EASE_DURATION = 0.2;   // seconds for the smooth-scroll to a room
 
-var ROOM_SIZE_2D       = 28;
-var ROOM_GAP_2D        = 14;
-var BASE_STEP_2D       = ROOM_SIZE_2D + ROOM_GAP_2D;
-var CONNECTION_WIDTH_2D = 4;
+// --- 2D Rendering Geometry ---
+
+var ROOM_SIZE_2D         = 28;
+var ROOM_GAP_2D          = 14;
+var BASE_STEP_2D         = ROOM_SIZE_2D + ROOM_GAP_2D;  // grid pitch in px
+var CONNECTION_WIDTH_2D  = 4;
 var ROOM_BORDER_WIDTH_2D = 1.5;
 var SYMBOL_FONT_SIZE_2D  = 14;
 var MAP_BG_2D            = '#111';
 var ROOM_BORDER_COLOR_2D = '#000000';
 
-var TILE_HW_3D          = 20;
-var TILE_HH_3D          = 10;
-var TILE_DEPTH_3D       = 7;
-var GRID_STEP_XY_3D     = 1.6;
-var Z_STEP_3D           = 50;
-var Z_SPACING_EXP_3D    = 1.5;
-var CONNECTION_WIDTH_3D  = 2;
+// --- 3D Isometric Rendering ---
+
+var TILE_HW_3D           = 20;    // half-width of an iso tile
+var TILE_HH_3D           = 10;    // half-height of an iso tile
+var TILE_DEPTH_3D        = 7;     // visible "thickness" of the side face
+var GRID_STEP_XY_3D      = 1.6;   // spacing multiplier between tiles on the same Z
+var Z_STEP_3D            = 50;    // vertical pixel offset per Z level
+var Z_SPACING_EXP_3D     = 1.5;   // exponent controlling Z-level separation curve
+var CONNECTION_WIDTH_3D   = 2;
 var MAP_BG_3D            = '#000';
 var TILE_BORDER_COLOR_3D = '#000';
 var TILE_BORDER_WIDTH_3D = 0.8;
-var SIDE_DARKEN_3D       = 0.55;
+var SIDE_DARKEN_3D       = 0.55;  // multiplier to darken tile side faces
 var SYMBOL_FONT_SIZE_3D  = 11;
 var SPACING_STEP_3D      = 1.25;
 var SPACING_MIN_3D       = 0.6;
 var SPACING_MAX_3D       = 4.0;
+
+// Transparency for Z-levels the user is NOT viewing directly
 var ALPHA_INACTIVE_3D    = 0.0;
-var ALPHA_CONNECTED_3D   = 0.30;
+var ALPHA_CONNECTED_3D   = 0.30;  // faint ghost for rooms linked to the active Z
+
+// Connection line colors vary by whether the two rooms share a Z level
 var CONN_COLOR_SAME_Z    = '#ffffff';
 var CONN_COLOR_CROSS_Z   = '#3a6b8a';
-var CROSS_Z_OFFSET_X     = 8;
+var CROSS_Z_OFFSET_X     = 8;     // horizontal nudge for cross-Z arrow markers
 var CROSS_Z_ARROW_SIZE   = 6;
 
+// --- Shared Color Palette ---
+
 var CONNECTION_COLOR          = '#7a4a1a';
-var ABNORMAL_CONNECTION_COLOR = '#d4c050';
-var SELECTED_ROOM_COLOR     = '#1a6abf';
-var SELECTED_ROOM_TEXT_COLOR = '#ffffff';
-var SYMBOL_TEXT_COLOR        = '#e0e0e0';
-var DEFAULT_ROOM_COLOR       = '#3a3a4a';
+var ABNORMAL_CONNECTION_COLOR = '#d4c050';  // visually flags non-standard exits
+var SELECTED_ROOM_COLOR       = '#1a6abf';
+var SELECTED_ROOM_TEXT_COLOR  = '#ffffff';
+var SYMBOL_TEXT_COLOR          = '#e0e0e0';
+var DEFAULT_ROOM_COLOR        = '#3a3a4a';
+
+// --- Symbol & Environment Lookup Tables ---
+// Each symbol has a fixed color so the palette stays consistent across biomes.
 
 var SYMBOL_COLORS = {
     '~':  '#2a53f7',
@@ -103,8 +121,13 @@ var ENVIRONMENT_COLORS = {
     'Land':      '#3a3a4a'
 };
 
+// Populated at runtime when custom biome data is loaded from the server
 var BIOME_SYMBOLS = {};
-var BIOME_COLORS = {};
+var BIOME_COLORS  = {};
+
+// --- Direction & Grid Geometry ---
+// Deltas are [dx, dy, dz]. Suffixes like -x2/-x3 represent multi-cell jumps;
+// -gap/-gap2/-gap3 represent exits that skip intervening cells visually.
 
 var DIRECTION_DELTAS = {
     'north': [0,-1,0], 'south': [0,1,0], 'west': [-1,0,0], 'east': [1,0,0],
@@ -122,11 +145,16 @@ var DIRECTION_DELTAS = {
     'northwest-gap3': [-3,-3,0], 'northeast-gap3': [3,-3,0], 'southwest-gap3': [-3,3,0], 'southeast-gap3': [3,3,0]
 };
 
+// Fast lookup: which exit names are "normal" directional exits (vs. named portals)
 var DIRECTIONAL_EXITS = {
     'north': true, 'south': true, 'east': true, 'west': true,
     'northeast': true, 'northwest': true, 'southeast': true, 'southwest': true,
     'up': true, 'down': true
 };
+
+// --- Quick-Build Geometry ---
+// Base 8 cardinal/intercardinal directions with their return counterparts.
+// CARDINAL_OFFSETS expands each base direction to x1, x2, x3 distances.
 
 var CARDINAL_BASE = [
     { dx:  0, dy: -1, dir: 'north',     ret: 'south'     },

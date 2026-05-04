@@ -1,3 +1,19 @@
+/**
+ * mapper-init.js -- Boot module that wires every mapper subsystem together.
+ *
+ * Loaded last (after state, render, tools, UI, and all tool modules).
+ * Responsibilities:
+ *   1. Collect DOM references and pass them to each module's init.
+ *   2. Wire cross-module callbacks (render, UI updates).
+ *   3. Attach canvas event listeners and dispatch to the tool chain.
+ *      The dispatch order for mousedown is: select intercept, room-drag
+ *      intercept, then the active tool -- so the select and drag tools
+ *      can claim events before the default pan tool sees them.
+ *   4. Register keyboard shortcuts (Escape, Delete/Backspace).
+ *   5. Populate the zone dropdown and restore the last-used zone.
+ *   6. Expose global handler references for inline HTML onclick attributes.
+ *   7. Run the async boot sequence (load biomes, load rooms, center camera).
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperState, MapperRender, MapperTools, MapperCtxMenu, MapperUI, MapperEvents, AdminAPI */
 'use strict';
@@ -5,7 +21,7 @@
 (function() {
 
     // =====================================================================
-    // DOM references
+    //  DOM setup
     // =====================================================================
 
     var canvas     = document.getElementById('mapper-canvas');
@@ -30,7 +46,7 @@
     };
 
     // =====================================================================
-    // Wire up modules
+    //  Module wiring
     // =====================================================================
 
     MapperState.setDom(domRefs);
@@ -45,26 +61,21 @@
     MapperCtxMenu.init(domRefs.ctxMenuEl);
     MapperUI.init(domRefs);
 
-    // =====================================================================
-    // Event wiring
-    // =====================================================================
-
     MapperEvents.on('room:createAt', function(data) {
         MapperUI.createRoomAt(data.gx, data.gy, data.gz);
     });
 
     // =====================================================================
-    // Tool references for interceptors
+    //  Tool references for interceptors
     // =====================================================================
 
     var roomDragTool = MapperTools.get('room-drag');
     var selectTool   = MapperTools.get('select');
 
-    // Activate pan as the default tool
     MapperTools.activate('pan');
 
     // =====================================================================
-    // Canvas event dispatch
+    //  Canvas event dispatch
     // =====================================================================
 
     canvas.addEventListener('mousedown', function(e) {
@@ -77,17 +88,14 @@
         var roomId = MapperRender.roomAtPoint(cx, cy);
         var gridCell = roomId === null ? MapperRender.canvasToGrid(cx, cy) : null;
 
-        // Let select tool intercept shift+drag
+        // Intercept order matters: selection rect first, then room-drag
         if (selectTool && selectTool.interceptMouseDown && selectTool.interceptMouseDown(e, cx, cy, roomId)) {
             return;
         }
-
-        // Let room-drag tool intercept room clicks (arms the drag)
         if (roomDragTool && roomDragTool.interceptMouseDown && roomDragTool.interceptMouseDown(e, cx, cy, roomId)) {
             return;
         }
 
-        // Forward to active tool
         var tool = MapperTools.getActive();
         if (tool && tool.onMouseDown) {
             tool.onMouseDown(e, cx, cy, roomId, gridCell);
@@ -100,7 +108,8 @@
         var roomId = MapperRender.roomAtPoint(cx, cy);
         var gridCell = roomId === null ? MapperRender.canvasToGrid(cx, cy) : null;
 
-        // Let room-drag tool handle armed-state mousemove (threshold promotion)
+        // Room-drag gets first look so threshold promotion works even when
+        // the active tool is still "pan"
         if (roomDragTool && roomDragTool.onMouseMove) {
             roomDragTool.onMouseMove(e, cx, cy, roomId, gridCell);
             if (MapperState.roomDrag.active) return;
@@ -111,7 +120,7 @@
             tool.onMouseMove(e, cx, cy, roomId, gridCell);
         }
 
-        // Update hover state for ghost cells and cursor
+        // Update hover state for ghost cells and cursor style
         MapperState.hoveredRoomId = roomId;
         var prevGhost = MapperState.hoveredGridCell;
         if (roomId === null && MapperState.data.rooms.size > 0) {
@@ -124,7 +133,7 @@
              (prevGhost.gx !== MapperState.hoveredGridCell.gx || prevGhost.gy !== MapperState.hoveredGridCell.gy));
         if (ghostChanged) MapperRender.render();
 
-        // Cursor
+        // Cursor: tools with a custom cursor override the default room/empty logic
         var activeTool = MapperTools.getActive();
         var specialCursor = (activeTool && activeTool.cursor) ? activeTool.cursor : null;
         if (roomId !== null) {
@@ -138,7 +147,7 @@
         var rect = canvas.getBoundingClientRect();
         var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
 
-        // Let room-drag tool handle mouseup (even if not the "active" tool, it may be armed)
+        // Room-drag may still be armed even though it is not the active tool
         if (roomDragTool && roomDragTool.onMouseUp) {
             roomDragTool.onMouseUp(e, cx, cy);
         }
@@ -150,7 +159,7 @@
     });
 
     canvas.addEventListener('mouseleave', function() {
-        // Cancel any active mode
+        // Clean up any in-progress interaction so state does not leak
         var tool = MapperTools.getActive();
         if (tool && tool.name === 'select' && MapperState.selRect.active) {
             MapperState.selRect.active = false;
@@ -178,6 +187,7 @@
     });
 
     canvas.addEventListener('click', function(e) {
+        // Suppress click when a drag or selection rect just finished
         if (canvas.dataset.suppressClick) { delete canvas.dataset.suppressClick; return; }
 
         var activeTool = MapperTools.getActive();
@@ -212,6 +222,7 @@
         }
     });
 
+    // Right-click cancels special tool modes instead of opening browser menu
     canvas.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -228,10 +239,15 @@
         MapperRender.render();
     }, { passive: false });
 
+    // Close context menu when clicking outside it
     document.addEventListener('click', function(e) {
         var ctxEl = domRefs.ctxMenuEl;
         if (!ctxEl.contains(e.target)) MapperCtxMenu.hide();
     });
+
+    // =====================================================================
+    //  Keyboard shortcuts
+    // =====================================================================
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -240,12 +256,26 @@
             if (activeTool && activeTool.name === 'exit-draw') { MapperTools.activate('pan'); return; }
             MapperCtxMenu.hide();
         }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (MapperState.selected.size > 0) {
+                var ids = Array.from(MapperState.selected);
+                var msg = ids.length === 1
+                    ? 'Delete this room? All exits to/from it will be removed.'
+                    : 'Delete ' + ids.length + ' selected rooms? All exits to/from them will be removed.';
+                if (confirm(msg)) {
+                    ids.forEach(function(rid) { MapperState.deleteRoomLocally(rid); });
+                    MapperRender.render();
+                }
+                e.preventDefault();
+                return;
+            }
+        }
         var tool = MapperTools.getActive();
         if (tool && tool.onKeyDown) tool.onKeyDown(e);
     });
 
     // =====================================================================
-    // Zone select
+    //  Zone dropdown
     // =====================================================================
 
     domRefs.zoneSelect.addEventListener('change', function() {
@@ -261,7 +291,7 @@
     });
 
     // =====================================================================
-    // Expose global handlers for inline HTML onclick attributes
+    //  Global handler exposure (for inline HTML onclick attributes)
     // =====================================================================
 
     window.switchTab      = MapperUI.switchTab;
@@ -274,7 +304,7 @@
     window.discardChanges = MapperUI.discardChanges;
 
     // =====================================================================
-    // Boot
+    //  Boot sequence
     // =====================================================================
 
     (async function() {
@@ -284,6 +314,7 @@
         MapperUI.switchTab(MapperState.camera.activeTab);
         MapperRender.initResizeObserver();
 
+        // Restore last-used zone, falling back to the first available zone
         var lastZone = localStorage.getItem('mapper.lastZone');
         if (!lastZone || !MapperState.data.allZones.some(function(z) { return z.Name === lastZone; })) {
             lastZone = MapperState.data.allZones.length > 0 ? MapperState.data.allZones[0].Name : null;

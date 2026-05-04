@@ -1,19 +1,21 @@
+/**
+ * mapper-tool-select.js -- Selection rectangle and base context menu items.
+ *
+ * Triggered by shift+drag on empty canvas space (NOT activated via the
+ * toolbar). The tool draws a translucent selection rectangle while
+ * dragging and enumerates all rooms whose 2D bounding boxes intersect the
+ * rectangle on mouseup.
+ *
+ * Also registers the "base" context menu providers for both room targets
+ * and empty-cell targets:
+ *   Room items:   Select, Add Room Up/Down, Edit Room, Delete Room
+ *   Empty items:  Create Room Here
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperCtxMenu, MapperState, MapperRender, MapperEvents,
    ROOM_SIZE_2D, escapeHtml */
 'use strict';
 
-/**
- * Selection-rect tool -- triggered by shift+drag on empty space.
- *
- * NOT activated via the tool registry. Uses `interceptMouseDown` to detect
- * shift+empty and start the selection rectangle. Runs alongside the normal
- * flow and deactivates automatically on mouseup.
- *
- * Also registers the "base" room and empty-cell context menu items:
- *   rooms:  Select, Edit Room, Delete Room, Add Room Up/Down
- *   empty:  Create Room Here
- */
 (function() {
 
     var tool = {
@@ -25,7 +27,7 @@
         },
 
         // -----------------------------------------------------------------
-        // Intercept -- called by init to detect shift+empty mousedown
+        //  Intercept -- detect shift+empty mousedown to start a rect
         // -----------------------------------------------------------------
 
         interceptMouseDown: function(e, cx, cy, roomId) {
@@ -45,6 +47,10 @@
 
         onMouseDown: function() { return false; },
 
+        // -----------------------------------------------------------------
+        //  Rect tracking
+        // -----------------------------------------------------------------
+
         onMouseMove: function(e, cx, cy) {
             var sr = MapperState.selRect;
             if (!sr.active) return;
@@ -52,6 +58,10 @@
             sr.endCy = cy;
             MapperRender.render();
         },
+
+        // -----------------------------------------------------------------
+        //  Room enumeration on release
+        // -----------------------------------------------------------------
 
         onMouseUp: function(e, cx, cy) {
             var sr = MapperState.selRect;
@@ -63,6 +73,7 @@
             var minCy = Math.min(sr.startCy, sr.endCy);
             var maxCy = Math.max(sr.startCy, sr.endCy);
 
+            // Only commit a selection when the rect is large enough to be intentional
             if (maxCx - minCx > 4 || maxCy - minCy > 4) {
                 var half = (ROOM_SIZE_2D * MapperState.camera.zoomScale) / 2;
                 if (!e.shiftKey && !e.ctrlKey) MapperState.selected.clear();
@@ -76,7 +87,8 @@
                 });
             }
 
-            MapperEvents.emit('pan:suppressClick');
+            // Suppress the click that would otherwise fire on the same mouseup
+            document.getElementById('mapper-canvas').dataset.suppressClick = '1';
             MapperTools.activate('pan');
             MapperRender.render();
         },
@@ -84,7 +96,7 @@
         onKeyDown: function() {},
 
         // -----------------------------------------------------------------
-        // 2D overlay: selection rectangle
+        //  2D overlay -- selection rectangle
         // -----------------------------------------------------------------
 
         renderOverlay2d: function(ctx, rs) {
@@ -105,24 +117,24 @@
             ctx.setLineDash([]);
         },
 
-        renderOverlay3d: function() {
-            // Selection rectangle is 2D-only in the current implementation
-        }
+        // Selection rectangle is 2D-only in the current implementation
+        renderOverlay3d: function() {}
     };
 
     MapperTools.register(tool);
 
-    // -----------------------------------------------------------------
-    // Context menu items for rooms
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Context menu providers
+    // =====================================================================
 
     MapperCtxMenu.registerProvider(function(target) {
+
+        // --- Room context menu ---
         if (target.type === 'room') {
             var items = [];
             var room = target.room;
             var roomId = target.roomId;
 
-            // Select
             items.push({
                 label: 'Select',
                 action: function() {
@@ -130,7 +142,7 @@
                 }
             });
 
-            // Add Room Up / Down (only for rooms with coordinates)
+            // Add Room Up/Down (only for rooms with coordinates)
             if (room && room.HasCoordinates) {
                 var upZ = room.MapZ + 1;
                 var downZ = room.MapZ - 1;
@@ -153,7 +165,7 @@
                 });
             }
 
-            // Edit Room (only for persisted rooms)
+            // Edit Room (only for persisted rooms, not temp negative IDs)
             if (roomId > 0) {
                 items.push({
                     label: 'Edit Room',
@@ -163,7 +175,6 @@
                 });
             }
 
-            // Delete Room
             items.push({
                 label: 'Delete Room',
                 style: 'color:#ff6b6b',
@@ -179,7 +190,7 @@
             return items;
         }
 
-        // Empty cell context menu
+        // --- Empty cell context menu ---
         if (target.type === 'empty') {
             return [
                 {

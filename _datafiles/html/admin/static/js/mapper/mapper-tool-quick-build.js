@@ -1,3 +1,16 @@
+/**
+ * mapper-tool-quick-build.js -- Stamping mode for rapid room creation.
+ *
+ * Activated via the context menu "Quick Build From Here". Shows cardinal
+ * and intercardinal build slots radiating from a source room. Clicking an
+ * unoccupied slot stamps a new room (copying traits from the source),
+ * wires bidirectional exits, and advances the source to the new room so
+ * the builder can chain rooms in a straight line without reopening the
+ * menu each time.
+ *
+ * Slots are organized by distance tier (1, 2, 3) and fade progressively
+ * so the nearest directions are the most prominent.
+ */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperCtxMenu, MapperState, MapperRender,
    ROOM_SIZE_2D, SYMBOL_FONT_SIZE_2D, SYMBOL_FONT_SIZE_3D,
@@ -5,18 +18,13 @@
    CARDINAL_OFFSETS, symbolForRoom, colorForSymbol */
 'use strict';
 
-/**
- * Quick-build tool -- activated via context menu "Quick Build From Here".
- *
- * Shows cardinal/intercardinal build slots around the source room. Clicking
- * a valid slot stamps a new room, wires exits, and advances the source.
- */
 (function() {
 
-    // -----------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Slot computation
+    // =====================================================================
 
+    /** Build the list of cardinal/intercardinal slots around the current source. */
     function getQuickBuildSlots() {
         var qb = MapperState.quickBuildMode;
         var slots = [];
@@ -27,6 +35,8 @@
             var gy = qb.sourceGy + co.dy;
             var occupied = MapperRender.gridCellOccupied(gx, gy, gz);
             var blocked = !!blockedDirs[co.label];
+            // Mark farther slots along the same direction as blocked when
+            // a nearer slot in that direction is already occupied.
             if (occupied) blockedDirs[co.label] = true;
             slots.push({
                 gx: gx, gy: gy, gz: gz,
@@ -50,6 +60,11 @@
         return false;
     }
 
+    // =====================================================================
+    //  Stamp-and-advance
+    // =====================================================================
+
+    /** Create a room at (gx,gy), wire exits, copy traits, and advance the source. */
     function quickBuildAt(gx, gy) {
         var qb = MapperState.quickBuildMode;
         var gz = qb.sourceGz;
@@ -64,7 +79,7 @@
 
         var newId = MapperState.createRoomLocally(gx, gy, gz);
 
-        // Copy traits from the source room
+        // Copy visual traits from the source so the new room blends in
         var srcRoom = MapperState.data.rooms.get(qb.sourceRoomId);
         var newRoom = MapperState.data.rooms.get(newId);
         if (srcRoom && newRoom) {
@@ -79,7 +94,7 @@
         MapperState.addExitLocally(qb.sourceRoomId, match.dir, newId);
         MapperState.addExitLocally(newId, match.ret, qb.sourceRoomId);
 
-        // Advance source to the new room
+        // Advance source to the newly created room
         qb.sourceRoomId = newId;
         qb.sourceGx = gx;
         qb.sourceGy = gy;
@@ -88,9 +103,9 @@
         return true;
     }
 
-    // -----------------------------------------------------------------
-    // Tool definition
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Tool definition
+    // =====================================================================
 
     var tool = {
         name: 'quick-build',
@@ -150,7 +165,7 @@
         },
 
         // -----------------------------------------------------------------
-        // 2D overlay: cardinal slots with labels and hover highlighting
+        //  2D overlay -- cardinal slots with labels and hover highlighting
         // -----------------------------------------------------------------
 
         renderOverlay2d: function(ctx, rs) {
@@ -164,7 +179,7 @@
 
             var srcP = rs.gridToCanvas2d(qb.sourceGx, qb.sourceGy);
 
-            // Highlight source room
+            // Highlight the current source room
             ctx.strokeStyle = 'rgba(95,183,122,0.8)';
             ctx.lineWidth = Math.max(2, 2.5 * rs.zoomScale);
             ctx.strokeRect(
@@ -175,6 +190,7 @@
             );
 
             var slots = getQuickBuildSlots();
+            // Distance tiers fade so nearer slots draw more attention
             var fadeByDist = [1.0, 0.7, 0.45];
 
             slots.forEach(function(slot) {
@@ -216,7 +232,7 @@
         },
 
         // -----------------------------------------------------------------
-        // 3D overlay: cardinal slots as iso-diamonds
+        //  3D overlay -- cardinal slots as iso diamonds
         // -----------------------------------------------------------------
 
         renderOverlay3d: function(ctx, rs) {
@@ -266,9 +282,9 @@
 
     MapperTools.register(tool);
 
-    // -----------------------------------------------------------------
-    // Context menu item
-    // -----------------------------------------------------------------
+    // =====================================================================
+    //  Context menu item
+    // =====================================================================
 
     MapperCtxMenu.registerProvider(function(target) {
         if (target.type !== 'room') return null;
