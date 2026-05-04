@@ -1,0 +1,2750 @@
+{{template "header" .}}
+
+<style>
+    main {
+        max-width: none;
+        padding: 0 1rem 1rem 1rem;
+        margin-top: 1rem;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    .subtitle { color: var(--color-text-dim); font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .subtitle a { color: var(--color-link); }
+
+    .mapper-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+    }
+    .mapper-toolbar select {
+        padding: 4px 6px;
+        font-size: 0.82rem;
+        font-family: monospace;
+        background: var(--color-surface-white);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        min-width: 160px;
+    }
+    .mapper-toolbar .sep {
+        width: 1px;
+        height: 20px;
+        background: var(--color-border);
+    }
+    .mapper-tabs { display: flex; gap: 2px; }
+    .mapper-tabs button {
+        padding: 3px 10px;
+        font-size: 0.78rem;
+        font-family: monospace;
+        background: var(--color-surface-white);
+        color: var(--color-text-dim);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .mapper-tabs button:hover { color: var(--color-text); }
+    .mapper-tabs button.active {
+        background: var(--color-primary);
+        color: #fff;
+        border-color: var(--color-primary);
+    }
+    .mapper-controls { display: flex; gap: 2px; align-items: center; }
+    .mapper-controls button {
+        width: 24px; height: 24px;
+        padding: 0;
+        font-size: 14px; line-height: 1;
+        font-family: monospace;
+        background: var(--color-surface-white);
+        color: var(--color-text-dim);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .mapper-controls button:hover { color: var(--color-text); background: var(--color-surface); }
+    .mapper-controls button.active {
+        background: var(--color-primary);
+        color: #fff;
+        border-color: var(--color-primary);
+    }
+    .mapper-controls .ctrl-sep {
+        width: 1px; height: 16px;
+        background: var(--color-border);
+        margin: 0 3px;
+    }
+    .mapper-z-controls { display: flex; gap: 2px; align-items: center; }
+    .mapper-z-controls span { font-size: 0.72rem; color: var(--color-text-dim); font-family: monospace; }
+
+    .mapper-body {
+        display: flex;
+        gap: 6px;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+    }
+    .mapper-viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #111;
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+    }
+    .mapper-viewport canvas {
+        display: block;
+        position: absolute;
+        top: 0; left: 0;
+        cursor: grab;
+    }
+
+    .mapper-info-panel {
+        width: 260px;
+        flex-shrink: 0;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        overflow-y: auto;
+        font-size: 0.8rem;
+        font-family: monospace;
+    }
+    .mapper-info-panel h3 {
+        margin: 0 0 6px 0;
+        font-size: 0.85rem;
+        color: var(--color-text);
+    }
+    .mapper-info-panel .info-empty {
+        color: var(--color-text-dim);
+        font-style: italic;
+    }
+    .mapper-info-panel .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        line-height: 1.8;
+    }
+    .mapper-info-panel .info-label {
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .mapper-info-panel .info-value {
+        color: var(--color-text);
+        text-align: right;
+        word-break: break-word;
+    }
+    .mapper-info-panel .info-divider {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: 6px 0;
+    }
+    .mapper-info-panel .info-link {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: var(--color-link);
+    }
+    .mapper-info-panel .info-exits {
+        margin-top: 4px;
+    }
+    .mapper-info-panel .info-exit-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        line-height: 1.6;
+        font-size: 0.75rem;
+    }
+    .mapper-info-panel .info-exit-dir { color: var(--color-text-dim); }
+    .mapper-info-panel .info-exit-id { color: var(--color-text); }
+    .mapper-info-panel .info-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        margin-top: 4px;
+    }
+    .mapper-info-panel .info-badge {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        border-radius: 3px;
+        background: var(--color-surface-white);
+        color: var(--color-text-dim);
+        border: 1px solid var(--color-border);
+    }
+    .mapper-info-panel .info-badge.secret { color: #d4a843; border-color: #d4a843; }
+    .mapper-info-panel .info-badge.locked { color: #9ab0d4; border-color: #9ab0d4; }
+
+    #mapper-tooltip {
+        position: fixed;
+        z-index: 99999;
+        pointer-events: none;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        padding: 8px 10px;
+        min-width: 140px;
+        max-width: 260px;
+        display: none;
+        font-family: monospace;
+        font-size: 0.78rem;
+    }
+    #mapper-tooltip .tt-title { font-weight: bold; color: var(--color-text); margin-bottom: 2px; }
+    #mapper-tooltip .tt-id { color: var(--color-text-dim); font-size: 0.7rem; }
+    #mapper-tooltip .tt-row { display: flex; justify-content: space-between; gap: 8px; line-height: 1.6; }
+    #mapper-tooltip .tt-label { color: var(--color-text-dim); font-size: 0.72rem; text-transform: uppercase; }
+    #mapper-tooltip .tt-value { color: var(--color-text); }
+    #mapper-tooltip .tt-divider { border: none; border-top: 1px solid var(--color-border); margin: 4px 0; }
+
+    .mapper-ctx-menu {
+        position: fixed;
+        z-index: 99998;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        min-width: 160px;
+        padding: 4px 0;
+        font-family: monospace;
+        font-size: 0.8rem;
+        display: none;
+    }
+    .mapper-ctx-menu .ctx-header {
+        padding: 4px 10px;
+        color: var(--color-text-dim);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 2px;
+    }
+    .mapper-ctx-menu .ctx-item {
+        display: block;
+        width: 100%;
+        padding: 5px 10px;
+        background: none;
+        border: none;
+        color: var(--color-text);
+        font-family: monospace;
+        font-size: 0.8rem;
+        text-align: left;
+        cursor: pointer;
+    }
+    .mapper-ctx-menu .ctx-item:hover {
+        background: var(--color-primary);
+        color: #fff;
+    }
+
+    .mapper-save-controls {
+        display: none;
+        gap: 4px;
+        align-items: center;
+    }
+    .mapper-save-controls.visible { display: flex; }
+    .mapper-save-controls button {
+        padding: 3px 10px;
+        font-size: 0.78rem;
+        font-family: monospace;
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .mapper-save-controls .btn-save {
+        background: #2a7a2a;
+        color: #fff;
+        border-color: #2a7a2a;
+    }
+    .mapper-save-controls .btn-save:hover { background: #35953a; }
+    .mapper-save-controls .btn-discard {
+        background: var(--color-surface-white);
+        color: var(--color-text-dim);
+    }
+    .mapper-save-controls .btn-discard:hover { color: var(--color-text); }
+    .mapper-save-controls .dirty-count {
+        font-size: 0.72rem;
+        color: #d4a843;
+        font-family: monospace;
+    }
+
+    .mapper-changelog {
+        margin-top: 6px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 6px 10px;
+        max-height: 160px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        display: none;
+    }
+    .mapper-changelog.visible { display: block; }
+    .mapper-changelog .cl-title {
+        font-size: 0.72rem;
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+    }
+    .mapper-changelog .cl-entry { color: var(--color-text); }
+    .mapper-changelog .cl-entry .cl-action { color: var(--color-text-dim); }
+    .mapper-changelog .cl-entry.cl-move .cl-action { color: #6aacf0; }
+    .mapper-changelog .cl-entry.cl-create .cl-action { color: #5fb77a; }
+    .mapper-changelog .cl-entry.cl-delete .cl-action { color: #ff6b6b; }
+    .mapper-changelog .cl-entry.cl-exit-add .cl-action { color: #a8d86e; }
+    .mapper-changelog .cl-entry.cl-exit-remove .cl-action { color: #d4a843; }
+
+    .mapper-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-text-dim);
+        font-family: monospace;
+        font-size: 0.85rem;
+        background: rgba(0,0,0,0.6);
+        z-index: 5;
+    }
+    .mapper-loading.hidden { display: none; }
+
+    .mapper-stats {
+        font-size: 0.72rem;
+        color: var(--color-text-dim);
+        font-family: monospace;
+        margin-left: auto;
+    }
+</style>
+
+<h1>Zone Mapper</h1>
+
+<div class="mapper-toolbar">
+    <select id="zone-select"><option value="">-- select zone --</option></select>
+    <span class="sep"></span>
+    <div class="mapper-tabs">
+        <button class="tab-btn active" data-tab="2d" onclick="switchTab('2d')">2D</button>
+        <button class="tab-btn" data-tab="3d" onclick="switchTab('3d')">3D</button>
+    </div>
+    <span class="sep"></span>
+    <div class="mapper-controls">
+        <button onclick="zoomOut()" title="Zoom out">&minus;</button>
+        <button onclick="zoomIn()" title="Zoom in">+</button>
+        <span class="ctrl-sep"></span>
+        <button onclick="centerCamera()" title="Re-center on root room">&#8982;</button>
+    </div>
+    <div class="mapper-z-controls" id="z-controls">
+        <span class="ctrl-sep"></span>
+        <span>Z:</span>
+        <div id="z-buttons"></div>
+    </div>
+    <div class="mapper-controls" id="spacing-controls" style="display:none">
+        <span class="ctrl-sep"></span>
+        <button onclick="spacingDown()" title="Decrease spacing">&darr;</button>
+        <button onclick="spacingUp()" title="Increase spacing">&uarr;</button>
+    </div>
+    <div class="mapper-save-controls" id="save-controls">
+        <span class="sep"></span>
+        <span class="dirty-count" id="dirty-count"></span>
+        <button class="btn-save" onclick="saveAllChanges()">Save Changes</button>
+        <button class="btn-discard" onclick="discardChanges()">Discard</button>
+    </div>
+    <span class="mapper-stats" id="mapper-stats"></span>
+</div>
+
+<div class="mapper-body">
+    <div class="mapper-viewport" id="mapper-viewport">
+        <canvas id="mapper-canvas"></canvas>
+        <div class="mapper-loading hidden" id="mapper-loading">Loading zone data...</div>
+    </div>
+    <div class="mapper-info-panel" id="mapper-info-panel">
+        <h3>Room Info</h3>
+        <div class="info-empty" id="info-empty">Click a room to see details</div>
+        <div id="info-content" style="display:none"></div>
+    </div>
+</div>
+
+<div class="mapper-changelog" id="mapper-changelog">
+    <div class="cl-title">Pending Changes</div>
+    <div id="changelog-entries"></div>
+</div>
+
+<div id="mapper-tooltip"></div>
+<div id="mapper-ctx-menu" class="mapper-ctx-menu"></div>
+
+<script>
+'use strict';
+
+// =========================================================================
+// Constants
+// =========================================================================
+
+var ZOOM_STEP = 1.25;
+var ZOOM_MIN  = 0.15;
+var ZOOM_MAX  = 5.0;
+var CENTER_EASE_DURATION = 0.2;
+
+var ROOM_SIZE_2D       = 28;
+var ROOM_GAP_2D        = 14;
+var BASE_STEP_2D       = ROOM_SIZE_2D + ROOM_GAP_2D;
+var CONNECTION_WIDTH_2D = 4;
+var ROOM_BORDER_WIDTH_2D = 1.5;
+var SYMBOL_FONT_SIZE_2D  = 14;
+var MAP_BG_2D            = '#111';
+var ROOM_BORDER_COLOR_2D = '#000000';
+
+var TILE_HW_3D          = 20;
+var TILE_HH_3D          = 10;
+var TILE_DEPTH_3D       = 7;
+var GRID_STEP_XY_3D     = 1.6;
+var Z_STEP_3D           = 50;
+var Z_SPACING_EXP_3D    = 1.5;
+var CONNECTION_WIDTH_3D  = 2;
+var MAP_BG_3D            = '#000';
+var TILE_BORDER_COLOR_3D = '#000';
+var TILE_BORDER_WIDTH_3D = 0.8;
+var SIDE_DARKEN_3D       = 0.55;
+var SYMBOL_FONT_SIZE_3D  = 11;
+var SPACING_STEP_3D      = 1.25;
+var SPACING_MIN_3D       = 0.6;
+var SPACING_MAX_3D       = 4.0;
+var ALPHA_INACTIVE_3D    = 0.0;
+var ALPHA_CONNECTED_3D   = 0.30;
+var CONN_COLOR_SAME_Z    = '#ffffff';
+var CONN_COLOR_CROSS_Z   = '#3a6b8a';
+var CROSS_Z_OFFSET_X     = 8;
+var CROSS_Z_ARROW_SIZE   = 6;
+
+var CONNECTION_COLOR          = '#7a4a1a';
+var ABNORMAL_CONNECTION_COLOR = '#d4c050';
+var SELECTED_ROOM_COLOR     = '#1a6abf';
+var SELECTED_ROOM_TEXT_COLOR = '#ffffff';
+var SYMBOL_TEXT_COLOR        = '#e0e0e0';
+var DEFAULT_ROOM_COLOR       = '#3a3a4a';
+
+var SYMBOL_COLORS = {
+    '~':  '#2a53f7',
+    '≈': '#0033cd',
+    '♣': '#1a6b1a',
+    '♨': '#4a6b20',
+    '❄': '#b8d8f0',
+    '⌬': '#5a4a38',
+    '⩕': '#7a6a50',
+    '▼': '#8a7a5a',
+    '⌂': '#8a6a3a',
+    '*':  '#d4aa55',
+    "'":  '#6a8a30',
+    '=':  '#a07840',
+    '$':  '#2a7a2a',
+    '%':  '#2a5a8a',
+    '♜': '#4a4a4a',
+    '+':  '#5fb7ff',
+    '•': '#3a3a4a'
+};
+
+var ENVIRONMENT_SYMBOLS = {
+    'Forest':    '♣',
+    'Swamp':     '♨',
+    'Snow':      '❄',
+    'Cave':      '⌬',
+    'Dungeon':   '⌬',
+    'Mountains': '⩕',
+    'Cliffs':    '▼',
+    'House':     '⌂',
+    'Desert':    '*',
+    'Farmland':  "'",
+    'Road':      '=',
+    'Shore':     '~',
+    'Water':     '≈'
+};
+
+var ENVIRONMENT_COLORS = {
+    'Forest':    '#1a6b1a',
+    'Swamp':     '#4a6b20',
+    'Snow':      '#b8d8f0',
+    'Cave':      '#5a4a38',
+    'Dungeon':   '#5a4a38',
+    'Mountains': '#7a6a50',
+    'Cliffs':    '#8a7a5a',
+    'House':     '#8a6a3a',
+    'Desert':    '#d4aa55',
+    'Farmland':  '#6a8a30',
+    'Road':      '#a07840',
+    'Shore':     '#2a53f7',
+    'Water':     '#0033cd',
+    'City':      '#5a5a6a',
+    'Fort':      '#5a5a6a',
+    'Land':      '#3a3a4a'
+};
+
+var BIOME_SYMBOLS = {};
+var BIOME_COLORS = {};
+
+var DIRECTION_DELTAS = {
+    'north': [0,-1,0], 'south': [0,1,0], 'west': [-1,0,0], 'east': [1,0,0],
+    'northwest': [-1,-1,0], 'northeast': [1,-1,0], 'southwest': [-1,1,0], 'southeast': [1,1,0],
+    'down': [0,0,-1], 'up': [0,0,1],
+    'north-x2': [0,-2,0], 'south-x2': [0,2,0], 'west-x2': [-2,0,0], 'east-x2': [2,0,0],
+    'northwest-x2': [-2,-2,0], 'northeast-x2': [2,-2,0], 'southwest-x2': [-2,2,0], 'southeast-x2': [2,2,0],
+    'north-x3': [0,-3,0], 'south-x3': [0,3,0], 'west-x3': [-3,0,0], 'east-x3': [3,0,0],
+    'northwest-x3': [-3,-3,0], 'northeast-x3': [3,-3,0], 'southwest-x3': [-3,3,0], 'southeast-x3': [3,3,0],
+    'north-gap': [0,-1,0], 'south-gap': [0,1,0], 'west-gap': [-1,0,0], 'east-gap': [1,0,0],
+    'northwest-gap': [-1,-1,0], 'northeast-gap': [1,-1,0], 'southwest-gap': [-1,1,0], 'southeast-gap': [1,1,0],
+    'north-gap2': [0,-2,0], 'south-gap2': [0,2,0], 'west-gap2': [-2,0,0], 'east-gap2': [2,0,0],
+    'northwest-gap2': [-2,-2,0], 'northeast-gap2': [2,-2,0], 'southwest-gap2': [-2,2,0], 'southeast-gap2': [2,2,0],
+    'north-gap3': [0,-3,0], 'south-gap3': [0,3,0], 'west-gap3': [-3,0,0], 'east-gap3': [3,0,0],
+    'northwest-gap3': [-3,-3,0], 'northeast-gap3': [3,-3,0], 'southwest-gap3': [-3,3,0], 'southeast-gap3': [3,3,0]
+};
+
+var DIRECTIONAL_EXITS = {
+    'north': true, 'south': true, 'east': true, 'west': true,
+    'northeast': true, 'northwest': true, 'southeast': true, 'southwest': true,
+    'up': true, 'down': true
+};
+
+function isDirectionalExit(dir) {
+    return DIRECTIONAL_EXITS[dir] === true || DIRECTION_DELTAS[dir] !== undefined;
+}
+
+// =========================================================================
+// Helpers
+// =========================================================================
+
+function symbolForRoom(room) {
+    if (room.MapSymbol) return room.MapSymbol;
+    var env = biomeEnvName(room.Biome);
+    if (env && ENVIRONMENT_SYMBOLS[env]) return ENVIRONMENT_SYMBOLS[env];
+    if (room.Biome && BIOME_SYMBOLS[room.Biome]) return BIOME_SYMBOLS[room.Biome];
+    return '•';
+}
+
+function colorForSymbol(sym, biome) {
+    if (sym && SYMBOL_COLORS[sym]) return SYMBOL_COLORS[sym];
+    var env = biomeEnvName(biome);
+    if (env && ENVIRONMENT_COLORS[env]) return ENVIRONMENT_COLORS[env];
+    if (biome && BIOME_COLORS[biome]) return BIOME_COLORS[biome];
+    return DEFAULT_ROOM_COLOR;
+}
+
+function biomeEnvName(biomeId) {
+    if (!biomeId) return '';
+    if (ENVIRONMENT_COLORS[biomeId]) return biomeId;
+    return biomeEnvMap[biomeId] || '';
+}
+var biomeEnvMap = {};
+
+function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+function darkenColor(hex, factor) {
+    var r = Math.min(255, Math.round(parseInt(hex.slice(1,3), 16) * factor));
+    var g = Math.min(255, Math.round(parseInt(hex.slice(3,5), 16) * factor));
+    var b = Math.min(255, Math.round(parseInt(hex.slice(5,7), 16) * factor));
+    return '#' + ('0'+r.toString(16)).slice(-2) + ('0'+g.toString(16)).slice(-2) + ('0'+b.toString(16)).slice(-2);
+}
+
+function exitDelta(dir, room) {
+    var ex = room.Exits && room.Exits[dir];
+    if (ex && ex.MapDirection && DIRECTION_DELTAS[ex.MapDirection]) return DIRECTION_DELTAS[ex.MapDirection];
+    if (DIRECTION_DELTAS[dir]) return DIRECTION_DELTAS[dir];
+    return null;
+}
+
+function sign(v) { return v > 0 ? 1 : (v < 0 ? -1 : 0); }
+
+function buildDragConstraints(roomId, groupSet) {
+    var room = mapperData.rooms.get(roomId);
+    if (!room) return [];
+    var constraints = [];
+
+    // Outgoing exits: from this room to neighbors outside the group
+    if (room.Exits) {
+        for (var dir in room.Exits) {
+            var ex = room.Exits[dir];
+            if (groupSet && groupSet.has(ex.RoomId)) continue;
+            var delta = exitDelta(dir, room);
+            if (!delta || (delta[0] === 0 && delta[1] === 0)) continue;
+            var dest = mapperData.rooms.get(ex.RoomId);
+            if (!dest || !dest.HasCoordinates) continue;
+            constraints.push({
+                signDx: sign(delta[0]),
+                signDy: sign(delta[1]),
+                refX: dest.MapX,
+                refY: dest.MapY,
+                ownerGx: room.MapX,
+                ownerGy: room.MapY,
+                ownerId: roomId,
+                outgoing: true
+            });
+        }
+    }
+
+    // Incoming exits: from neighbors outside the group pointing at this room
+    mapperData.rooms.forEach(function(other, otherId) {
+        if (otherId === roomId || !other.HasCoordinates || !other.Exits) return;
+        if (groupSet && groupSet.has(otherId)) return;
+        for (var dir in other.Exits) {
+            var ex = other.Exits[dir];
+            if (ex.RoomId !== roomId) continue;
+            var delta = exitDelta(dir, other);
+            if (!delta || (delta[0] === 0 && delta[1] === 0)) continue;
+            constraints.push({
+                signDx: sign(delta[0]),
+                signDy: sign(delta[1]),
+                refX: other.MapX,
+                refY: other.MapY,
+                ownerGx: room.MapX,
+                ownerGy: room.MapY,
+                ownerId: roomId,
+                outgoing: false
+            });
+        }
+    });
+
+    return constraints;
+}
+
+function isExitConstraintSatisfied(c, gx, gy) {
+    var dx, dy;
+    if (c.outgoing) {
+        dx = c.refX - gx;
+        dy = c.refY - gy;
+    } else {
+        dx = gx - c.refX;
+        dy = gy - c.refY;
+    }
+    // Sign must match
+    if (c.signDx !== 0 && sign(dx) !== c.signDx) return false;
+    if (c.signDy !== 0 && sign(dy) !== c.signDy) return false;
+    // Cardinal: axis-aligned (zero component must stay zero)
+    if (c.signDx === 0 && dx !== 0) return false;
+    if (c.signDy === 0 && dy !== 0) return false;
+    // Intercardinal: must stay on the exact diagonal (|dx| == |dy|)
+    if (c.signDx !== 0 && c.signDy !== 0 && Math.abs(dx) !== Math.abs(dy)) return false;
+    return true;
+}
+
+function computeBrokenExits(gx, gy, constraints) {
+    var broken = [];
+    for (var i = 0; i < constraints.length; i++) {
+        if (!isExitConstraintSatisfied(constraints[i], gx, gy)) {
+            broken.push(constraints[i]);
+        }
+    }
+    return broken;
+}
+
+// =========================================================================
+// Data layer
+// =========================================================================
+
+var mapperData = {
+    allZones: [],
+    currentZone: null,
+    rawRooms: [],
+    rooms: new Map(),
+    roomsByCoord: new Map(),
+    zLevels: [],
+    zoneRootRooms: new Map(),
+    zoneOffsets: new Map(),
+    visibleZones: new Set(),
+};
+
+async function loadBiomes() {
+    var res = await AdminAPI.get('/admin/api/v1/biomes');
+    var biomeList = res.ok && res.data ? res.data.data : null;
+    if (Array.isArray(biomeList)) {
+        biomeList.forEach(function(b) {
+            if (b.Name) biomeEnvMap[b.BiomeId || b.Name] = b.Name;
+            if (b.Symbol) BIOME_SYMBOLS[b.BiomeId || b.Name] = b.Symbol;
+        });
+    }
+}
+
+async function loadAllRooms() {
+    showLoading(true);
+    var res = await AdminAPI.get('/admin/api/v1/mapper/rooms', true);
+    showLoading(false);
+    var data = res.ok && res.data ? res.data.data : null;
+    if (!data) return;
+
+    mapperData.allZones = data.Zones || [];
+    mapperData.zoneRootRooms.clear();
+    mapperData.allZones.forEach(function(z) {
+        mapperData.zoneRootRooms.set(z.Name, z.RoomId);
+    });
+
+    mapperData.rawRooms = (data.Rooms || []).map(function(r) {
+        r._symbol = symbolForRoom(r);
+        r._color  = colorForSymbol(r._symbol, r.Biome);
+        return r;
+    });
+
+    if (mapperData.currentZone) {
+        applyZoneLayout(mapperData.currentZone);
+    }
+}
+
+function buildCrossZoneGraph(rawRooms) {
+    var roomById = new Map();
+    rawRooms.forEach(function(r) { roomById.set(r.RoomId, r); });
+
+    var edges = new Map();
+    rawRooms.forEach(function(r) {
+        if (!r.HasCoordinates || !r.Zone || !r.Exits) return;
+        for (var dir in r.Exits) {
+            if (!isDirectionalExit(dir)) continue;
+            var delta = DIRECTION_DELTAS[dir];
+            if (!delta || (delta[0] === 0 && delta[1] === 0 && delta[2] === 0)) continue;
+            var dest = roomById.get(r.Exits[dir].RoomId);
+            if (!dest || !dest.HasCoordinates || !dest.Zone) continue;
+            if (dest.Zone === r.Zone) continue;
+            var key = r.Zone + '>' + dest.Zone;
+            if (!edges.has(key)) {
+                edges.set(key, {
+                    fromZone: r.Zone, toZone: dest.Zone,
+                    fromX: r.MapX, fromY: r.MapY,
+                    toX: dest.MapX, toY: dest.MapY,
+                    dx: delta[0], dy: delta[1]
+                });
+            }
+        }
+    });
+    return edges;
+}
+
+function applyZoneLayout(centerZone) {
+    mapperData.currentZone = centerZone;
+    mapperData.rooms.clear();
+    mapperData.roomsByCoord.clear();
+    mapperData.zoneOffsets.clear();
+    mapperData.visibleZones.clear();
+
+    var graph = buildCrossZoneGraph(mapperData.rawRooms);
+
+    // BFS from centerZone through directional cross-zone exits
+    var adj = new Map();
+    graph.forEach(function(edge) {
+        if (!adj.has(edge.fromZone)) adj.set(edge.fromZone, []);
+        adj.get(edge.fromZone).push(edge);
+    });
+
+    mapperData.zoneOffsets.set(centerZone, { dx: 0, dy: 0 });
+    mapperData.visibleZones.add(centerZone);
+    var queue = [centerZone];
+
+    while (queue.length > 0) {
+        var zone = queue.shift();
+        var myOff = mapperData.zoneOffsets.get(zone);
+        var neighbors = adj.get(zone) || [];
+        neighbors.forEach(function(edge) {
+            if (mapperData.visibleZones.has(edge.toZone)) return;
+            var dx = myOff.dx + (edge.fromX + edge.dx) - edge.toX;
+            var dy = myOff.dy + (edge.fromY + edge.dy) - edge.toY;
+            mapperData.zoneOffsets.set(edge.toZone, { dx: dx, dy: dy });
+            mapperData.visibleZones.add(edge.toZone);
+            queue.push(edge.toZone);
+        });
+    }
+
+    // Populate rooms for visible zones only, applying offsets
+    var zSet = new Set();
+    mapperData.rawRooms.forEach(function(r) {
+        if (!r.Zone || !mapperData.visibleZones.has(r.Zone)) return;
+        var copy = Object.assign({}, r);
+        copy.Exits = r.Exits;
+        copy._symbol = r._symbol;
+        copy._color = r._color;
+        copy._serverX = r.MapX;
+        copy._serverY = r.MapY;
+        if (copy.HasCoordinates) {
+            var off = mapperData.zoneOffsets.get(copy.Zone);
+            if (off) { copy.MapX = r.MapX + off.dx; copy.MapY = r.MapY + off.dy; }
+        }
+        mapperData.rooms.set(copy.RoomId, copy);
+        if (copy.HasCoordinates) {
+            mapperData.roomsByCoord.set(copy.MapX + ',' + copy.MapY + ',' + copy.MapZ, copy.RoomId);
+            zSet.add(copy.MapZ);
+        }
+    });
+    mapperData.zLevels = Array.from(zSet).sort(function(a, b) { return a - b; });
+
+    updateStats();
+    updateZButtons();
+    render();
+}
+
+function centerOnZone(zoneName) {
+    applyZoneLayout(zoneName);
+    var rootId = mapperData.zoneRootRooms.get(zoneName);
+    if (rootId) {
+        var root = mapperData.rooms.get(rootId);
+        if (root && root.HasCoordinates) {
+            setCameraTarget(root.MapX, root.MapY, root.MapZ);
+            activeZ2d = root.MapZ;
+            activeZ3d = root.MapZ;
+            updateZButtons();
+            return;
+        }
+    }
+    if (mapperData.zLevels.length > 0) {
+        activeZ2d = mapperData.zLevels[0];
+        activeZ3d = mapperData.zLevels[0];
+        updateZButtons();
+        render();
+    }
+}
+
+// =========================================================================
+// Selection
+// =========================================================================
+
+var selectedRoomIds = new Set();
+var hoveredRoomId   = null;
+var hoveredGridCell  = null; // { gx, gy } when hovering an empty 2D cell
+var selRect = { active: false, startCx: 0, startCy: 0, endCx: 0, endCy: 0 };
+
+function selectRoom(id) {
+    selectedRoomIds.clear();
+    if (id !== null) selectedRoomIds.add(id);
+    updateInfoPanel();
+    render();
+}
+
+function toggleRoomSelection(id) {
+    if (selectedRoomIds.has(id)) selectedRoomIds.delete(id);
+    else selectedRoomIds.add(id);
+    updateInfoPanel();
+    render();
+}
+
+// =========================================================================
+// DOM references
+// =========================================================================
+
+var canvas     = document.getElementById('mapper-canvas');
+var ctx        = canvas.getContext('2d');
+var viewport   = document.getElementById('mapper-viewport');
+var tooltip    = document.getElementById('mapper-tooltip');
+var loadingEl  = document.getElementById('mapper-loading');
+var zoneSelect = document.getElementById('zone-select');
+var zControlsEl   = document.getElementById('z-controls');
+var zButtonsEl    = document.getElementById('z-buttons');
+var spacingCtrlEl = document.getElementById('spacing-controls');
+var statsEl       = document.getElementById('mapper-stats');
+var ctxMenuEl     = document.getElementById('mapper-ctx-menu');
+var saveCtrlEl    = document.getElementById('save-controls');
+var dirtyCountEl  = document.getElementById('dirty-count');
+var changelogEl   = document.getElementById('mapper-changelog');
+var clEntriesEl   = document.getElementById('changelog-entries');
+
+// =========================================================================
+// Camera state
+// =========================================================================
+
+var activeTab = localStorage.getItem('mapper.activeTab') === '3d' ? '3d' : '2d';
+var zoomScale = 1.0;
+var cameraX = 0, cameraY = 0, cameraZ = 0;
+var panOffsetX = 0, panOffsetY = 0;
+var easeStartX = 0, easeStartY = 0, easeStartZ = 0;
+var easeTargetX = 0, easeTargetY = 0, easeTargetZ = 0;
+var easeStartTime = null, easeRafId = null;
+var dragActive = false, dragStartPxX = 0, dragStartPxY = 0, dragStartPanX = 0, dragStartPanY = 0;
+var roomDrag = {
+    active: false,
+    anchorId: null,
+    group: new Map(),       // roomId -> { startGx, startGy }
+    deltaGx: 0, deltaGy: 0,
+    pixelDx: 0, pixelDy: 0,   // raw pixel offset from anchor's canvas position at drag start
+    anchorCanvasPx: 0, anchorCanvasPy: 0,
+    droppable: false,
+    brokenExits: [],
+    allConstraints: []
+};
+
+// Deferred save tracking
+var dirty = {
+    movedRooms: new Map(),      // roomId -> { origGx, origGy, origGz }
+    exitRemovals: [],           // [{ roomId, dir }]
+    exitAdditions: [],          // [{ roomId, dir, targetRoomId }]
+    deletedRooms: [],           // [roomId]
+    createdRooms: new Map(),    // tempId -> { gx, gy, gz, zone }
+    nextTempId: -1
+};
+
+// Exit drawing mode
+var exitDrawMode = {
+    active: false,
+    sourceRoomId: null,
+    sourceGx: 0, sourceGy: 0, sourceGz: 0,
+    hoveredTargetId: null,
+    _mouseCx: 0, _mouseCy: 0
+};
+
+function isDirty() {
+    return dirty.movedRooms.size > 0 || dirty.exitRemovals.length > 0 ||
+           dirty.exitAdditions.length > 0 || dirty.deletedRooms.length > 0 ||
+           dirty.createdRooms.size > 0;
+}
+
+function updateSaveButtons() {
+    var d = isDirty();
+    saveCtrlEl.classList.toggle('visible', d);
+    if (d) {
+        var parts = [];
+        if (dirty.movedRooms.size > 0) parts.push(dirty.movedRooms.size + ' moved');
+        if (dirty.createdRooms.size > 0) parts.push(dirty.createdRooms.size + ' new');
+        if (dirty.deletedRooms.length > 0) parts.push(dirty.deletedRooms.length + ' deleted');
+        if (dirty.exitAdditions.length > 0) parts.push(dirty.exitAdditions.length + ' exits added');
+        if (dirty.exitRemovals.length > 0) parts.push(dirty.exitRemovals.length + ' exits removed');
+        dirtyCountEl.textContent = parts.join(', ');
+    }
+}
+
+function logChange(cssClass, text) {
+    var entry = document.createElement('div');
+    entry.className = 'cl-entry ' + cssClass;
+    entry.innerHTML = text;
+    clEntriesEl.appendChild(entry);
+    changelogEl.classList.add('visible');
+    entry.scrollIntoView({ block: 'nearest' });
+}
+
+function roomLabel(roomId) {
+    var r = mapperData.rooms.get(roomId);
+    return r ? escapeHtml(r.Title) + ' (#' + roomId + ')' : '#' + roomId;
+}
+
+function clearDirty() {
+    dirty.movedRooms.clear();
+    dirty.exitRemovals = [];
+    dirty.exitAdditions = [];
+    dirty.deletedRooms = [];
+    dirty.createdRooms.clear();
+    dirty.nextTempId = -1;
+    clEntriesEl.innerHTML = '';
+    changelogEl.classList.remove('visible');
+    updateSaveButtons();
+}
+function moveRoomLocally(roomId, newGx, newGy) {
+    var room = mapperData.rooms.get(roomId);
+    if (!room) return;
+    var wasTracked = dirty.movedRooms.has(roomId);
+    if (!wasTracked) {
+        dirty.movedRooms.set(roomId, { origGx: room.MapX, origGy: room.MapY, origGz: room.MapZ });
+    }
+    var oldGx = room.MapX, oldGy = room.MapY;
+    mapperData.roomsByCoord.delete(room.MapX + ',' + room.MapY + ',' + room.MapZ);
+    room.MapX = newGx;
+    room.MapY = newGy;
+    room.HasCoordinates = true;
+    mapperData.roomsByCoord.set(newGx + ',' + newGy + ',' + room.MapZ, roomId);
+    logChange('cl-move', '<span class="cl-action">MOVE</span> ' + roomLabel(roomId) + ' (' + oldGx + ',' + oldGy + ') &rarr; (' + newGx + ',' + newGy + ')');
+    updateSaveButtons();
+}
+
+function breakExitLocally(roomId, dir) {
+    var room = mapperData.rooms.get(roomId);
+    if (room && room.Exits && room.Exits[dir]) {
+        var targetId = room.Exits[dir].RoomId;
+        delete room.Exits[dir];
+        dirty.exitRemovals.push({ roomId: roomId, dir: dir });
+        logChange('cl-exit-remove', '<span class="cl-action">REMOVE EXIT</span> "' + escapeHtml(dir) + '" from ' + roomLabel(roomId) + ' (was &rarr; #' + targetId + ')');
+        updateSaveButtons();
+    }
+}
+
+function addExitLocally(sourceRoomId, dir, targetRoomId) {
+    var room = mapperData.rooms.get(sourceRoomId);
+    if (!room) return;
+    if (!room.Exits) room.Exits = {};
+    room.Exits[dir] = { RoomId: targetRoomId };
+    dirty.exitAdditions.push({ roomId: sourceRoomId, dir: dir, targetRoomId: targetRoomId });
+    logChange('cl-exit-add', '<span class="cl-action">ADD EXIT</span> "' + escapeHtml(dir) + '" on ' + roomLabel(sourceRoomId) + ' &rarr; ' + roomLabel(targetRoomId));
+    updateSaveButtons();
+}
+
+function deleteRoomLocally(roomId) {
+    var room = mapperData.rooms.get(roomId);
+    if (!room) return;
+    var label = roomLabel(roomId);
+    mapperData.rooms.forEach(function(other, otherId) {
+        if (!other.Exits) return;
+        for (var dir in other.Exits) {
+            if (other.Exits[dir].RoomId === roomId) breakExitLocally(otherId, dir);
+        }
+    });
+    if (room.HasCoordinates) {
+        mapperData.roomsByCoord.delete(room.MapX + ',' + room.MapY + ',' + room.MapZ);
+    }
+    if (roomId > 0) {
+        dirty.deletedRooms.push(roomId);
+    } else {
+        dirty.createdRooms.delete(roomId);
+    }
+    mapperData.rooms.delete(roomId);
+    selectedRoomIds.delete(roomId);
+    logChange('cl-delete', '<span class="cl-action">DELETE</span> ' + label);
+    updateSaveButtons();
+    updateInfoPanel();
+    updateStats();
+}
+
+function createRoomLocally(gx, gy, gz) {
+    var tempId = dirty.nextTempId--;
+    var zoneInfo = mapperData.allZones.find(function(z) { return z.Name === mapperData.currentZone; });
+    var biome = zoneInfo ? zoneInfo.DefaultBiome : '';
+    var tempRoom = {
+        RoomId: tempId, Zone: mapperData.currentZone || '', Title: 'New Room',
+        MapX: gx, MapY: gy, MapZ: gz,
+        HasCoordinates: true, MapSymbol: '', MapLegend: '', Biome: biome, Exits: {}
+    };
+    tempRoom._symbol = symbolForRoom(tempRoom);
+    tempRoom._color = colorForSymbol(tempRoom._symbol, tempRoom.Biome);
+    mapperData.rooms.set(tempId, tempRoom);
+    mapperData.roomsByCoord.set(gx + ',' + gy + ',' + gz, tempId);
+    if (!mapperData.zLevels.includes(gz)) {
+        mapperData.zLevels.push(gz);
+        mapperData.zLevels.sort(function(a, b) { return a - b; });
+    }
+    dirty.createdRooms.set(tempId, { gx: gx, gy: gy, gz: gz, zone: mapperData.currentZone || '' });
+    logChange('cl-create', '<span class="cl-action">CREATE</span> New Room at (' + gx + ', ' + gy + ', ' + gz + ') in zone ' + escapeHtml(mapperData.currentZone || '?'));
+    updateSaveButtons();
+    updateStats();
+    return tempId;
+}
+
+function applyGroupMove(group, deltaGx, deltaGy) {
+    var brokenConstraints = [];
+    group.forEach(function(start, roomId) {
+        var newGx = start.startGx + deltaGx;
+        var newGy = start.startGy + deltaGy;
+        moveRoomLocally(roomId, newGx, newGy);
+    });
+
+    // Compute and break invalid exits for each room in the group
+    group.forEach(function(start, roomId) {
+        var room = mapperData.rooms.get(roomId);
+        if (!room) return;
+        var constraints = buildDragConstraints(roomId);
+        constraints.forEach(function(c) {
+            if (!isExitConstraintSatisfied(c, room.MapX, room.MapY)) {
+                brokenConstraints.push(c);
+                if (c.outgoing) {
+                    var neighborId = mapperData.roomsByCoord.get(c.refX + ',' + c.refY + ',' + room.MapZ);
+                    if (room.Exits) {
+                        for (var dir in room.Exits) {
+                            if (room.Exits[dir].RoomId === neighborId) {
+                                breakExitLocally(roomId, dir);
+                            }
+                        }
+                    }
+                } else {
+                    var neighborId2 = mapperData.roomsByCoord.get(c.refX + ',' + c.refY + ',' + room.MapZ);
+                    if (neighborId2 !== undefined) {
+                        var neighbor = mapperData.rooms.get(neighborId2);
+                        if (neighbor && neighbor.Exits) {
+                            for (var dir in neighbor.Exits) {
+                                if (neighbor.Exits[dir].RoomId === roomId) {
+                                    breakExitLocally(neighborId2, dir);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
+var activeZ2d = 0;
+var activeZ3d = null;
+var spacingScale3d = (function() {
+    var s = parseFloat(localStorage.getItem('mapper.spacing3d'));
+    return (isFinite(s) && s >= SPACING_MIN_3D && s <= SPACING_MAX_3D) ? s : SPACING_MIN_3D;
+})();
+var tooltipHideTimer = null;
+
+// =========================================================================
+// Resize
+// =========================================================================
+
+function resizeCanvas() {
+    canvas.width  = viewport.clientWidth  || 1;
+    canvas.height = viewport.clientHeight || 1;
+}
+
+var resizeObserver = typeof ResizeObserver !== 'undefined'
+    ? new ResizeObserver(function() { resizeCanvas(); render(); })
+    : null;
+if (resizeObserver) resizeObserver.observe(viewport);
+
+// =========================================================================
+// Tab switching
+// =========================================================================
+
+function switchTab(tab) {
+    activeTab = tab;
+    localStorage.setItem('mapper.activeTab', tab);
+    document.querySelectorAll('.mapper-tabs .tab-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    spacingCtrlEl.style.display = tab === '3d' ? '' : 'none';
+    resizeCanvas();
+    updateZButtons();
+    render();
+}
+
+// =========================================================================
+// Zoom / controls
+// =========================================================================
+
+function zoomIn()  { zoomScale = Math.min(ZOOM_MAX, zoomScale * ZOOM_STEP); render(); }
+function zoomOut() { zoomScale = Math.max(ZOOM_MIN, zoomScale / ZOOM_STEP); render(); }
+
+function spacingDown() {
+    spacingScale3d = Math.max(SPACING_MIN_3D, spacingScale3d / SPACING_STEP_3D);
+    localStorage.setItem('mapper.spacing3d', spacingScale3d);
+    render();
+}
+function spacingUp() {
+    spacingScale3d = Math.min(SPACING_MAX_3D, spacingScale3d * SPACING_STEP_3D);
+    localStorage.setItem('mapper.spacing3d', spacingScale3d);
+    render();
+}
+
+function centerCamera() {
+    panOffsetX = 0; panOffsetY = 0;
+    if (mapperData.currentZone) {
+        centerOnZone(mapperData.currentZone);
+    } else if (mapperData.zLevels.length > 0) {
+        activeZ2d = mapperData.zLevels[0];
+        activeZ3d = mapperData.zLevels[0];
+        updateZButtons();
+        render();
+    }
+}
+
+function setCameraTarget(tx, ty, tz) {
+    panOffsetX = 0; panOffsetY = 0;
+    if (typeof tz === 'undefined') tz = cameraZ;
+    if (CENTER_EASE_DURATION <= 0) { cameraX = tx; cameraY = ty; cameraZ = tz; render(); return; }
+    if (easeRafId !== null) { cancelAnimationFrame(easeRafId); easeRafId = null; }
+    easeStartX = cameraX; easeStartY = cameraY; easeStartZ = cameraZ;
+    easeTargetX = tx; easeTargetY = ty; easeTargetZ = tz;
+    easeStartTime = null;
+    function step(ts) {
+        if (easeStartTime === null) easeStartTime = ts;
+        var t = Math.min((ts - easeStartTime) / 1000 / CENTER_EASE_DURATION, 1);
+        var s = smoothstep(t);
+        cameraX = easeStartX + (easeTargetX - easeStartX) * s;
+        cameraY = easeStartY + (easeTargetY - easeStartY) * s;
+        cameraZ = easeStartZ + (easeTargetZ - easeStartZ) * s;
+        render();
+        easeRafId = t < 1 ? requestAnimationFrame(step) : null;
+    }
+    easeRafId = requestAnimationFrame(step);
+}
+
+// =========================================================================
+// Z-level controls
+// =========================================================================
+
+function updateZButtons() {
+    zButtonsEl.innerHTML = '';
+    if (mapperData.zLevels.length <= 1) return;
+    var current = activeTab === '3d' ? activeZ3d : activeZ2d;
+    mapperData.zLevels.slice().reverse().forEach(function(z) {
+        var btn = document.createElement('button');
+        btn.textContent = z;
+        btn.title = 'Z level ' + z;
+        btn.style.cssText = 'width:24px;height:20px;padding:0;font-size:0.7rem;font-family:monospace;' +
+            'border:1px solid var(--color-border);border-radius:3px;cursor:pointer;';
+        if (z === current) {
+            btn.style.background = 'var(--color-primary)';
+            btn.style.color = '#fff';
+            btn.style.borderColor = 'var(--color-primary)';
+        } else {
+            btn.style.background = 'var(--color-surface-white)';
+            btn.style.color = 'var(--color-text-dim)';
+        }
+        btn.addEventListener('click', function() {
+            if (activeTab === '3d') activeZ3d = z; else activeZ2d = z;
+            updateZButtons();
+            render();
+        });
+        zButtonsEl.appendChild(btn);
+    });
+}
+
+// =========================================================================
+// 2D View
+// =========================================================================
+
+function gridToCanvas2d(gx, gy) {
+    var midX = Math.floor(canvas.width / 2);
+    var midY = Math.floor(canvas.height / 2);
+    var step = BASE_STEP_2D * zoomScale;
+    return {
+        px: midX + (gx - cameraX - panOffsetX) * step,
+        py: midY + (gy - cameraY - panOffsetY) * step
+    };
+}
+
+function canvasToGrid2d(cx, cy) {
+    var midX = Math.floor(canvas.width / 2);
+    var midY = Math.floor(canvas.height / 2);
+    var step = BASE_STEP_2D * zoomScale;
+    return {
+        gx: Math.round((cx - midX) / step + cameraX + panOffsetX),
+        gy: Math.round((cy - midY) / step + cameraY + panOffsetY)
+    };
+}
+
+function canvasToGrid3d(cx, cy) {
+    var step = TILE_HW_3D * GRID_STEP_XY_3D * spacingScale3d * zoomScale;
+    var zs   = Z_STEP_3D * Math.pow(spacingScale3d, Z_SPACING_EXP_3D) * zoomScale;
+    var midX = Math.floor(canvas.width / 2);
+    var midY = Math.floor(canvas.height / 2);
+    var drawZ = activeZ3d !== null ? activeZ3d : (mapperData.zLevels.length > 0 ? mapperData.zLevels[0] : 0);
+    var relZ = drawZ - cameraZ;
+    var sxOff = cx - midX;
+    var syAdj = cy - midY + relZ * zs;
+    var halfStep = step / 2;
+    var relX = (sxOff / step + syAdj / halfStep) / 2;
+    var relY = (syAdj / halfStep - sxOff / step) / 2;
+    return {
+        gx: Math.round(relX + cameraX + panOffsetX),
+        gy: Math.round(relY + cameraY + panOffsetY)
+    };
+}
+
+function canvasToGrid(cx, cy) {
+    return activeTab === '2d' ? canvasToGrid2d(cx, cy) : canvasToGrid3d(cx, cy);
+}
+
+function roomAtPoint(cx, cy) {
+    return activeTab === '2d' ? roomAtPoint2d(cx, cy) : roomAtPoint3d(cx, cy);
+}
+
+function currentZ() {
+    return activeTab === '3d' ? (activeZ3d !== null ? activeZ3d : 0) : activeZ2d;
+}
+
+function gridCellOccupied(gx, gy, gz) {
+    return mapperData.roomsByCoord.has(gx + ',' + gy + ',' + gz);
+}
+
+function roomAtPoint2d(cx, cy) {
+    var half = (ROOM_SIZE_2D * zoomScale) / 2;
+    var found = null;
+    mapperData.rooms.forEach(function(room, id) {
+        if (found !== null) return;
+        if (!room.HasCoordinates || room.MapZ !== activeZ2d) return;
+        var p = gridToCanvas2d(room.MapX, room.MapY);
+        if (cx >= p.px - half && cx <= p.px + half && cy >= p.py - half && cy <= p.py + half) {
+            found = id;
+        }
+    });
+    return found;
+}
+
+function render2d() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = MAP_BG_2D;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    var rooms = mapperData.rooms;
+    if (rooms.size === 0) return;
+
+    // Draw edges (two passes: normal directional first, then abnormal)
+    ctx.lineCap = 'round';
+    var drawnEdges = new Set();
+    var abnormalEdges = [];
+
+    // Pass 1: normal directional edges (solid lines)
+    ctx.strokeStyle = CONNECTION_COLOR;
+    ctx.lineWidth   = CONNECTION_WIDTH_2D * zoomScale;
+    rooms.forEach(function(room, id) {
+        if (!room.HasCoordinates || room.MapZ !== activeZ2d) return;
+        if (!room.Exits) return;
+        for (var dir in room.Exits) {
+            var ex = room.Exits[dir];
+            var dest = rooms.get(ex.RoomId);
+            if (!dest || !dest.HasCoordinates) continue;
+            var key = Math.min(id, ex.RoomId) + '-' + Math.max(id, ex.RoomId) + ':' + dir;
+            if (drawnEdges.has(key)) continue;
+            drawnEdges.add(key);
+            var delta = exitDelta(dir, room);
+            var directional = isDirectionalExit(dir);
+            if (!directional || !delta) {
+                abnormalEdges.push({ room: room, dest: dest, dir: dir, ex: ex });
+                continue;
+            }
+            if (delta[2] !== 0) continue;
+            if (dest.MapZ !== activeZ2d) continue;
+            var pA = gridToCanvas2d(room.MapX, room.MapY);
+            var pB = gridToCanvas2d(dest.MapX, dest.MapY);
+            ctx.beginPath(); ctx.moveTo(pA.px, pA.py); ctx.lineTo(pB.px, pB.py); ctx.stroke();
+            if (ex.Secret || ex.HasLock) {
+                drawLineBadge2d((pA.px+pB.px)/2, (pA.py+pB.py)/2, ex.Secret ? 'secret' : 'key');
+            }
+        }
+    });
+
+    // Pass 2: abnormal edges (yellow dotted arcs)
+    if (abnormalEdges.length > 0) {
+        ctx.strokeStyle = ABNORMAL_CONNECTION_COLOR;
+        ctx.lineWidth   = Math.max(1, CONNECTION_WIDTH_2D * zoomScale * 0.7);
+        ctx.setLineDash([Math.max(3, 8 * zoomScale), Math.max(4, 10 * zoomScale)]);
+        abnormalEdges.forEach(function(ae) {
+            var pA = gridToCanvas2d(ae.room.MapX, ae.room.MapY);
+            var pB = gridToCanvas2d(ae.dest.MapX, ae.dest.MapY);
+            var mx = (pA.px + pB.px) / 2, my = (pA.py + pB.py) / 2;
+            var dx = pB.px - pA.px, dy = pB.py - pA.py;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var bulge = Math.max(15, dist * 0.25);
+            var cpx = mx + (-dy / dist) * bulge;
+            var cpy = my + (dx / dist) * bulge;
+            ctx.beginPath(); ctx.moveTo(pA.px, pA.py);
+            ctx.quadraticCurveTo(cpx, cpy, pB.px, pB.py); ctx.stroke();
+        });
+        ctx.setLineDash([]);
+    }
+
+    // Draw rooms
+    var scaledSize   = ROOM_SIZE_2D * zoomScale;
+    var scaledBorder = ROOM_BORDER_WIDTH_2D * zoomScale;
+    var scaledFont   = SYMBOL_FONT_SIZE_2D * zoomScale;
+    var half         = scaledSize / 2;
+
+    var dragGroupSet = roomDrag.active ? new Set(roomDrag.group.keys()) : new Set();
+
+    function drawRoom2d(p, room, id) {
+        var isSelected = selectedRoomIds.has(id);
+        var fill = isSelected ? SELECTED_ROOM_COLOR : room._color;
+        var rx = p.px - half, ry = p.py - half;
+
+        ctx.fillStyle = fill;
+        ctx.fillRect(rx, ry, scaledSize, scaledSize);
+        ctx.strokeStyle = ROOM_BORDER_COLOR_2D;
+        ctx.lineWidth = scaledBorder;
+        ctx.strokeRect(rx, ry, scaledSize, scaledSize);
+
+        ctx.fillStyle = isSelected ? SELECTED_ROOM_TEXT_COLOR : SYMBOL_TEXT_COLOR;
+        ctx.font = 'bold ' + scaledFont + 'px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(room._symbol || '•', p.px, p.py);
+
+        var hasUp = false, hasDown = false;
+        if (room.Exits) {
+            for (var dir in room.Exits) {
+                var delta = exitDelta(dir, room);
+                if (delta && delta[2] > 0) hasUp = true;
+                if (delta && delta[2] < 0) hasDown = true;
+            }
+        }
+        if (hasUp || hasDown) {
+            var arrowSize = Math.max(5, scaledSize * 0.28);
+            var margin = Math.max(2, scaledSize * 0.1);
+            ctx.font = 'bold ' + arrowSize + 'px monospace';
+            ctx.fillStyle = isSelected ? SELECTED_ROOM_TEXT_COLOR : SYMBOL_TEXT_COLOR;
+            if (hasDown) {
+                ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+                ctx.fillText('▾', rx + margin, ry + scaledSize - margin);
+            }
+            if (hasUp) {
+                ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+                ctx.fillText('▴', rx + scaledSize - margin, ry + margin);
+            }
+        }
+    }
+
+    // Draw non-dragged rooms at their normal positions
+    rooms.forEach(function(room, id) {
+        if (!room.HasCoordinates || room.MapZ !== activeZ2d) return;
+        if (dragGroupSet.has(id)) return;
+        drawRoom2d(gridToCanvas2d(room.MapX, room.MapY), room, id);
+    });
+
+    // Draw dragged rooms following the cursor with grid-snap indicator
+    if (roomDrag.active) {
+        var hasBroken = roomDrag.brokenExits.length > 0;
+        var hasMoved = roomDrag.deltaGx !== 0 || roomDrag.deltaGy !== 0;
+
+        // Origin marker (faint outline where the room was)
+        if (hasMoved) {
+            roomDrag.group.forEach(function(start, rid) {
+                var origP = gridToCanvas2d(start.startGx, start.startGy);
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.lineWidth = Math.max(1, 1 * zoomScale);
+                ctx.setLineDash([Math.max(2, 3 * zoomScale), Math.max(2, 3 * zoomScale)]);
+                ctx.strokeRect(origP.px - half, origP.py - half, scaledSize, scaledSize);
+                ctx.setLineDash([]);
+            });
+        }
+
+        // Grid-snap indicator (dashed outline at the target cell)
+        if (hasMoved) {
+            roomDrag.group.forEach(function(start, rid) {
+                var snapP = gridToCanvas2d(start.startGx + roomDrag.deltaGx, start.startGy + roomDrag.deltaGy);
+                var snapColor = !roomDrag.droppable ? 'rgba(255,80,80,0.5)' :
+                                hasBroken ? 'rgba(255,180,60,0.5)' : 'rgba(100,200,255,0.5)';
+                ctx.strokeStyle = snapColor;
+                ctx.lineWidth = Math.max(1, 1.5 * zoomScale);
+                ctx.setLineDash([Math.max(2, 4 * zoomScale), Math.max(2, 4 * zoomScale)]);
+                ctx.strokeRect(snapP.px - half, snapP.py - half, scaledSize, scaledSize);
+                ctx.setLineDash([]);
+            });
+        }
+
+        // Predicted connection lines from snap positions to neighbors
+        if (roomDrag.droppable && hasMoved) {
+            ctx.lineWidth = CONNECTION_WIDTH_2D * zoomScale * 0.7;
+            ctx.lineCap = 'round';
+            ctx.setLineDash([Math.max(2, 3 * zoomScale), Math.max(2, 3 * zoomScale)]);
+            roomDrag.allConstraints.forEach(function(c) {
+                var isBroken = !isExitConstraintSatisfied(c, c.ownerGx + roomDrag.deltaGx, c.ownerGy + roomDrag.deltaGy);
+                var fromP = gridToCanvas2d(c.ownerGx + roomDrag.deltaGx, c.ownerGy + roomDrag.deltaGy);
+                var toP = gridToCanvas2d(c.refX, c.refY);
+                ctx.strokeStyle = isBroken ? 'rgba(255,60,60,0.7)' : 'rgba(100,200,100,0.6)';
+                ctx.beginPath(); ctx.moveTo(fromP.px, fromP.py); ctx.lineTo(toP.px, toP.py); ctx.stroke();
+            });
+            ctx.setLineDash([]);
+        }
+
+        // Rooms rendered solid, following cursor at pixel offset
+        roomDrag.group.forEach(function(start, rid) {
+            var origP = gridToCanvas2d(start.startGx, start.startGy);
+            var dragP = { px: origP.px + roomDrag.pixelDx, py: origP.py + roomDrag.pixelDy };
+            var dragRoom = mapperData.rooms.get(rid);
+            if (!dragRoom) return;
+
+            var blocked = !roomDrag.droppable && hasMoved;
+            if (blocked) { ctx.globalAlpha = 0.5; }
+            drawRoom2d(dragP, dragRoom, rid);
+            if (blocked) { ctx.globalAlpha = 1.0; }
+
+            if (roomDrag.droppable && hasBroken) {
+                ctx.fillStyle = 'rgba(255,180,60,0.2)';
+                ctx.fillRect(dragP.px - half, dragP.py - half, scaledSize, scaledSize);
+            }
+        });
+    }
+    // Ghost cell outline on empty grid positions (not during room drag)
+    else if (hoveredGridCell && !gridCellOccupied(hoveredGridCell.gx, hoveredGridCell.gy, activeZ2d)) {
+        var gp = gridToCanvas2d(hoveredGridCell.gx, hoveredGridCell.gy);
+        var ghalf = scaledSize / 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = Math.max(1, 1.5 * zoomScale);
+        ctx.setLineDash([Math.max(2, 4 * zoomScale), Math.max(2, 4 * zoomScale)]);
+        ctx.strokeRect(gp.px - ghalf, gp.py - ghalf, scaledSize, scaledSize);
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(gp.px - ghalf, gp.py - ghalf, scaledSize, scaledSize);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = 'bold ' + Math.max(10, scaledFont * 0.8) + 'px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('+', gp.px, gp.py);
+    }
+
+    // Exit draw mode line
+    if (exitDrawMode.active) {
+        var srcP = activeTab === '2d'
+            ? gridToCanvas2d(exitDrawMode.sourceGx, exitDrawMode.sourceGy)
+            : isoProject3d(exitDrawMode.sourceGx, exitDrawMode.sourceGy, exitDrawMode.sourceGz, activeZ2d);
+        var endX, endY;
+        if (exitDrawMode.hoveredTargetId !== null) {
+            var tgt = mapperData.rooms.get(exitDrawMode.hoveredTargetId);
+            if (tgt && tgt.HasCoordinates) {
+                var tgtP = gridToCanvas2d(tgt.MapX, tgt.MapY);
+                endX = tgtP.px; endY = tgtP.py;
+                var hlHalf = scaledSize / 2 + 3 * zoomScale;
+                ctx.strokeStyle = 'rgba(100,255,100,0.8)';
+                ctx.lineWidth = 2 * zoomScale;
+                ctx.strokeRect(tgtP.px - hlHalf, tgtP.py - hlHalf, hlHalf * 2, hlHalf * 2);
+            }
+        } else {
+            endX = exitDrawMode._mouseCx;
+            endY = exitDrawMode._mouseCy;
+        }
+        if (endX !== undefined) {
+            ctx.strokeStyle = 'rgba(100,200,255,0.8)';
+            ctx.lineWidth = Math.max(2, CONNECTION_WIDTH_2D * zoomScale);
+            ctx.setLineDash([6 * zoomScale, 4 * zoomScale]);
+            ctx.beginPath(); ctx.moveTo(srcP.px, srcP.py); ctx.lineTo(endX, endY); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    // Selection rectangle
+    if (selRect.active) {
+        var sx = Math.min(selRect.startCx, selRect.endCx);
+        var sy = Math.min(selRect.startCy, selRect.endCy);
+        var sw = Math.abs(selRect.endCx - selRect.startCx);
+        var sh = Math.abs(selRect.endCy - selRect.startCy);
+        ctx.fillStyle = 'rgba(100,160,255,0.12)';
+        ctx.fillRect(sx, sy, sw, sh);
+        ctx.strokeStyle = 'rgba(100,160,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(sx, sy, sw, sh);
+        ctx.setLineDash([]);
+    }
+}
+
+function drawLineBadge2d(mx, my, type) {
+    var sz = Math.max(7, Math.round(CONNECTION_WIDTH_2D * zoomScale * 2.5));
+    var half = sz / 2;
+    ctx.save();
+    ctx.fillStyle = MAP_BG_2D;
+    ctx.fillRect(mx - half, my - half, sz, sz);
+    if (type === 'secret') {
+        ctx.fillStyle = '#d4a843';
+        ctx.font = 'bold ' + Math.round(sz * 0.85) + 'px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('?', mx, my);
+    } else {
+        var kc = '#9ab0d4', lw = Math.max(1, sz * 0.14);
+        ctx.strokeStyle = kc; ctx.fillStyle = kc;
+        ctx.lineWidth = lw; ctx.lineCap = 'round';
+        var bowR = sz * 0.22, bowCx = mx - sz * 0.14;
+        ctx.beginPath(); ctx.arc(bowCx, my, bowR, 0, Math.PI * 2); ctx.stroke();
+        var shaftX1 = bowCx + bowR, shaftX2 = mx + half * 0.82;
+        ctx.beginPath(); ctx.moveTo(shaftX1, my); ctx.lineTo(shaftX2, my); ctx.stroke();
+        var toothH = sz * 0.18;
+        var t1x = shaftX1 + (shaftX2 - shaftX1) * 0.45;
+        var t2x = shaftX1 + (shaftX2 - shaftX1) * 0.72;
+        ctx.beginPath();
+        ctx.moveTo(t1x, my); ctx.lineTo(t1x, my + toothH);
+        ctx.moveTo(t2x, my); ctx.lineTo(t2x, my + toothH);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// =========================================================================
+// 3D View
+// =========================================================================
+
+var bucketCache3d = null;
+
+function isoProject3d(gx, gy, gz, drawZ) {
+    var step = TILE_HW_3D * GRID_STEP_XY_3D * spacingScale3d * zoomScale;
+    var zs   = Z_STEP_3D * Math.pow(spacingScale3d, Z_SPACING_EXP_3D) * zoomScale;
+    var midX = Math.floor(canvas.width / 2);
+    var midY = Math.floor(canvas.height / 2);
+    var relX = gx - cameraX - panOffsetX;
+    var relY = gy - cameraY - panOffsetY;
+    var relZ = gz - cameraZ;
+    return {
+        sx: midX + (relX - relY) * step,
+        sy: midY + (relX + relY) * (step / 2) - relZ * zs
+    };
+}
+
+function buildBucketCache3d() {
+    var roomsByZ = {};
+    var sameZEdges = {};
+    var crossZEdges = {};
+    mapperData.zLevels.forEach(function(z) {
+        roomsByZ[z] = [];
+        sameZEdges[z] = [];
+        crossZEdges[z] = [];
+    });
+
+    mapperData.rooms.forEach(function(room, id) {
+        if (!room.HasCoordinates) return;
+        roomsByZ[room.MapZ].push({ id: id, x: room.MapX, y: room.MapY, z: room.MapZ,
+                                   symbol: room._symbol, color: room._color });
+    });
+    mapperData.zLevels.forEach(function(z) {
+        roomsByZ[z].sort(function(a, b) { return (a.x + a.y) - (b.x + b.y); });
+    });
+
+    var edgeSeen = new Set();
+    mapperData.rooms.forEach(function(room, id) {
+        if (!room.HasCoordinates || !room.Exits) return;
+        for (var dir in room.Exits) {
+            var ex = room.Exits[dir];
+            var dest = mapperData.rooms.get(ex.RoomId);
+            if (!dest || !dest.HasCoordinates) continue;
+            var key = Math.min(id, ex.RoomId) + '-' + Math.max(id, ex.RoomId) + ':' + dir;
+            if (edgeSeen.has(key)) continue;
+            edgeSeen.add(key);
+            var delta = exitDelta(dir, room);
+            var abnormal = !isDirectionalExit(dir) || !delta;
+            var dz = delta ? delta[2] : (dest.MapZ - room.MapZ);
+            var entry = { rA: room, rB: dest, dz: dz,
+                          dx: dest.MapX - room.MapX, dy: dest.MapY - room.MapY,
+                          abnormal: abnormal };
+            if (abnormal || dz === 0) {
+                var z = room.MapZ;
+                if (sameZEdges[z]) sameZEdges[z].push(entry);
+                else { sameZEdges[z] = [entry]; }
+            } else {
+                var lowerZ = Math.min(room.MapZ, dest.MapZ);
+                if (crossZEdges[lowerZ]) crossZEdges[lowerZ].push(entry);
+                else { crossZEdges[lowerZ] = [entry]; }
+            }
+        }
+    });
+
+    bucketCache3d = { roomsByZ: roomsByZ, sameZEdges: sameZEdges, crossZEdges: crossZEdges };
+}
+
+function tileAttachPoint3d(sx, sy, dx, dy) {
+    var hw = TILE_HW_3D * zoomScale, hh = TILE_HH_3D * zoomScale;
+    if (dx !== 0 && dy !== 0) {
+        if (dx > 0 && dy > 0) return { sx: sx,      sy: sy + hh };
+        if (dx > 0 && dy < 0) return { sx: sx + hw, sy: sy      };
+        if (dx < 0 && dy > 0) return { sx: sx - hw, sy: sy      };
+        return { sx: sx, sy: sy - hh };
+    }
+    if (dx > 0) return { sx: sx + hw/2, sy: sy + hh/2 };
+    if (dx < 0) return { sx: sx - hw/2, sy: sy - hh/2 };
+    if (dy > 0) return { sx: sx - hw/2, sy: sy + hh/2 };
+    if (dy < 0) return { sx: sx + hw/2, sy: sy - hh/2 };
+    return { sx: sx, sy: sy };
+}
+
+function drawTile3d(gx, gy, gz, topColor, isSelected, symbol, drawZ) {
+    var hw  = TILE_HW_3D * zoomScale;
+    var hh  = TILE_HH_3D * zoomScale;
+    var dep = TILE_DEPTH_3D * zoomScale;
+    var bw  = TILE_BORDER_WIDTH_3D * zoomScale;
+    var p   = isoProject3d(gx, gy, gz, drawZ);
+    var sx  = p.sx, sy = p.sy;
+    var leftColor  = darkenColor(topColor, SIDE_DARKEN_3D * 0.8);
+    var rightColor = darkenColor(topColor, SIDE_DARKEN_3D);
+
+    // Top face
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - hh); ctx.lineTo(sx + hw, sy);
+    ctx.lineTo(sx, sy + hh); ctx.lineTo(sx - hw, sy);
+    ctx.closePath();
+    ctx.fillStyle = topColor; ctx.fill();
+    ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw; ctx.stroke();
+
+    // Left face
+    ctx.beginPath();
+    ctx.moveTo(sx - hw, sy); ctx.lineTo(sx, sy + hh);
+    ctx.lineTo(sx, sy + hh + dep); ctx.lineTo(sx - hw, sy + dep);
+    ctx.closePath();
+    ctx.fillStyle = leftColor; ctx.fill();
+    ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw; ctx.stroke();
+
+    // Right face
+    ctx.beginPath();
+    ctx.moveTo(sx, sy + hh); ctx.lineTo(sx + hw, sy);
+    ctx.lineTo(sx + hw, sy + dep); ctx.lineTo(sx, sy + hh + dep);
+    ctx.closePath();
+    ctx.fillStyle = rightColor; ctx.fill();
+    ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw; ctx.stroke();
+
+    // Symbol
+    ctx.fillStyle = isSelected ? SELECTED_ROOM_TEXT_COLOR : SYMBOL_TEXT_COLOR;
+    ctx.font = 'bold ' + (SYMBOL_FONT_SIZE_3D * zoomScale) + 'px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(symbol || '•', sx, sy);
+}
+
+function render3d() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = MAP_BG_3D;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (mapperData.rooms.size === 0) return;
+
+    var drawZ = activeZ3d !== null ? activeZ3d : (mapperData.zLevels.length > 0 ? mapperData.zLevels[0] : 0);
+
+    // Build connected set for cross-z alpha
+    var connectedToActive = new Set();
+    if (!bucketCache3d) buildBucketCache3d();
+    var bc = bucketCache3d;
+
+    mapperData.zLevels.forEach(function(z) {
+        (bc.crossZEdges[z] || []).forEach(function(e) {
+            if (e.rA.MapZ === drawZ && e.rB.MapZ !== drawZ)
+                connectedToActive.add(mapperData.roomsByCoord.get(e.rB.MapX+','+e.rB.MapY+','+e.rB.MapZ) || -1);
+            if (e.rB.MapZ === drawZ && e.rA.MapZ !== drawZ)
+                connectedToActive.add(mapperData.roomsByCoord.get(e.rA.MapX+','+e.rA.MapY+','+e.rA.MapZ) || -1);
+        });
+    });
+
+    ctx.lineWidth = CONNECTION_WIDTH_3D * zoomScale;
+    ctx.lineCap = 'round';
+
+    function drawEdge3d(e) {
+        var pA = isoProject3d(e.rA.MapX, e.rA.MapY, e.rA.MapZ, drawZ);
+        var pB = isoProject3d(e.rB.MapX, e.rB.MapY, e.rB.MapZ, drawZ);
+        var startPt, endPt;
+        if (e.dz !== 0) {
+            startPt = { sx: pA.sx + CROSS_Z_OFFSET_X * zoomScale, sy: pA.sy };
+            endPt   = { sx: pB.sx + CROSS_Z_OFFSET_X * zoomScale, sy: pB.sy };
+        } else {
+            startPt = tileAttachPoint3d(pA.sx, pA.sy, e.dx, e.dy);
+            endPt   = tileAttachPoint3d(pB.sx, pB.sy, -e.dx, -e.dy);
+        }
+        ctx.beginPath(); ctx.moveTo(startPt.sx, startPt.sy);
+        ctx.lineTo(endPt.sx, endPt.sy); ctx.stroke();
+
+        if (e.dz !== 0) {
+            var dx = endPt.sx - startPt.sx;
+            var dy = endPt.sy - startPt.sy;
+            var len = Math.sqrt(dx*dx + dy*dy);
+            if (len > 0) {
+                var ux = dx/len, uy = dy/len;
+                var as = CROSS_Z_ARROW_SIZE * zoomScale;
+                ctx.fillStyle = ctx.strokeStyle;
+                ctx.beginPath();
+                ctx.moveTo(endPt.sx, endPt.sy);
+                ctx.lineTo(endPt.sx - ux*as - uy*as, endPt.sy - uy*as + ux*as);
+                ctx.lineTo(endPt.sx - ux*as + uy*as, endPt.sy - uy*as - ux*as);
+                ctx.closePath(); ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(startPt.sx, startPt.sy);
+                ctx.lineTo(startPt.sx + ux*as - uy*as, startPt.sy + uy*as + ux*as);
+                ctx.lineTo(startPt.sx + ux*as + uy*as, startPt.sy + uy*as - ux*as);
+                ctx.closePath(); ctx.fill();
+            }
+        }
+    }
+
+    mapperData.zLevels.forEach(function(z) {
+        var zDiff = Math.abs(z - drawZ);
+        var baseAlpha = zDiff === 0 ? 1.0 : ALPHA_INACTIVE_3D;
+
+        // Same-z edges (normal solid, abnormal yellow dotted)
+        (bc.sameZEdges[z] || []).forEach(function(e) {
+            ctx.globalAlpha = baseAlpha;
+            if (e.abnormal) {
+                ctx.strokeStyle = ABNORMAL_CONNECTION_COLOR;
+                ctx.setLineDash([Math.max(3, 8 * zoomScale), Math.max(4, 10 * zoomScale)]);
+                var pA3a = isoProject3d(e.rA.MapX, e.rA.MapY, e.rA.MapZ, drawZ);
+                var pB3a = isoProject3d(e.rB.MapX, e.rB.MapY, e.rB.MapZ, drawZ);
+                var mx3 = (pA3a.sx + pB3a.sx) / 2, my3 = (pA3a.sy + pB3a.sy) / 2;
+                var dx3 = pB3a.sx - pA3a.sx, dy3 = pB3a.sy - pA3a.sy;
+                var dist3 = Math.sqrt(dx3 * dx3 + dy3 * dy3) || 1;
+                var bulge3 = Math.max(15, dist3 * 0.25);
+                ctx.beginPath(); ctx.moveTo(pA3a.sx, pA3a.sy);
+                ctx.quadraticCurveTo(mx3 + (-dy3/dist3)*bulge3, my3 + (dx3/dist3)*bulge3, pB3a.sx, pB3a.sy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else {
+                ctx.strokeStyle = CONN_COLOR_SAME_Z;
+                drawEdge3d(e);
+            }
+        });
+
+        // Tiles (skip rooms being dragged)
+        var dragGroupSet3d = roomDrag.active ? new Set(roomDrag.group.keys()) : new Set();
+        (bc.roomsByZ[z] || []).forEach(function(item) {
+            if (dragGroupSet3d.has(item.id)) return;
+            var isSelected = selectedRoomIds.has(item.id);
+            var topColor = isSelected ? SELECTED_ROOM_COLOR : item.color;
+            var onActive = zDiff === 0;
+            ctx.globalAlpha = onActive ? 1.0 : (connectedToActive.has(item.id) ? ALPHA_CONNECTED_3D : ALPHA_INACTIVE_3D);
+            drawTile3d(item.x, item.y, item.z, topColor, isSelected, item.symbol, drawZ);
+        });
+
+        // Cross-z edges
+        ctx.strokeStyle = CONN_COLOR_CROSS_Z;
+        (bc.crossZEdges[z] || []).forEach(function(e) {
+            var zd = Math.min(Math.abs(e.rA.MapZ - drawZ), Math.abs(e.rB.MapZ - drawZ));
+            ctx.globalAlpha = zd === 0 ? 1.0 : ALPHA_INACTIVE_3D;
+            drawEdge3d(e);
+        });
+    });
+
+    ctx.globalAlpha = 1.0;
+
+    // Draw dragged rooms following cursor in 3D
+    if (roomDrag.active) {
+        var hasBroken3 = roomDrag.brokenExits.length > 0;
+        var hasMoved3 = roomDrag.deltaGx !== 0 || roomDrag.deltaGy !== 0;
+
+        // Grid-snap indicator at target cell
+        if (hasMoved3) {
+            var ghw3 = TILE_HW_3D * zoomScale, ghh3 = TILE_HH_3D * zoomScale;
+            var snapColor3 = !roomDrag.droppable ? 'rgba(255,80,80,0.5)' :
+                             hasBroken3 ? 'rgba(255,180,60,0.5)' : 'rgba(100,200,255,0.5)';
+            ctx.strokeStyle = snapColor3;
+            ctx.lineWidth = Math.max(1, 1.5 * zoomScale);
+            ctx.setLineDash([Math.max(2, 4 * zoomScale), Math.max(2, 4 * zoomScale)]);
+            roomDrag.group.forEach(function(start) {
+                var sp = isoProject3d(start.startGx + roomDrag.deltaGx, start.startGy + roomDrag.deltaGy, drawZ, drawZ);
+                ctx.beginPath();
+                ctx.moveTo(sp.sx, sp.sy - ghh3); ctx.lineTo(sp.sx + ghw3, sp.sy);
+                ctx.lineTo(sp.sx, sp.sy + ghh3); ctx.lineTo(sp.sx - ghw3, sp.sy);
+                ctx.closePath(); ctx.stroke();
+            });
+            ctx.setLineDash([]);
+        }
+
+        // Rooms following cursor at pixel offset
+        roomDrag.group.forEach(function(start, rid) {
+            var origP3 = isoProject3d(start.startGx, start.startGy, drawZ, drawZ);
+            var dragSx = origP3.sx + roomDrag.pixelDx;
+            var dragSy = origP3.sy + roomDrag.pixelDy;
+            var dragRoom3 = mapperData.rooms.get(rid);
+            if (!dragRoom3) return;
+            var isSelected3 = selectedRoomIds.has(rid);
+            var topColor3 = isSelected3 ? SELECTED_ROOM_COLOR : dragRoom3._color;
+
+            var blocked3 = !roomDrag.droppable && hasMoved3;
+            if (blocked3) ctx.globalAlpha = 0.5;
+
+            // Draw tile at pixel offset (manual inline to use custom sx/sy)
+            var hw3  = TILE_HW_3D * zoomScale;
+            var hh3  = TILE_HH_3D * zoomScale;
+            var dep3 = TILE_DEPTH_3D * zoomScale;
+            var bw3  = TILE_BORDER_WIDTH_3D * zoomScale;
+            var leftC3  = darkenColor(topColor3, SIDE_DARKEN_3D * 0.8);
+            var rightC3 = darkenColor(topColor3, SIDE_DARKEN_3D);
+            ctx.beginPath();
+            ctx.moveTo(dragSx, dragSy - hh3); ctx.lineTo(dragSx + hw3, dragSy);
+            ctx.lineTo(dragSx, dragSy + hh3); ctx.lineTo(dragSx - hw3, dragSy);
+            ctx.closePath();
+            ctx.fillStyle = topColor3; ctx.fill();
+            ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw3; ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(dragSx - hw3, dragSy); ctx.lineTo(dragSx, dragSy + hh3);
+            ctx.lineTo(dragSx, dragSy + hh3 + dep3); ctx.lineTo(dragSx - hw3, dragSy + dep3);
+            ctx.closePath();
+            ctx.fillStyle = leftC3; ctx.fill();
+            ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw3; ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(dragSx, dragSy + hh3); ctx.lineTo(dragSx + hw3, dragSy);
+            ctx.lineTo(dragSx + hw3, dragSy + dep3); ctx.lineTo(dragSx, dragSy + hh3 + dep3);
+            ctx.closePath();
+            ctx.fillStyle = rightC3; ctx.fill();
+            ctx.strokeStyle = TILE_BORDER_COLOR_3D; ctx.lineWidth = bw3; ctx.stroke();
+            ctx.fillStyle = isSelected3 ? SELECTED_ROOM_TEXT_COLOR : SYMBOL_TEXT_COLOR;
+            ctx.font = 'bold ' + (SYMBOL_FONT_SIZE_3D * zoomScale) + 'px monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(dragRoom3._symbol || '•', dragSx, dragSy);
+
+            if (blocked3) ctx.globalAlpha = 1.0;
+        });
+    }
+
+    // Ghost cell on empty grid position
+    if (hoveredGridCell && !gridCellOccupied(hoveredGridCell.gx, hoveredGridCell.gy, drawZ)) {
+        var gp3 = isoProject3d(hoveredGridCell.gx, hoveredGridCell.gy, drawZ, drawZ);
+        var ghw = TILE_HW_3D * zoomScale;
+        var ghh = TILE_HH_3D * zoomScale;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = Math.max(1, 1.5 * zoomScale);
+        ctx.setLineDash([Math.max(2, 4 * zoomScale), Math.max(2, 4 * zoomScale)]);
+        ctx.beginPath();
+        ctx.moveTo(gp3.sx, gp3.sy - ghh); ctx.lineTo(gp3.sx + ghw, gp3.sy);
+        ctx.lineTo(gp3.sx, gp3.sy + ghh); ctx.lineTo(gp3.sx - ghw, gp3.sy);
+        ctx.closePath(); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = 'bold ' + Math.max(8, SYMBOL_FONT_SIZE_3D * zoomScale * 0.8) + 'px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('+', gp3.sx, gp3.sy);
+    }
+
+    // Exit draw mode line
+    if (exitDrawMode.active) {
+        var srcP3 = isoProject3d(exitDrawMode.sourceGx, exitDrawMode.sourceGy, exitDrawMode.sourceGz, drawZ);
+        var endX3, endY3;
+        if (exitDrawMode.hoveredTargetId !== null) {
+            var tgt3 = mapperData.rooms.get(exitDrawMode.hoveredTargetId);
+            if (tgt3 && tgt3.HasCoordinates) {
+                var tgtP3 = isoProject3d(tgt3.MapX, tgt3.MapY, tgt3.MapZ, drawZ);
+                endX3 = tgtP3.sx; endY3 = tgtP3.sy;
+            }
+        } else {
+            endX3 = exitDrawMode._mouseCx;
+            endY3 = exitDrawMode._mouseCy;
+        }
+        if (endX3 !== undefined) {
+            ctx.strokeStyle = 'rgba(100,200,255,0.8)';
+            ctx.lineWidth = Math.max(2, CONNECTION_WIDTH_3D * zoomScale * 1.5);
+            ctx.setLineDash([6 * zoomScale, 4 * zoomScale]);
+            ctx.beginPath(); ctx.moveTo(srcP3.sx, srcP3.sy); ctx.lineTo(endX3, endY3); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+}
+
+function roomAtPoint3d(cx, cy) {
+    var targetZ = activeZ3d !== null ? activeZ3d : (mapperData.zLevels.length > 0 ? mapperData.zLevels[0] : 0);
+    var step = TILE_HW_3D * GRID_STEP_XY_3D * spacingScale3d * zoomScale;
+    var hw = step, hh = step / 2;
+    var list = [];
+    mapperData.rooms.forEach(function(room, id) {
+        if (room.HasCoordinates && room.MapZ === targetZ) {
+            list.push({ id: id, x: room.MapX, y: room.MapY, z: room.MapZ });
+        }
+    });
+    list.sort(function(a, b) { return (b.x + b.y) - (a.x + a.y); });
+    for (var i = 0; i < list.length; i++) {
+        var item = list[i];
+        var p = isoProject3d(item.x, item.y, item.z);
+        if (Math.abs(cx - p.sx) / hw + Math.abs(cy - p.sy) / hh <= 1) return item.id;
+    }
+    return null;
+}
+
+// =========================================================================
+// Render dispatch
+// =========================================================================
+
+function render() {
+    if (activeTab === '3d') { bucketCache3d = null; render3d(); }
+    else render2d();
+}
+
+// =========================================================================
+// Exit draw mode
+// =========================================================================
+
+function startExitDrawMode(sourceRoomId) {
+    var room = mapperData.rooms.get(sourceRoomId);
+    if (!room || !room.HasCoordinates) return;
+    exitDrawMode.active = true;
+    exitDrawMode.sourceRoomId = sourceRoomId;
+    exitDrawMode.sourceGx = room.MapX;
+    exitDrawMode.sourceGy = room.MapY;
+    exitDrawMode.sourceGz = room.MapZ;
+    exitDrawMode.hoveredTargetId = null;
+    canvas.style.cursor = 'crosshair';
+    render();
+}
+
+function cancelExitDrawMode() {
+    exitDrawMode.active = false;
+    exitDrawMode.sourceRoomId = null;
+    exitDrawMode.hoveredTargetId = null;
+    canvas.style.cursor = '';
+    render();
+}
+
+function validateExitName(dir, sourceRoom, targetRoom) {
+    if (!dir) return null;
+    if (DIRECTIONAL_EXITS[dir]) {
+        var delta = DIRECTION_DELTAS[dir];
+        if (delta && sourceRoom && targetRoom && sourceRoom.HasCoordinates && targetRoom.HasCoordinates) {
+            var dx = targetRoom.MapX - sourceRoom.MapX;
+            var dy = targetRoom.MapY - sourceRoom.MapY;
+            var dz = targetRoom.MapZ - sourceRoom.MapZ;
+            if (sign(dx) !== sign(delta[0]) || sign(dy) !== sign(delta[1]) || sign(dz) !== sign(delta[2])) {
+                return 'Exit "' + dir + '" does not match the spatial direction to the target room. Use a non-directional name instead.';
+            }
+        }
+    }
+    return null;
+}
+
+function finishExitDraw(targetRoomId) {
+    if (targetRoomId === exitDrawMode.sourceRoomId) { cancelExitDrawMode(); return; }
+    var sourceRoom = mapperData.rooms.get(exitDrawMode.sourceRoomId);
+    var targetRoom = mapperData.rooms.get(targetRoomId);
+
+    var dir = null;
+    while (true) {
+        dir = prompt('Exit name (e.g. "north", "portal", "trapdoor"):');
+        if (!dir || !dir.trim()) { cancelExitDrawMode(); return; }
+        dir = dir.trim();
+        var err = validateExitName(dir, sourceRoom, targetRoom);
+        if (!err) break;
+        alert(err);
+    }
+
+    addExitLocally(exitDrawMode.sourceRoomId, dir, targetRoomId);
+
+    var returnDir = prompt('Return exit name (leave blank for no return exit):');
+    if (returnDir && returnDir.trim()) {
+        returnDir = returnDir.trim();
+        var err2 = validateExitName(returnDir, targetRoom, sourceRoom);
+        if (err2) {
+            alert(err2 + '\nReturn exit not created.');
+        } else {
+            addExitLocally(targetRoomId, returnDir, exitDrawMode.sourceRoomId);
+        }
+    }
+
+    cancelExitDrawMode();
+    render();
+}
+
+function addExitByRoomNumber(sourceRoomId) {
+    var targetIdStr = prompt('Target room number:');
+    if (!targetIdStr || !targetIdStr.trim()) return;
+    var targetRoomId = parseInt(targetIdStr.trim(), 10);
+    if (isNaN(targetRoomId)) { alert('Invalid room number.'); return; }
+    if (targetRoomId === sourceRoomId) { alert('Cannot connect a room to itself.'); return; }
+
+    var sourceRoom = mapperData.rooms.get(sourceRoomId);
+    var targetRoom = mapperData.rooms.get(targetRoomId);
+
+    var dir = null;
+    while (true) {
+        dir = prompt('Exit name (e.g. "north", "portal", "trapdoor"):');
+        if (!dir || !dir.trim()) return;
+        dir = dir.trim();
+        if (sourceRoom && targetRoom) {
+            var err = validateExitName(dir, sourceRoom, targetRoom);
+            if (err) { alert(err); continue; }
+        }
+        break;
+    }
+
+    addExitLocally(sourceRoomId, dir, targetRoomId);
+
+    var returnDir = prompt('Return exit name (leave blank for no return exit):');
+    if (returnDir && returnDir.trim()) {
+        returnDir = returnDir.trim();
+        if (sourceRoom && targetRoom) {
+            var err2 = validateExitName(returnDir, targetRoom, sourceRoom);
+            if (err2) {
+                alert(err2 + '\nReturn exit not created.');
+            } else {
+                addExitLocally(targetRoomId, returnDir, sourceRoomId);
+            }
+        } else {
+            addExitLocally(targetRoomId, returnDir, sourceRoomId);
+        }
+    }
+
+    render();
+}
+
+// =========================================================================
+// Mouse interaction
+// =========================================================================
+
+var mousedownRoomId = null;
+var mousedownPxX = 0, mousedownPxY = 0;
+var mousedownShift = false;
+
+canvas.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    hideCtxMenu();
+
+    var rect = canvas.getBoundingClientRect();
+    var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    var id = roomAtPoint(cx, cy);
+
+    // Exit draw mode: click commits or cancels
+    if (exitDrawMode.active) {
+        if (id !== null && id !== exitDrawMode.sourceRoomId) {
+            finishExitDraw(id);
+        } else {
+            cancelExitDrawMode();
+        }
+        return;
+    }
+
+    mousedownRoomId = id;
+    mousedownPxX = e.clientX;
+    mousedownPxY = e.clientY;
+    mousedownShift = e.shiftKey;
+
+    // Shift+drag on empty space = selection rectangle
+    if (e.shiftKey && id === null) {
+        selRect.active = true;
+        selRect.startCx = cx;
+        selRect.startCy = cy;
+        selRect.endCx = cx;
+        selRect.endCy = cy;
+        canvas.style.cursor = 'crosshair';
+        return;
+    }
+
+    // Clicked on a room: don't start pan yet, wait for drag threshold
+    if (id !== null && !e.shiftKey) {
+        return;
+    }
+
+    // Clicked on empty space: start pan immediately
+    dragActive = true;
+    dragStartPxX = e.clientX; dragStartPxY = e.clientY;
+    dragStartPanX = panOffsetX; dragStartPanY = panOffsetY;
+    canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('mousemove', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+
+    // Exit draw mode tracking
+    if (exitDrawMode.active) {
+        var id = roomAtPoint(cx, cy);
+        exitDrawMode.hoveredTargetId = (id !== null && id !== exitDrawMode.sourceRoomId) ? id : null;
+        exitDrawMode._mouseCx = cx;
+        exitDrawMode._mouseCy = cy;
+        render();
+        return;
+    }
+
+    // Selection rectangle mode
+    if (selRect.active) {
+        selRect.endCx = cx;
+        selRect.endCy = cy;
+        render();
+        return;
+    }
+
+    // Room drag mode (group) — update pixel offset every frame, grid delta for snapping
+    if (roomDrag.active) {
+        roomDrag.pixelDx = cx - roomDrag.anchorCanvasPx;
+        roomDrag.pixelDy = cy - roomDrag.anchorCanvasPy;
+
+        var gc = canvasToGrid(cx, cy);
+        var anchorStart = roomDrag.group.get(roomDrag.anchorId);
+        var newDx = gc.gx - anchorStart.startGx;
+        var newDy = gc.gy - anchorStart.startGy;
+        if (newDx !== roomDrag.deltaGx || newDy !== roomDrag.deltaGy) {
+            roomDrag.deltaGx = newDx;
+            roomDrag.deltaGy = newDy;
+            var cZ = currentZ();
+            var canDrop = true;
+            roomDrag.group.forEach(function(start, rid) {
+                var pGx = start.startGx + newDx, pGy = start.startGy + newDy;
+                var coordKey = pGx + ',' + pGy + ',' + cZ;
+                var occupant = mapperData.roomsByCoord.get(coordKey);
+                if (occupant !== undefined && !roomDrag.group.has(occupant)) canDrop = false;
+            });
+            roomDrag.droppable = canDrop;
+            if (canDrop && (newDx !== 0 || newDy !== 0)) {
+                var broken = [];
+                roomDrag.allConstraints.forEach(function(c) {
+                    if (!isExitConstraintSatisfied(c, c.ownerGx + newDx, c.ownerGy + newDy)) broken.push(c);
+                });
+                roomDrag.brokenExits = broken;
+            } else {
+                roomDrag.brokenExits = [];
+            }
+        }
+        render();
+        return;
+    }
+
+    // Promote to room drag if mousedown was on a room and threshold exceeded
+    if (!dragActive && !roomDrag.active && mousedownRoomId !== null && !mousedownShift) {
+        var movedPx = Math.abs(e.clientX - mousedownPxX) + Math.abs(e.clientY - mousedownPxY);
+        if (movedPx > 4) {
+            var anchorRoom = mapperData.rooms.get(mousedownRoomId);
+            if (anchorRoom && anchorRoom.HasCoordinates) {
+                var groupIds = selectedRoomIds.has(mousedownRoomId) && selectedRoomIds.size > 1
+                    ? new Set(selectedRoomIds) : new Set([mousedownRoomId]);
+                var groupMap = new Map();
+                var groupSet = new Set();
+                groupIds.forEach(function(rid) {
+                    var r = mapperData.rooms.get(rid);
+                    if (r && r.HasCoordinates) {
+                        groupMap.set(rid, { startGx: r.MapX, startGy: r.MapY });
+                        groupSet.add(rid);
+                    }
+                });
+
+                var allC = [];
+                groupSet.forEach(function(rid) {
+                    allC = allC.concat(buildDragConstraints(rid, groupSet));
+                });
+
+                var anchorP;
+                if (activeTab === '2d') {
+                    var ap2 = gridToCanvas2d(anchorRoom.MapX, anchorRoom.MapY);
+                    anchorP = { px: ap2.px, py: ap2.py };
+                } else {
+                    var ap3 = isoProject3d(anchorRoom.MapX, anchorRoom.MapY, anchorRoom.MapZ, currentZ());
+                    anchorP = { px: ap3.sx, py: ap3.sy };
+                }
+                roomDrag.active = true;
+                roomDrag.anchorId = mousedownRoomId;
+                roomDrag.group = groupMap;
+                roomDrag.deltaGx = 0;
+                roomDrag.deltaGy = 0;
+                roomDrag.pixelDx = 0;
+                roomDrag.pixelDy = 0;
+                roomDrag.anchorCanvasPx = anchorP.px;
+                roomDrag.anchorCanvasPy = anchorP.py;
+                roomDrag.droppable = true;
+                roomDrag.brokenExits = [];
+                roomDrag.allConstraints = allC;
+                canvas.style.cursor = 'move';
+                hideTooltip();
+                render();
+                return;
+            }
+        }
+    }
+
+    // Pan drag
+    if (dragActive) {
+        if (activeTab === '2d') {
+            var step = BASE_STEP_2D * zoomScale;
+            panOffsetX = dragStartPanX - (e.clientX - dragStartPxX) / step;
+            panOffsetY = dragStartPanY - (e.clientY - dragStartPxY) / step;
+        } else {
+            var step3 = TILE_HW_3D * GRID_STEP_XY_3D * spacingScale3d * zoomScale;
+            var dsx = e.clientX - dragStartPxX, dsy = e.clientY - dragStartPxY;
+            panOffsetX = dragStartPanX - (dsx / step3 + dsy * 2 / step3) / 2;
+            panOffsetY = dragStartPanY - (dsy * 2 / step3 - dsx / step3) / 2;
+        }
+        render();
+        return;
+    }
+
+    // Hover (no drag)
+    var id = roomAtPoint(cx, cy);
+    hoveredRoomId = id;
+    if (id !== null) {
+        var hroom = mapperData.rooms.get(id);
+        if (hroom) { clearTimeout(tooltipHideTimer); showTooltip(e.clientX, e.clientY, hroom, id); }
+        canvas.style.cursor = exitDrawMode.active ? 'crosshair' : 'pointer';
+    } else {
+        hideTooltip();
+        canvas.style.cursor = exitDrawMode.active ? 'crosshair' : 'grab';
+    }
+
+    // Ghost cell tracking for empty grid positions (both views)
+    var prevGhost = hoveredGridCell;
+    if (id === null && mapperData.rooms.size > 0) {
+        hoveredGridCell = canvasToGrid(cx, cy);
+    } else {
+        hoveredGridCell = null;
+    }
+    var ghostChanged = (prevGhost === null) !== (hoveredGridCell === null) ||
+        (prevGhost && hoveredGridCell && (prevGhost.gx !== hoveredGridCell.gx || prevGhost.gy !== hoveredGridCell.gy));
+    if (ghostChanged) render();
+});
+
+canvas.addEventListener('mouseup', function(e) {
+    // Finish selection rectangle
+    if (selRect.active) {
+        selRect.active = false;
+        canvas.style.cursor = '';
+        var minCx = Math.min(selRect.startCx, selRect.endCx);
+        var maxCx = Math.max(selRect.startCx, selRect.endCx);
+        var minCy = Math.min(selRect.startCy, selRect.endCy);
+        var maxCy = Math.max(selRect.startCy, selRect.endCy);
+        if (maxCx - minCx > 4 || maxCy - minCy > 4) {
+            var half = (ROOM_SIZE_2D * zoomScale) / 2;
+            if (!e.shiftKey && !e.ctrlKey) selectedRoomIds.clear();
+            mapperData.rooms.forEach(function(room, id) {
+                if (!room.HasCoordinates || room.MapZ !== activeZ2d) return;
+                var p = gridToCanvas2d(room.MapX, room.MapY);
+                if (p.px + half >= minCx && p.px - half <= maxCx &&
+                    p.py + half >= minCy && p.py - half <= maxCy) {
+                    selectedRoomIds.add(id);
+                }
+            });
+            updateInfoPanel();
+        }
+        render();
+        canvas.dataset.suppressClick = '1';
+        return;
+    }
+
+    // Finish room drag (group)
+    if (roomDrag.active) {
+        var wasDroppable = roomDrag.droppable;
+        var dGx = roomDrag.deltaGx, dGy = roomDrag.deltaGy;
+        var groupCopy = new Map(roomDrag.group);
+        roomDrag.active = false;
+        roomDrag.anchorId = null;
+        roomDrag.group = new Map();
+        roomDrag.brokenExits = [];
+        roomDrag.allConstraints = [];
+        canvas.style.cursor = '';
+        mousedownRoomId = null;
+        canvas.dataset.suppressClick = '1';
+
+        if (wasDroppable && (dGx !== 0 || dGy !== 0)) {
+            applyGroupMove(groupCopy, dGx, dGy);
+        }
+        render();
+        return;
+    }
+
+    // Clicked on a room without dragging — let the click handler deal with it
+    if (!dragActive && mousedownRoomId !== null) {
+        mousedownRoomId = null;
+        return;
+    }
+
+    if (!dragActive) return;
+    var dx = e.clientX - dragStartPxX, dy = e.clientY - dragStartPxY;
+    dragActive = false;
+    canvas.style.cursor = '';
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        canvas.dataset.suppressClick = '1';
+    }
+    mousedownRoomId = null;
+});
+
+canvas.addEventListener('mouseleave', function() {
+    hideTooltip();
+    if (selRect.active) {
+        selRect.active = false;
+        canvas.style.cursor = '';
+        render();
+    }
+    if (roomDrag.active) {
+        roomDrag.active = false;
+        roomDrag.anchorId = null;
+        roomDrag.group = new Map();
+        roomDrag.brokenExits = [];
+        roomDrag.allConstraints = [];
+        canvas.style.cursor = '';
+        render();
+    }
+    if (dragActive) { dragActive = false; canvas.style.cursor = ''; }
+    if (hoveredGridCell) { hoveredGridCell = null; render(); }
+    mousedownRoomId = null;
+});
+
+canvas.addEventListener('click', function(e) {
+    if (canvas.dataset.suppressClick) { delete canvas.dataset.suppressClick; return; }
+    if (exitDrawMode.active) return;
+    hideCtxMenu();
+    var rect = canvas.getBoundingClientRect();
+    var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    var id = roomAtPoint(cx, cy);
+    if (id !== null) {
+        if (e.shiftKey || e.ctrlKey) { toggleRoomSelection(id); }
+        else { selectRoom(id); }
+    } else if (mapperData.rooms.size > 0) {
+        var gc = canvasToGrid(cx, cy);
+        var cZ = currentZ();
+        if (!gridCellOccupied(gc.gx, gc.gy, cZ)) {
+            showCtxMenuForEmpty(e.clientX, e.clientY, gc.gx, gc.gy, cZ);
+            e.stopPropagation();
+        } else {
+            selectRoom(null);
+        }
+    } else {
+        selectRoom(null);
+    }
+});
+
+canvas.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (exitDrawMode.active) { cancelExitDrawMode(); return; }
+    hideCtxMenu();
+    var rect = canvas.getBoundingClientRect();
+    var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    var id = roomAtPoint(cx, cy);
+    if (id !== null) {
+        showCtxMenuForRoom(e.clientX, e.clientY, id);
+    } else if (mapperData.rooms.size > 0) {
+        var gc = canvasToGrid(cx, cy);
+        var cZ = currentZ();
+        if (!gridCellOccupied(gc.gx, gc.gy, cZ)) {
+            showCtxMenuForEmpty(e.clientX, e.clientY, gc.gx, gc.gy, cZ);
+        }
+    }
+});
+
+canvas.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var factor = Math.pow(ZOOM_STEP, e.deltaY * 0.002);
+    zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale / factor));
+    render();
+}, { passive: false });
+
+// =========================================================================
+// Context menu
+// =========================================================================
+
+function showCtxMenuForEmpty(mx, my, gx, gy, gz) {
+    var html = '<div class="ctx-header">Cell (' + gx + ', ' + gy + ', ' + gz + ')</div>';
+    html += '<button class="ctx-item" data-action="create" data-gx="' + gx + '" data-gy="' + gy + '" data-gz="' + gz + '">Create Room Here</button>';
+    ctxMenuEl.innerHTML = html;
+    ctxMenuEl.style.display = 'block';
+    positionCtxMenu(mx, my);
+    bindCtxMenuActions();
+}
+
+function showCtxMenuForRoom(mx, my, roomId) {
+    var room = mapperData.rooms.get(roomId);
+    var label = room ? escapeHtml(room.Title) : 'Room';
+    var html = '<div class="ctx-header">#' + roomId + ' ' + label + '</div>';
+    html += '<button class="ctx-item" data-action="select" data-id="' + roomId + '">Select</button>';
+    html += '<button class="ctx-item" data-action="add-exit" data-id="' + roomId + '">Add Exit</button>';
+    html += '<button class="ctx-item" data-action="add-exit-by-id" data-id="' + roomId + '">Add Exit (By Room Number)</button>';
+    if (roomId > 0) html += '<button class="ctx-item" data-action="edit" data-id="' + roomId + '">Edit Room</button>';
+    html += '<button class="ctx-item" style="color:#ff6b6b" data-action="delete" data-id="' + roomId + '">Delete Room</button>';
+    ctxMenuEl.innerHTML = html;
+    ctxMenuEl.style.display = 'block';
+    positionCtxMenu(mx, my);
+    bindCtxMenuActions();
+}
+
+function positionCtxMenu(mx, my) {
+    var mw = ctxMenuEl.offsetWidth, mh = ctxMenuEl.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var left = mx;
+    if (left + mw > vw - 8) left = mx - mw;
+    left = Math.max(8, left);
+    var top = my;
+    if (top + mh > vh - 8) top = my - mh;
+    top = Math.max(8, top);
+    ctxMenuEl.style.left = left + 'px';
+    ctxMenuEl.style.top  = top + 'px';
+}
+
+function hideCtxMenu() {
+    ctxMenuEl.style.display = 'none';
+}
+
+function bindCtxMenuActions() {
+    ctxMenuEl.querySelectorAll('.ctx-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var action = btn.dataset.action;
+            hideCtxMenu();
+            if (action === 'create') {
+                createRoomAt(parseInt(btn.dataset.gx), parseInt(btn.dataset.gy), parseInt(btn.dataset.gz));
+            } else if (action === 'select') {
+                selectRoom(parseInt(btn.dataset.id));
+            } else if (action === 'edit') {
+                window.location.href = '/admin/rooms#' + btn.dataset.id;
+            } else if (action === 'add-exit') {
+                startExitDrawMode(parseInt(btn.dataset.id));
+            } else if (action === 'add-exit-by-id') {
+                addExitByRoomNumber(parseInt(btn.dataset.id));
+            } else if (action === 'delete') {
+                var rid = parseInt(btn.dataset.id);
+                var room = mapperData.rooms.get(rid);
+                var lbl = room ? room.Title : 'Room #' + rid;
+                if (confirm('Delete "' + lbl + '"? All exits to/from it will be removed.')) {
+                    deleteRoomLocally(rid);
+                    render();
+                }
+            }
+        });
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (!ctxMenuEl.contains(e.target)) hideCtxMenu();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (exitDrawMode.active) { cancelExitDrawMode(); return; }
+        hideCtxMenu();
+    }
+});
+
+// =========================================================================
+// Local room creation (deferred save)
+// =========================================================================
+
+function createRoomAt(gx, gy, gz) {
+    if (!mapperData.currentZone) {
+        alert('Select a zone from the dropdown first to set which zone new rooms are created in.');
+        return;
+    }
+    var tempId = createRoomLocally(gx, gy, gz);
+    selectRoom(tempId);
+    render();
+}
+
+// =========================================================================
+// Save / Discard
+// =========================================================================
+
+function toServerCoords(room) {
+    if (!room) return { x: 0, y: 0, z: 0 };
+    var zone = room.Zone || mapperData.currentZone;
+    var off = zone ? mapperData.zoneOffsets.get(zone) : null;
+    if (!off) return { x: room.MapX, y: room.MapY, z: room.MapZ };
+    return { x: room.MapX - off.dx, y: room.MapY - off.dy, z: room.MapZ };
+}
+
+async function saveAllChanges() {
+    showLoading(true);
+
+    // 1. Delete rooms on server
+    for (var i = 0; i < dirty.deletedRooms.length; i++) {
+        await AdminAPI.delete('/admin/api/v1/rooms/' + dirty.deletedRooms[i]);
+    }
+
+    // 2. Create new rooms on server
+    var tempToReal = new Map();
+    for (var entry of dirty.createdRooms) {
+        var tempId = entry[0], info = entry[1];
+        var zone = info.zone || mapperData.currentZone || '';
+        var off = mapperData.zoneOffsets.get(zone) || { dx: 0, dy: 0 };
+        var serverX = info.gx - off.dx, serverY = info.gy - off.dy;
+        var createRes = await AdminAPI.post('/admin/api/v1/rooms', { Zone: zone });
+        if (createRes.ok && createRes.data && createRes.data.data) {
+            var realId = createRes.data.data.RoomId;
+            tempToReal.set(tempId, realId);
+            await AdminAPI.patch('/admin/api/v1/rooms/' + realId, {
+                MapX: serverX, MapY: serverY, MapZ: info.gz, HasCoordinates: true
+            });
+        }
+    }
+
+    // 3. Move existing rooms on server
+    for (var entry2 of dirty.movedRooms) {
+        var roomId = entry2[0];
+        if (roomId < 0) continue;
+        var room = mapperData.rooms.get(roomId);
+        if (room) {
+            var sc = toServerCoords(room);
+            await AdminAPI.patch('/admin/api/v1/rooms/' + roomId, {
+                MapX: sc.x, MapY: sc.y, MapZ: sc.z, HasCoordinates: true
+            });
+        }
+    }
+
+    // 4. Handle exit changes (grouped by room: removals and additions)
+    var exitChangesByRoom = new Map();
+    dirty.exitRemovals.forEach(function(er) {
+        var rId = er.roomId < 0 ? (tempToReal.get(er.roomId) || er.roomId) : er.roomId;
+        if (rId < 0) return;
+        if (!exitChangesByRoom.has(rId)) exitChangesByRoom.set(rId, { remove: new Set(), add: [] });
+        exitChangesByRoom.get(rId).remove.add(er.dir);
+    });
+    dirty.exitAdditions.forEach(function(ea) {
+        var rId = ea.roomId < 0 ? (tempToReal.get(ea.roomId) || ea.roomId) : ea.roomId;
+        var tId = ea.targetRoomId < 0 ? (tempToReal.get(ea.targetRoomId) || ea.targetRoomId) : ea.targetRoomId;
+        if (rId < 0 || tId < 0) return;
+        if (!exitChangesByRoom.has(rId)) exitChangesByRoom.set(rId, { remove: new Set(), add: [] });
+        exitChangesByRoom.get(rId).add.push({ dir: ea.dir, targetRoomId: tId });
+    });
+    for (var entry3 of exitChangesByRoom) {
+        var rId = entry3[0], changes = entry3[1];
+        var res = await AdminAPI.get('/admin/api/v1/rooms/' + rId);
+        if (res.ok && res.data && res.data.data) {
+            var fullRoom = res.data.data;
+            var mergedExits = {};
+            for (var d in (fullRoom.Exits || {})) {
+                if (!changes.remove.has(d)) mergedExits[d] = fullRoom.Exits[d];
+            }
+            changes.add.forEach(function(a) { mergedExits[a.dir] = { RoomId: a.targetRoomId }; });
+            await AdminAPI.patch('/admin/api/v1/rooms/' + rId, { Exits: mergedExits });
+        }
+    }
+
+    clearDirty();
+    await loadAllRooms();
+    showLoading(false);
+    selectedRoomIds.clear();
+    updateInfoPanel();
+    render();
+}
+
+async function discardChanges() {
+    clearDirty();
+    showLoading(true);
+    await loadAllRooms();
+    showLoading(false);
+    selectedRoomIds.clear();
+    updateInfoPanel();
+    render();
+}
+
+// =========================================================================
+// Tooltip
+// =========================================================================
+
+function showTooltip(mx, my, room, id) {
+    var html = '<div class="tt-title">' + escapeHtml(room.Title || 'Unknown') + '</div>';
+    html += '<div class="tt-id">Room #' + id + '</div>';
+    html += '<hr class="tt-divider">';
+    if (room.Biome) html += '<div class="tt-row"><span class="tt-label">Biome</span><span class="tt-value">' + escapeHtml(room.Biome) + '</span></div>';
+    if (room._symbol) html += '<div class="tt-row"><span class="tt-label">Symbol</span><span class="tt-value">' + escapeHtml(room._symbol) + '</span></div>';
+    html += '<div class="tt-row"><span class="tt-label">Coords</span><span class="tt-value">' + room.MapX + ', ' + room.MapY + ', ' + room.MapZ + '</span></div>';
+    if (room.Exits) {
+        var dirs = Object.keys(room.Exits).sort();
+        if (dirs.length > 0) {
+            html += '<hr class="tt-divider">';
+            html += '<div class="tt-row"><span class="tt-label">Exits</span><span class="tt-value">' + dirs.join(', ') + '</span></div>';
+        }
+    }
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    positionTooltip(mx, my);
+}
+
+function positionTooltip(mx, my) {
+    var ttW = tooltip.offsetWidth, ttH = tooltip.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var left = mx + 14;
+    if (left + ttW > vw - 8) left = mx - ttW - 14;
+    left = Math.max(8, left);
+    var top = my - Math.floor(ttH / 2);
+    if (top + ttH > vh - 8) top = vh - ttH - 8;
+    top = Math.max(8, top);
+    tooltip.style.left = left + 'px';
+    tooltip.style.top  = top + 'px';
+}
+
+function hideTooltip() {
+    tooltipHideTimer = setTimeout(function() {
+        tooltip.style.display = 'none';
+    }, 80);
+}
+
+function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// =========================================================================
+// Info panel
+// =========================================================================
+
+function updateInfoPanel() {
+    var emptyEl   = document.getElementById('info-empty');
+    var contentEl = document.getElementById('info-content');
+
+    if (selectedRoomIds.size === 0) {
+        emptyEl.style.display = '';
+        contentEl.style.display = 'none';
+        return;
+    }
+
+    emptyEl.style.display = 'none';
+    contentEl.style.display = '';
+
+    // Multi-select summary
+    if (selectedRoomIds.size > 1) {
+        var ids = Array.from(selectedRoomIds).sort(function(a,b) { return a-b; });
+        var html = '<div class="info-row"><span class="info-label">Selected</span><span class="info-value">' + ids.length + ' rooms</span></div>';
+        html += '<hr class="info-divider">';
+        ids.forEach(function(rid) {
+            var r = mapperData.rooms.get(rid);
+            var title = r ? escapeHtml(r.Title) : '?';
+            html += '<div class="info-exit-row"><span class="info-exit-dir">#' + rid + '</span><span class="info-exit-id">' + title + '</span></div>';
+        });
+        contentEl.innerHTML = html;
+        return;
+    }
+
+    // Single room detail
+    var selectedRoomId = Array.from(selectedRoomIds)[0];
+    var room = mapperData.rooms.get(selectedRoomId);
+    if (!room) {
+        emptyEl.style.display = '';
+        contentEl.style.display = 'none';
+        return;
+    }
+
+    var html = '';
+    html += '<div class="info-row"><span class="info-label">ID</span><span class="info-value">' + selectedRoomId + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">Title</span><span class="info-value">' + escapeHtml(room.Title) + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">Biome</span><span class="info-value">' + escapeHtml(room.Biome || '-') + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">Symbol</span><span class="info-value">' + escapeHtml(room._symbol || '-') + '</span></div>';
+    if (room.MapLegend) {
+        html += '<div class="info-row"><span class="info-label">Legend</span><span class="info-value">' + escapeHtml(room.MapLegend) + '</span></div>';
+    }
+    html += '<div class="info-row"><span class="info-label">Coords</span><span class="info-value">' + room.MapX + ', ' + room.MapY + ', ' + room.MapZ + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">Has Coords</span><span class="info-value">' + (room.HasCoordinates ? 'yes' : 'no') + '</span></div>';
+
+    if (room.Exits && Object.keys(room.Exits).length > 0) {
+        html += '<hr class="info-divider">';
+        html += '<div class="info-exits">';
+        var dirs = Object.keys(room.Exits).sort();
+        dirs.forEach(function(dir) {
+            var ex = room.Exits[dir];
+            var badges = '';
+            if (ex.Secret) badges += '<span class="info-badge secret">secret</span> ';
+            if (ex.HasLock) badges += '<span class="info-badge locked">locked</span> ';
+            html += '<div class="info-exit-row">';
+            html += '<span class="info-exit-dir">' + escapeHtml(dir) + '</span>';
+            html += '<span class="info-exit-id">' + badges + '#' + ex.RoomId + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    html += '<hr class="info-divider">';
+    html += '<a class="info-link" href="/admin/rooms#' + selectedRoomId + '">Edit Room &rarr;</a>';
+
+    contentEl.innerHTML = html;
+}
+
+// =========================================================================
+// Loading
+// =========================================================================
+
+function showLoading(show) {
+    loadingEl.classList.toggle('hidden', !show);
+}
+
+function updateStats() {
+    var total = mapperData.rooms.size;
+    var coordinated = 0;
+    mapperData.rooms.forEach(function(r) { if (r.HasCoordinates) coordinated++; });
+    var unmapped = total - coordinated;
+    var txt = total + ' rooms';
+    if (unmapped > 0) txt += ' (' + unmapped + ' unmapped)';
+    txt += ' | ' + mapperData.zLevels.length + ' z-level' + (mapperData.zLevels.length !== 1 ? 's' : '');
+    txt += ' | ' + mapperData.visibleZones.size + '/' + mapperData.allZones.length + ' zones';
+    statsEl.textContent = txt;
+}
+
+// =========================================================================
+// Zone select
+// =========================================================================
+
+zoneSelect.addEventListener('change', function() {
+    var zone = zoneSelect.value;
+    if (!zone) return;
+    if (isDirty() && !confirm('You have unsaved changes. Discard and switch zones?')) {
+        zoneSelect.value = mapperData.currentZone || '';
+        return;
+    }
+    if (isDirty()) { clearDirty(); }
+    localStorage.setItem('mapper.lastZone', zone);
+    centerOnZone(zone);
+});
+
+// =========================================================================
+// Init
+// =========================================================================
+
+function populateZoneDropdown() {
+    var current = zoneSelect.value;
+    while (zoneSelect.options.length > 1) zoneSelect.remove(1);
+    mapperData.allZones.forEach(function(z) {
+        var opt = document.createElement('option');
+        opt.value = z.Name;
+        opt.textContent = z.Name + ' (' + z.RoomCount + ' rooms)';
+        zoneSelect.appendChild(opt);
+    });
+    if (current) zoneSelect.value = current;
+}
+
+(async function init() {
+    await loadBiomes();
+    await loadAllRooms();
+    populateZoneDropdown();
+
+    switchTab(activeTab);
+
+    var lastZone = localStorage.getItem('mapper.lastZone');
+    if (!lastZone || !mapperData.allZones.some(function(z) { return z.Name === lastZone; })) {
+        lastZone = mapperData.allZones.length > 0 ? mapperData.allZones[0].Name : null;
+    }
+    if (lastZone) {
+        zoneSelect.value = lastZone;
+        centerOnZone(lastZone);
+    }
+
+    resizeCanvas();
+    render();
+})();
+</script>
+
+{{template "footer" .}}

@@ -208,6 +208,14 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 		doBasicAuth(apiV1DeleteBiome),
 	))
 
+	// Mapper
+	mux.HandleFunc("GET /admin/api/v1/mapper/rooms", RunWithMUDLocked(
+		doBasicAuth(apiV1GetMapperAllRooms),
+	))
+	mux.HandleFunc("GET /admin/api/v1/mapper/zone/{zonename}", RunWithMUDLocked(
+		doBasicAuth(apiV1GetMapperZone),
+	))
+
 	// Rooms - static sub-routes before wildcard {roomId}
 	mux.HandleFunc("GET /admin/api/v1/rooms/biomes", RunWithMUDLocked(
 		doBasicAuth(apiV1GetBiomes),

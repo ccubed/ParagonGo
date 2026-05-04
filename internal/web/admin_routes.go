@@ -119,6 +119,9 @@ func registerAdminRoutes(mux *http.ServeMux) {
 		doBasicAuth(adminMutatorsAPI),
 	))
 
+	mux.HandleFunc("GET /admin/mapper", RunWithMUDLocked(
+		doBasicAuth(adminMapper),
+	))
 	mux.HandleFunc("GET /admin/rooms", RunWithMUDLocked(
 		doBasicAuth(adminRooms),
 	))

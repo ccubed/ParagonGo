@@ -313,6 +313,116 @@ func SaveRoomScript(roomId int, content string) error {
 	return os.WriteFile(scriptPath, []byte(content), 0644)
 }
 
+type MapperRoomData struct {
+	RoomId         int                       `json:"RoomId"`
+	Zone           string                    `json:"Zone"`
+	Title          string                    `json:"Title"`
+	MapX           int                       `json:"MapX"`
+	MapY           int                       `json:"MapY"`
+	MapZ           int                       `json:"MapZ"`
+	HasCoordinates bool                      `json:"HasCoordinates"`
+	MapSymbol      string                    `json:"MapSymbol"`
+	MapLegend      string                    `json:"MapLegend"`
+	Biome          string                    `json:"Biome"`
+	Exits          map[string]MapperExitData `json:"Exits"`
+}
+
+type MapperExitData struct {
+	RoomId       int    `json:"RoomId"`
+	Secret       bool   `json:"Secret,omitempty"`
+	MapDirection string `json:"MapDirection,omitempty"`
+	HasLock      bool   `json:"HasLock,omitempty"`
+}
+
+func GetMapperRooms(zoneName string) ([]MapperRoomData, error) {
+	zoneInfo, ok := roomManager.zones[zoneName]
+	if !ok {
+		return nil, fmt.Errorf("zone does not exist: %s", zoneName)
+	}
+
+	roomIds := make([]int, 0, len(zoneInfo.RoomIds))
+	for id := range zoneInfo.RoomIds {
+		roomIds = append(roomIds, id)
+	}
+	sort.Ints(roomIds)
+
+	result := make([]MapperRoomData, 0, len(roomIds))
+	for _, id := range roomIds {
+		r := LoadRoomTemplate(id)
+		if r == nil {
+			continue
+		}
+
+		exits := make(map[string]MapperExitData, len(r.Exits))
+		for dir, ex := range r.Exits {
+			exits[dir] = MapperExitData{
+				RoomId:       ex.RoomId,
+				Secret:       ex.Secret,
+				MapDirection: ex.MapDirection,
+				HasLock:      ex.HasLock(),
+			}
+		}
+
+		result = append(result, MapperRoomData{
+			RoomId:         r.RoomId,
+			Zone:           r.Zone,
+			Title:          r.Title,
+			MapX:           r.MapX,
+			MapY:           r.MapY,
+			MapZ:           r.MapZ,
+			HasCoordinates: r.HasCoordinates,
+			MapSymbol:      r.MapSymbol,
+			MapLegend:      r.MapLegend,
+			Biome:          r.Biome,
+			Exits:          exits,
+		})
+	}
+
+	return result, nil
+}
+
+func GetAllMapperRooms() []MapperRoomData {
+	roomIds := make([]int, 0, len(roomManager.roomIdToFileCache))
+	for id := range roomManager.roomIdToFileCache {
+		roomIds = append(roomIds, id)
+	}
+	sort.Ints(roomIds)
+
+	result := make([]MapperRoomData, 0, len(roomIds))
+	for _, id := range roomIds {
+		r := LoadRoomTemplate(id)
+		if r == nil {
+			continue
+		}
+
+		exits := make(map[string]MapperExitData, len(r.Exits))
+		for dir, ex := range r.Exits {
+			exits[dir] = MapperExitData{
+				RoomId:       ex.RoomId,
+				Secret:       ex.Secret,
+				MapDirection: ex.MapDirection,
+				HasLock:      ex.HasLock(),
+			}
+		}
+
+		result = append(result, MapperRoomData{
+			RoomId:         r.RoomId,
+			Zone:           r.Zone,
+			Title:          r.Title,
+			MapX:           r.MapX,
+			MapY:           r.MapY,
+			MapZ:           r.MapZ,
+			HasCoordinates: r.HasCoordinates,
+			MapSymbol:      r.MapSymbol,
+			MapLegend:      r.MapLegend,
+			Biome:          r.Biome,
+			Exits:          exits,
+		})
+	}
+
+	return result
+}
+
 func DeleteZoneForAdmin(zoneName string) error {
 	zoneInfo, ok := roomManager.zones[zoneName]
 	if !ok {

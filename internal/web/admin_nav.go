@@ -89,6 +89,10 @@ func buildAdminNav() []WebNavItem {
 			Name: "Rooms",
 			SubMenus: []WebNavItem{
 				{
+					Name:   "Mapper",
+					Target: "/admin/mapper",
+				},
+				{
 					Name:   "Rooms",
 					Target: "/admin/rooms",
 					SubItems: []WebNavSub{
