@@ -27,6 +27,10 @@ Recommended versioning for the next release line:
 
    Or, for a manual test without merging:
    - Run the `Release` workflow with `workflow_dispatch`.
+   - Optionally set `release_tag` if you want the run to upload assets to a
+     specific existing or new release tag instead of the default prerelease tag.
+   - Run `Release Latest Assets` when you want the Actions UI path that updates
+     the repo's current latest GitHub release tag without any manual input.
 
 2. **Monitor Release**
    - GitHub Actions will:
@@ -56,6 +60,9 @@ Recommended versioning for the next release line:
 3. **Manual test runs can also publish prereleases**
    - `workflow_dispatch` can be used to refresh the rolling `prerelease`
      without merging.
+   - If you provide `release_tag`, the run publishes to that tag instead.
+   - `Release Latest Assets` is the no-input manual workflow that resolves the
+     current latest GitHub release tag and publishes to it.
 
 4. **Rolling release naming**
    - The release tag is always `prerelease`.
@@ -69,19 +76,27 @@ Recommended versioning for the next release line:
 1. **Run the release workflow manually**
    - Use `workflow_dispatch` when you want a test release
      without merging to `master`.
+   - Leave `release_tag` blank to use the default manual prerelease naming.
+   - Set `release_tag` when you want the run to upload assets to a specific
+     existing or new release tag.
+   - Run `Release Latest Assets` when you want the no-input Actions UI path
+     that uploads assets to whichever tag GitHub currently considers the latest
+     release.
 
 2. **Verify the GitHub release**
    - Confirm the workflow succeeds.
-   - Confirm the `prerelease` release now points at the expected commit.
+   - Confirm the targeted release now points at the expected commit.
    - Confirm the per-platform binaries are attached.
    - Confirm the `_datafiles` zip asset is attached.
    - Confirm the checksum manifest asset is attached.
-   - Confirm GitHub marks the release as a prerelease.
-   - Confirm GitHub does not mark it as `Latest`.
+   - For default manual prerelease runs, confirm GitHub marks the release as a
+     prerelease and does not mark it as `Latest`.
 
 3. **Clean up if needed**
-   - No cleanup is normally required because the next successful run replaces the
-     rolling `prerelease`.
+   - No cleanup is normally required for the rolling `prerelease` path because
+     the next successful run replaces it.
+   - Tag-targeted manual runs use the tag you requested, so cleanup is only
+     needed if you created a temporary release tag for testing.
 
 ---
 
@@ -98,6 +113,9 @@ Recommended versioning for the next release line:
 - **Can I create a test release without merging to `master`?**
   Yes - run the `Release` workflow manually with `workflow_dispatch`. That keeps PR
   submissions clean while still allowing an on-demand refresh of `prerelease`.
+  Set `release_tag` when you want the run to publish assets to a specific tag.
+  Run `Release Latest Assets` when you want the no-input path that targets the
+  current latest release.
 
 - **Are workflow-created releases stable releases?**
   No - the workflow creates prereleases. A repo owner must manually promote a release

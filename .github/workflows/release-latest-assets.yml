@@ -1,19 +1,11 @@
 ---
-name: Release
+name: Release Latest Assets
 
 "on":
-  push:
-    branches:
-      - master
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: Existing/new release tag, or latest, to publish assets to
-        required: false
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: Release-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -22,7 +14,6 @@ permissions:
 jobs:
   prep:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
@@ -37,16 +28,22 @@ jobs:
       # actions/checkout v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Compute release metadata
         id: meta
-        env:
-          REQUESTED_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
         run: |
-          short_sha="$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
-          timestamp="$(date -u +'%Y%m%d%H%M%S')"
-          requested_release_tag="$REQUESTED_RELEASE_TAG"
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then
+            echo \
+              "Release Latest Assets may only be run from master" \
+              >&2
+            exit 1
+          fi
+          release_tag="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases/latest" \
+              --jq '.tag_name'
+          )"
           binary_version="$(
             awk -F'"' '/^const VERSION = "/ { print $2; exit }' main.go
           )"
@@ -54,73 +51,25 @@ jobs:
             echo "Could not determine binary version from main.go" >&2
             exit 1
           fi
-
-          if [ -n "$requested_release_tag" ]; then
-            if [ "$requested_release_tag" = "latest" ]; then
-              if [ "$GITHUB_REF" != "refs/heads/master" ]; then
-                echo \
-                  "release_tag=latest may only be used when " \
-                  "workflow_dispatch runs from master" \
-                  >&2
-                exit 1
-              fi
-              release_tag="$(
-                gh api "repos/${GITHUB_REPOSITORY}/releases/latest" \
-                  --jq '.tag_name'
-              )"
-              if [ -z "$release_tag" ]; then
-                echo "Could not determine latest release tag" >&2
-                exit 1
-              fi
-              release_title="$release_tag"
-              release_notes_intro="Manual release build for current latest \
-          release \`${release_tag}\` from \`${GITHUB_REF_NAME}\`."
-            else
-              case "$requested_release_tag" in
-                *[!A-Za-z0-9._-]*)
-                  echo \
-                    "release_tag may contain only letters, digits, ., _, and \
-          -" \
-                    >&2
-                  exit 1
-                  ;;
-              esac
-
-              release_tag="$requested_release_tag"
-              release_title="$requested_release_tag"
-              release_notes_intro="Manual release build for \
-          \`${requested_release_tag}\` from \`${GITHUB_REF_NAME}\`."
-            fi
-            release_notes_summary="This run publishes assets to the \
-          requested release tag."
-          elif [ "$GITHUB_REF" = "refs/heads/master" ]; then
-            release_tag="prerelease"
-            release_title="prerelease"
-            release_notes_intro="Rolling prerelease build from \`master\`."
-            release_notes_summary="This release is replaced on each successful \
-          merge to \`master\`."
-          else
-            release_tag="pre-${timestamp}-${short_sha}"
-            release_title="$release_tag"
-            release_notes_intro="Manual prerelease build from \
-          \`${GITHUB_REF_NAME}\`."
-            release_notes_summary="This is an ad hoc prerelease for the \
-          selected ref and does not replace the rolling \`master\` prerelease."
+          if [ -z "$release_tag" ]; then
+            echo "Could not determine latest release tag" >&2
+            exit 1
           fi
 
           {
             echo "binary_version=${binary_version}"
             echo "release_tag=${release_tag}"
-            echo "release_title=${release_title}"
-            echo "release_notes_intro=${release_notes_intro}"
-            echo "release_notes_summary=${release_notes_summary}"
+            echo "release_title=${release_tag}"
+            echo "release_notes_intro=Manual release build for current latest\
+          release \`${release_tag}\` from \`${GITHUB_REF_NAME}\`."
+            echo "release_notes_summary=This run publishes assets to the repo's\
+          current latest release tag."
             echo "datafiles_archive=gomud-ALL-datafiles.zip"
             echo "checksums_file=SHA256SUMS.txt"
           } >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
     needs: prep
     env:
       BINARY_VERSION: ${{ needs.prep.outputs.binary_version }}
@@ -128,6 +77,7 @@ jobs:
       # actions/checkout v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: ./.github/actions/setup-go
 
@@ -146,31 +96,31 @@ jobs:
       - name: Build windows amd64
         run: >-
           env GOOS=windows GOARCH=amd64 go build -v
-          -ldflags "-X main.version=${BINARY_VERSION}"
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-windows_x64.exe .
 
       - name: Build darwin/arm64
         run: >-
           env GOOS=darwin GOARCH=arm64 go build -v
-          -ldflags "-X main.version=${BINARY_VERSION}"
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-darwin_arm64 .
 
       - name: Build darwin/amd64
         run: >-
           env GOOS=darwin GOARCH=amd64 go build -v
-          -ldflags "-X main.version=${BINARY_VERSION}"
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-darwin_x64 .
 
       - name: Build linux/amd64
         run: >-
           env GOOS=linux GOARCH=amd64 go build -v
-          -ldflags "-X main.version=${BINARY_VERSION}"
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-linux_x64 .
 
       - name: Build linux/arm5
         run: >-
           env GOOS=linux GOARCH=arm GOARM=5 go build -v
-          -ldflags "-X main.version=${BINARY_VERSION}"
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-linux_arm5 .
 
       - name: Upload bin
@@ -182,7 +132,6 @@ jobs:
 
   release:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
     permissions:
       contents: write
     needs:
@@ -197,11 +146,11 @@ jobs:
       DATAFILES_ARCHIVE: ${{ needs.prep.outputs.datafiles_archive }}
       CHECKSUMS_FILE: ${{ needs.prep.outputs.checksums_file }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REQUESTED_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
     steps:
       # actions/checkout v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Download builds
@@ -214,7 +163,7 @@ jobs:
       - name: Archive datafiles
         run: >-
           zip -r
-          "bin/${DATAFILES_ARCHIVE}"
+          bin/${{ env.DATAFILES_ARCHIVE }}
           bin/_datafiles
 
       - name: Generate release checksums
@@ -226,8 +175,8 @@ jobs:
             gomud-darwin_x64 \
             gomud-linux_x64 \
             gomud-linux_arm5 \
-            "${DATAFILES_ARCHIVE}" \
-            > "${CHECKSUMS_FILE}"
+            "${{ env.DATAFILES_ARCHIVE }}" \
+            > "${{ env.CHECKSUMS_FILE }}"
 
       - name: Write release notes
         run: |
@@ -268,7 +217,7 @@ jobs:
           ${generated_release_notes}
           EOF
 
-      - name: Create prerelease
+      - name: Publish latest release assets
         run: |
           assets=(
             bin/gomud-windows_x64.exe
@@ -280,50 +229,21 @@ jobs:
             "bin/$CHECKSUMS_FILE"
           )
 
-          if [ -n "$REQUESTED_RELEASE_TAG" ]; then
-            if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-              gh api \
-                -X PATCH \
-                "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
-                -f "sha=${GITHUB_SHA}" \
-                -F force=true
-              gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
-              gh release edit "$RELEASE_TAG" \
-                --title "$RELEASE_TITLE" \
-                --target "$GITHUB_SHA" \
-                --notes-file release-notes.md
-            else
-              if gh api \
-                "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-                >/dev/null 2>&1; then
-                gh api \
-                  -X PATCH \
-                  "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
-                  -f "sha=${GITHUB_SHA}" \
-                  -F force=true
-              fi
-              gh release create "$RELEASE_TAG" \
-                "${assets[@]}" \
-                --title "$RELEASE_TITLE" \
-                --target "$GITHUB_SHA" \
-                --notes-file release-notes.md
-            fi
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh api \
+              -X PATCH \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
+              -f "sha=${GITHUB_SHA}" \
+              -F force=true
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" \
+              --title "$RELEASE_TITLE" \
+              --target "$GITHUB_SHA" \
+              --notes-file release-notes.md
           else
-            if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-              gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
-              gh release edit "$RELEASE_TAG" \
-                --title "$RELEASE_TITLE" \
-                --target "$GITHUB_SHA" \
-                --prerelease \
-                --latest=false \
-                --notes-file release-notes.md
-            else
-              gh release create "$RELEASE_TAG" \
-                "${assets[@]}" \
-                --title "$RELEASE_TITLE" \
-                --target "$GITHUB_SHA" \
-                --prerelease \
-                --latest=false \
-                --notes-file release-notes.md
-            fi
+            gh release create "$RELEASE_TAG" \
+              "${assets[@]}" \
+              --title "$RELEASE_TITLE" \
+              --target "$GITHUB_SHA" \
+              --notes-file release-notes.md
           fi
