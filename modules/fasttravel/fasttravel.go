@@ -108,7 +108,9 @@ func (m *FastTravelModule) onRoomLook(d rooms.RoomTemplateDetails) rooms.RoomTem
 	for _, t := range d.Tags {
 		if strings.EqualFold(t, fastTravelTag) {
 			d.RoomAlerts = append(d.RoomAlerts,
-				` <ansi fg="yellow-bold">This is a fast travel station!</ansi> <ansi fg="command">fasttravel</ansi> lists destinations, or <ansi fg="command">look fast travel</ansi> to examine it.`,
+				`<ansi fg="yellow-bold">This is a fast travel station!</ansi>`+
+					"\n"+
+					`      <ansi fg="command">fasttravel</ansi> lists destinations, or <ansi fg="command">look fast travel</ansi> to examine it.`,
 			)
 			return d
 		}
@@ -371,10 +373,13 @@ type destEntry struct {
 }
 
 func (m *FastTravelModule) fastTravelCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
 	if !roomIsFastTravel(room) {
 		user.SendText(`You must be at a fast travel station to use fast travel.` + term.CRLFStr)
 		return true, nil
 	}
+
+	user.SendText(``)
 
 	// Always unlock the current room when the player uses the command here.
 	if m.unlock(user.UserId, room.RoomId) {
