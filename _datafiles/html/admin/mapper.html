@@ -105,7 +105,7 @@
 
     .mapper-body {
         display: flex;
-        gap: 6px;
+        gap: 0;
         height: calc(100vh - 180px);
         min-height: 400px;
     }
@@ -116,6 +116,7 @@
         background: #111;
         border: 1px solid var(--color-border);
         border-radius: 4px;
+        margin-right: 3px;
     }
     .mapper-viewport canvas {
         display: block;
@@ -127,6 +128,8 @@
     .mapper-info-panel {
         width: 260px;
         flex-shrink: 0;
+        min-width: 160px;
+        margin-left: 3px;
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         border-radius: 4px;
@@ -248,6 +251,20 @@
     }
     .mapper-info-panel .info-spawn-table tr:nth-child(even) td {
         background: rgba(255,255,255,0.03);
+    }
+
+    .mapper-resizer {
+        width: 5px;
+        flex-shrink: 0;
+        cursor: col-resize;
+        background: var(--color-border);
+        border-radius: 3px;
+        transition: background 0.15s;
+        position: relative;
+    }
+    .mapper-resizer:hover,
+    .mapper-resizer.dragging {
+        background: var(--color-primary);
     }
 
     #toolbar-tooltip {
@@ -940,6 +957,400 @@
         min-width: 28px;
         text-align: right;
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Room editor modal                                                   */
+    /* ------------------------------------------------------------------ */
+    .room-editor-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1010;
+        align-items: center;
+        justify-content: center;
+    }
+    .room-editor-backdrop.visible { display: flex; }
+    .room-editor-modal {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        width: min(680px, 96vw);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+        font-family: monospace;
+    }
+    .room-editor-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--color-border);
+        flex-shrink: 0;
+    }
+    .room-editor-header-id {
+        font-size: 0.72rem;
+        color: var(--color-text-dim);
+        margin-left: 2px;
+    }
+    .room-editor-title-text {
+        font-size: 0.85rem;
+        color: var(--color-text);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex: 1;
+    }
+    .room-editor-close {
+        background: none;
+        border: none;
+        color: var(--color-text-dim);
+        font-size: 1.3rem;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+    .room-editor-close:hover { color: var(--color-text); }
+    .room-editor-body {
+        padding: 14px 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        flex: 1;
+    }
+    .room-editor-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .room-editor-label {
+        font-size: 0.72rem;
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .room-editor-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--color-surface-white);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+    .room-editor-input:focus { outline: none; border-color: var(--color-primary); }
+    .room-editor-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--color-surface-white);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        font-family: monospace;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        resize: vertical;
+        min-height: 100px;
+    }
+    .room-editor-textarea:focus { outline: none; border-color: var(--color-primary); }
+    /* Nouns table */
+    .room-editor-nouns {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .room-editor-noun-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr auto;
+        gap: 6px;
+        align-items: center;
+    }
+    .room-editor-noun-input {
+        box-sizing: border-box;
+        background: var(--color-surface-white);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        padding: 5px 8px;
+        font-family: monospace;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+    .room-editor-noun-input:focus { outline: none; border-color: var(--color-primary); }
+    .room-editor-noun-del {
+        background: none;
+        border: none;
+        color: var(--color-text-dim);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 2px 5px;
+        line-height: 1;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+    .room-editor-noun-del:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+    .room-editor-noun-add {
+        background: none;
+        border: 1px dashed var(--color-border);
+        color: var(--color-text-dim);
+        border-radius: 3px;
+        padding: 4px 10px;
+        font-family: monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        margin-top: 2px;
+        width: 100%;
+        text-align: left;
+    }
+    .room-editor-noun-add:hover { color: var(--color-text); border-color: var(--color-text-dim); }
+    .room-editor-noun-header {
+        display: grid;
+        grid-template-columns: 1fr 2fr auto;
+        gap: 6px;
+        font-size: 0.68rem;
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0 0 2px 0;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 2px;
+    }
+    /* Footer */
+    .room-editor-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--color-border);
+        flex-shrink: 0;
+    }
+    .room-editor-error {
+        flex: 1;
+        font-size: 0.75rem;
+        color: #ff6b6b;
+        font-family: monospace;
+    }
+    .room-editor-save {
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 20px;
+        font-family: monospace;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .room-editor-save:hover { opacity: 0.85; }
+    .room-editor-save:disabled { opacity: 0.45; cursor: default; }
+    .room-editor-cancel {
+        background: none;
+        color: var(--color-text-dim);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: monospace;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .room-editor-cancel:hover { color: var(--color-text); }
+    /* Truncated description click target in info panel */
+    .info-desc-snippet {
+        color: var(--color-text-dim);
+        font-size: 0.75rem;
+        font-style: italic;
+        cursor: pointer;
+        line-height: 1.45;
+        border-radius: 3px;
+        padding: 2px 0;
+        transition: color 0.1s;
+        word-break: break-word;
+    }
+    .info-desc-snippet:hover { color: var(--color-text); }
+    .info-desc-snippet::after {
+        content: ' \270E';
+        font-style: normal;
+        font-size: 0.7rem;
+        opacity: 0.5;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Spawn cards (room editor modal)                                     */
+    /* ------------------------------------------------------------------ */
+    .re-spawn-card {
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        margin-bottom: 6px;
+        background: var(--color-surface-white);
+        overflow: hidden;
+    }
+    .re-spawn-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        background: rgba(255,255,255,0.04);
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.8rem;
+        font-family: monospace;
+    }
+    .re-spawn-header::before {
+        content: '\25B6';
+        font-size: 0.5rem;
+        transition: transform 0.15s;
+        flex-shrink: 0;
+        color: var(--color-text-dim);
+    }
+    .re-spawn-header.open::before { transform: rotate(90deg); }
+    .re-spawn-body { display: none; padding: 8px 10px; }
+    .re-spawn-body.open { display: block; }
+    .re-spawn-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 10px;
+    }
+    .re-spawn-grid .span2 { grid-column: 1 / -1; }
+    .re-spawn-field label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 3px;
+    }
+    .re-spawn-field .field-hint {
+        font-size: 0.68rem;
+        color: var(--color-text-dim);
+        margin-top: 2px;
+    }
+    .re-spawn-field input[type="text"],
+    .re-spawn-field input[type="number"],
+    .re-spawn-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        padding: 4px 7px;
+        font-family: monospace;
+        font-size: 0.8rem;
+    }
+    .re-spawn-field input:focus,
+    .re-spawn-field textarea:focus {
+        outline: none;
+        border-color: var(--color-primary);
+    }
+    .re-spawn-picker-wrap { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .re-spawn-picker-display {
+        font-family: monospace;
+        padding: 4px 7px;
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        font-size: 0.8rem;
+        background: var(--color-surface);
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+    .re-spawn-picker-display.empty { color: var(--color-text-dim); font-style: italic; }
+    .re-spawn-badge {
+        font-size: 0.62rem;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-weight: 600;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .re-spawn-badge-mob  { background: var(--color-info-bg,  #1a3a5c); color: var(--color-info-text,  #7ab8f5); }
+    .re-spawn-badge-item { background: var(--color-success-bg, #1a3a1a); color: var(--color-success-text, #7abf7a); }
+    .re-spawn-del {
+        background: none;
+        border: none;
+        color: var(--color-text-dim);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        margin-left: auto;
+    }
+    .re-spawn-del:hover { color: #ff6b6b; }
+    .re-spawn-summary { flex: 1; color: var(--color-text); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .re-spawn-toggle-wrap { display: flex; align-items: center; gap: 6px; }
+    .re-spawn-toggle {
+        position: relative;
+        display: inline-block;
+        width: 28px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+    .re-spawn-toggle input { opacity: 0; width: 0; height: 0; }
+    .re-spawn-toggle-track {
+        position: absolute;
+        inset: 0;
+        background: var(--color-border);
+        border-radius: 7px;
+        transition: background 0.15s;
+        cursor: pointer;
+    }
+    .re-spawn-toggle-track::after {
+        content: '';
+        position: absolute;
+        left: 2px; top: 2px;
+        width: 10px; height: 10px;
+        background: var(--color-text-dim);
+        border-radius: 50%;
+        transition: left 0.15s, background 0.15s;
+    }
+    .re-spawn-toggle input:checked + .re-spawn-toggle-track { background: var(--color-primary); }
+    .re-spawn-toggle input:checked + .re-spawn-toggle-track::after { left: 16px; background: #fff; }
+    .re-spawn-toggle-label { font-size: 0.78rem; color: var(--color-text-dim); cursor: pointer; }
+    .re-buff-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.72rem;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        font-family: monospace;
+        margin: 2px 2px 2px 0;
+    }
+    .re-buff-chip button {
+        background: none;
+        border: none;
+        color: var(--color-text-dim);
+        font-size: 0.85rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    .re-buff-chip button:hover { color: #ff6b6b; }
+    .re-spawn-add-btn {
+        background: none;
+        border: 1px dashed var(--color-border);
+        color: var(--color-text-dim);
+        border-radius: 3px;
+        padding: 4px 10px;
+        font-family: monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+        margin-top: 2px;
+    }
+    .re-spawn-add-btn:hover { color: var(--color-text); border-color: var(--color-text-dim); }
 </style>
 
 <h1>Zone Mapper</h1>
@@ -978,7 +1389,7 @@
     <span class="mapper-stats" id="mapper-stats"></span>
 </div>
 
-<div class="mapper-body">
+<div class="mapper-body" id="mapper-body">
     <div class="mapper-viewport" id="mapper-viewport">
         <canvas id="mapper-canvas"></canvas>
         <div class="mapper-loading hidden" id="mapper-loading">Loading zone data...</div>
@@ -1024,6 +1435,7 @@
             </div>
         </div>
     </div>
+    <div class="mapper-resizer" id="mapper-resizer"></div>
     <div class="mapper-info-panel" id="mapper-info-panel">
         <h3>Room Info</h3>
         <div class="info-empty" id="info-empty">Click a room to see details</div>
@@ -1074,7 +1486,7 @@
             <div class="mapper-settings-row">
                 <label class="mapper-settings-label" for="spacing-slider">Room Spacing</label>
                 <div class="mapper-settings-control">
-                    <input type="range" id="spacing-slider" min="0.75" max="3.0" step="0.05"
+                    <input type="range" id="spacing-slider" min="1.00" max="3.0" step="0.1"
                         oninput="onSpacingSlider(this.value)">
                     <span id="spacing-val" class="mapper-settings-val"></span>
                 </div>
@@ -1115,6 +1527,90 @@
 <div id="mapper-tooltip"></div>
 <div id="toolbar-tooltip"></div>
 <div id="mapper-ctx-menu" class="mapper-ctx-menu"></div>
+
+<!-- Room editor modal -->
+<div class="room-editor-backdrop" id="room-editor-backdrop">
+    <div class="room-editor-modal">
+        <div class="room-editor-header">
+            <span class="room-editor-title-text">Edit Room</span>
+            <span class="room-editor-header-id" id="room-editor-id"></span>
+            <button class="room-editor-close" id="room-editor-close">&times;</button>
+        </div>
+        <div class="room-editor-body">
+            <div class="room-editor-field">
+                <label class="room-editor-label" for="room-editor-title">Title</label>
+                <input class="room-editor-input" type="text" id="room-editor-title" autocomplete="off">
+            </div>
+            <div class="room-editor-field">
+                <label class="room-editor-label" for="room-editor-desc">Description</label>
+                <textarea class="room-editor-textarea" id="room-editor-desc" rows="6"></textarea>
+            </div>
+            <div class="room-editor-field">
+                <label class="room-editor-label">Nouns <span style="font-size:0.65rem;text-transform:none;letter-spacing:0;color:var(--color-text-dim);font-style:italic">(keyword &rarr; description shown when examined)</span></label>
+                <div class="room-editor-nouns">
+                    <div class="room-editor-noun-header">
+                        <span>Keyword</span><span>Description</span><span></span>
+                    </div>
+                    <div id="room-editor-noun-rows"></div>
+                    <button class="room-editor-noun-add" id="room-editor-noun-add">+ Add noun</button>
+                </div>
+            </div>
+            <div class="room-editor-field">
+                <label class="room-editor-label">Spawn Info</label>
+                <div id="room-editor-spawn-list"></div>
+                <div style="display:flex;gap:6px;margin-top:2px">
+                    <button class="re-spawn-add-btn" id="re-spawn-add-mob">+ Mob Spawn</button>
+                    <button class="re-spawn-add-btn" id="re-spawn-add-item">+ Item / Gold Spawn</button>
+                </div>
+            </div>
+        </div>
+        <div class="room-editor-footer">
+            <span class="room-editor-error" id="room-editor-error"></span>
+            <button class="room-editor-cancel" id="room-editor-cancel">Cancel</button>
+            <button class="room-editor-save" id="room-editor-save">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const resizer = document.getElementById('mapper-resizer');
+    const infoPanel = document.getElementById('mapper-info-panel');
+    const body = document.getElementById('mapper-body');
+
+    const MIN_PANEL = 160;
+    const MAX_PANEL = 600;
+
+    let startX = 0;
+    let startWidth = 0;
+
+    resizer.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        startX = e.clientX;
+        startWidth = infoPanel.offsetWidth;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        function onMouseMove(e) {
+            const delta = startX - e.clientX;
+            const newWidth = Math.min(MAX_PANEL, Math.max(MIN_PANEL, startWidth + delta));
+            infoPanel.style.width = newWidth + 'px';
+        }
+
+        function onMouseUp() {
+            resizer.classList.remove('dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+})();
+</script>
 
 <script src="/admin/static/js/mapper/_all.js?mapper-constants.js,mapper-events.js,mapper-helpers.js,mapper-state.js,mapper-render.js,mapper-tools.js,mapper-ctx-menu.js,mapper-ui.js,mapper-tool-pan.js,mapper-tool-room-drag.js,mapper-tool-exit-draw.js,mapper-tool-quick-build.js,mapper-tool-select.js,mapper-init.js"></script>
 

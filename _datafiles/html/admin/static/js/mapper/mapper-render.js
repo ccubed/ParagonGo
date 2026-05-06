@@ -4,6 +4,13 @@
    ROOM_SIZE_2D, ROOM_GAP_2D, BASE_STEP_2D, CONNECTION_WIDTH_2D, ROOM_BORDER_WIDTH_2D, SYMBOL_FONT_SIZE_2D, MAP_BG_2D, ROOM_BORDER_COLOR_2D,
    CONNECTION_COLOR, ABNORMAL_CONNECTION_COLOR, SELECTED_ROOM_COLOR, SELECTED_ROOM_TEXT_COLOR, SYMBOL_TEXT_COLOR,
    ZONE_BOX_PADDING, ZONE_BOX_COLOR, ZONE_BOX_COLOR_HOV, ZONE_BOX_BORDER, ZONE_BOX_BORDER_HOV,
+   ROOM_ARROW_COLOR, ROOM_ARROW_STROKE_COLOR, ROOM_ARROW_STROKE_WIDTH,
+   ROOM_BORDER_MOB_SPAWN, ROOM_BORDER_SCRIPT_GLOW, BADGE_SECRET_COLOR, BADGE_LOCK_COLOR,
+   GHOST_CELL_BORDER, GHOST_CELL_FILL, GHOST_CELL_SYMBOL,
+   EXIT_DRAW_TARGET_HIGHLIGHT, EXIT_DRAW_LINE_COLOR,
+   DRAG_ORIGIN_MARKER, DRAG_SNAP_BLOCKED, DRAG_SNAP_BROKEN, DRAG_SNAP_CLEAN, DRAG_CONSTRAINT_BROKEN, DRAG_CONSTRAINT_OK, DRAG_GHOST_BROKEN_FILL,
+   QB_COLOR, QB_OCCUPIED_COLOR, SELECT_RECT_FILL, SELECT_RECT_BORDER,
+   bgColorForBiome,
    computeZonePaddedBounds,
    exitDelta, isDirectionalExit, darkenColor, smoothstep, isExitConstraintSatisfied */
 
@@ -196,7 +203,7 @@ var MapperRender = (function() {
         var half = scaledSize / 2;
 
         var isSelected = MapperState.selected.has(id);
-        var fill = isSelected ? SELECTED_ROOM_COLOR : room._color;
+        var fill = isSelected ? SELECTED_ROOM_COLOR : (room._bgColor || room._color);
         var rx = p.px - half, ry = p.py - half;
 
         ctx.fillStyle = fill;
@@ -212,19 +219,20 @@ var MapperRender = (function() {
         ctx.strokeRect(rx, ry, scaledSize, scaledSize);
 
         if (!isSelected && room.HasScript) {
-            var offset = scaledBorder //+ Math.max(1, scaledBorder);
+            var offset = scaledBorder * 2;
             var glowColor = ROOM_BORDER_SCRIPT_GLOW;
             ctx.save();
             ctx.shadowColor = glowColor;
-            //Removing shadowBlue for performance reasons
-            //ctx.shadowBlur = Math.max(4, scaledSize * 0.35) * cam.zoomScale;
             ctx.strokeStyle = glowColor;
-            ctx.lineWidth = scaledBorder//Math.max(1.5, scaledBorder * 1.5);
+            ctx.lineWidth = scaledBorder;
             ctx.strokeRect(rx - offset, ry - offset, scaledSize + offset * 2, scaledSize + offset * 2);
             ctx.restore();
         }
 
-        ctx.fillStyle = isSelected ? SELECTED_ROOM_TEXT_COLOR : (room._symbolColor || SYMBOL_TEXT_COLOR);
+        // Symbol: when bg is set, use _color as the symbol fg; otherwise use _symbolColor
+        var symColor = isSelected ? SELECTED_ROOM_TEXT_COLOR
+            : (room._bgColor ? room._color : (room._symbolColor || SYMBOL_TEXT_COLOR));
+        ctx.fillStyle = symColor;
         ctx.font = 'bold ' + scaledFont + 'px monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(room._symbol || '•', p.px, p.py);
@@ -240,16 +248,26 @@ var MapperRender = (function() {
         if (hasUp || hasDown) {
             var arrowSize = Math.max(10, scaledSize * 0.56);
             var margin = Math.max(2, scaledSize * 0.1);
+            ctx.save();
             ctx.font = 'bold ' + arrowSize + 'px monospace';
             ctx.fillStyle = ROOM_ARROW_COLOR;
+            var useStroke = ROOM_ARROW_STROKE_COLOR && ROOM_ARROW_STROKE_WIDTH > 0;
+            if (useStroke) {
+                ctx.strokeStyle = ROOM_ARROW_STROKE_COLOR;
+                ctx.lineWidth = ROOM_ARROW_STROKE_WIDTH * cam.zoomScale;
+                ctx.lineJoin = 'round';
+            }
             if (hasDown) {
                 ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+                if (useStroke) ctx.strokeText('▾', rx + margin, ry + scaledSize - margin);
                 ctx.fillText('▾', rx + margin, ry + scaledSize - margin);
             }
             if (hasUp) {
                 ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+                if (useStroke) ctx.strokeText('▴', rx + scaledSize - margin, ry - margin);
                 ctx.fillText('▴', rx + scaledSize - margin, ry - margin);
             }
+            ctx.restore();
         }
     }
 
@@ -405,7 +423,7 @@ var MapperRender = (function() {
         // Pass 2: abnormal edges (yellow dotted arcs)
         if (abnormalEdges.length > 0) {
             ctx.strokeStyle = ABNORMAL_CONNECTION_COLOR;
-            ctx.lineWidth = Math.max(1, CONNECTION_WIDTH_2D * cam.zoomScale * 0.5);
+            ctx.lineWidth = Math.max(1, CONNECTION_WIDTH_2D * cam.zoomScale * .5);
             ctx.setLineDash([Math.max(3, 4 * cam.zoomScale), Math.max(4, 5 * cam.zoomScale)]);
             abnormalEdges.forEach(function(ae) {
                 var pA = gridToCanvas2d(ae.room.MapX, ae.room.MapY);

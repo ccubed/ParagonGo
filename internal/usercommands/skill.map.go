@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/mattn/go-runewidth"
 )
 
 /*
@@ -182,15 +181,33 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	width := 0
 
 	displayLines := []string{}
-	for i, line := range mapOutput.Render {
-		displayLines = append(displayLines, string(line))
-		if width == 0 {
-			width = runewidth.StringWidth(displayLines[0])
+	for _, row := range mapOutput.Render {
+		if len(row) > width {
+			width = len(row)
 		}
-		for sym, txtLegend := range legend {
-			txtLc := strings.ToLower(txtLegend)
-			displayLines[i] = strings.Replace(displayLines[i], string(sym), fmt.Sprintf(`<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, sym), -1)
+		var sb strings.Builder
+		for _, cell := range row {
+			if cell.Symbol == ' ' {
+				sb.WriteRune(' ')
+				continue
+			}
+			if cell.FGColor > 0 || cell.BGColor > 0 {
+				if cell.FGColor > 0 && cell.BGColor > 0 {
+					fmt.Fprintf(&sb, `<ansi fg="%d" bg="%d">%c</ansi>`, cell.FGColor, cell.BGColor, cell.Symbol)
+				} else if cell.BGColor > 0 {
+					fmt.Fprintf(&sb, `<ansi fg="map-room" bg="%d">%c</ansi>`, cell.BGColor, cell.Symbol)
+				} else {
+					fmt.Fprintf(&sb, `<ansi fg="%d">%c</ansi>`, cell.FGColor, cell.Symbol)
+				}
+			} else if _, ok := legend[cell.Symbol]; ok {
+				//txtLc := strings.ToLower(name)
+				fmt.Fprintf(&sb, `<ansi fg="map-room">%c</ansi>`, cell.Symbol)
+			} else {
+				sb.WriteRune(cell.Symbol)
+			}
 		}
+		line := sb.String()
+		displayLines = append(displayLines, line)
 	}
 
 	zoneCompletePct := 0

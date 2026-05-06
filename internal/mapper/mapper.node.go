@@ -1,10 +1,14 @@
 package mapper
 
+import "github.com/GoMudEngine/GoMud/internal/rooms"
+
 // represents a single room
 type mapNode struct {
 	RoomId          int
 	Symbol          rune
-	Legend          string // The same that shows in the legend for this symbol
+	Legend          string                       // The same that shows in the legend for this symbol
+	Color           rooms.SymbolColor            // FG/BG color from biome (zero values = use alias fallback)
+	SymbolOverrides map[string]rooms.SymbolColor // Per-symbol color overrides from the biome
 	Exits           map[string]nodeExit
 	SecretExits     map[string]struct{} // Just a flag for whether an exit key is secret
 	Pos             positionDelta       // Its x/y/z position relative to the root node

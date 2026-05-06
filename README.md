@@ -53,6 +53,7 @@ Colorization is handled through extensive use of my [github.com/GoMudEngine/ansi
 ### Small Feature Demos
 
 - [Web Admin Tool](https://youtu.be/n44kQp2JwIk)
+- [Web Map Editor](https://youtu.be/W2F07TeR168)
 - [Auto-complete input](https://youtu.be/7sG-FFHdhtI)
 - [In-game maps](https://youtu.be/navCCH-mz_8)
 - [Quests / Quest Progress](https://youtu.be/3zIClk3ewTU)

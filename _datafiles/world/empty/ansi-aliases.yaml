@@ -25,16 +25,8 @@ colors:
   exit: 10 # Bright green
   secret-exit: 8 # Bright black
   zone: 124
-  map-shop: 2
-  map-bank: 10
   map-you: 14
   map-secret: 8 # Bright black
-  map-temple: 8 # Bright black BG
-  mapbg-temple: 15 # Bright black
-  map-water: 12 # Bright blue
-  map-shore: 12 # Bright blue
-  map-forest: 2
-  map-trainer: 12 # Bright blue
   map-player: 11 # Bright yellow
   map-friend: 11 # Bright green
   map-mob: 9 # Bright red
@@ -42,14 +34,9 @@ colors:
   map-here: 13 # Bright magenta
   room-description: 15
   room-description-dark: 7
-  map-default: 8
   map-room: 15 # Bright white
   map-target: 9 # Bright red
-  map-city: 15 # Bright white
-  map-snow: 15 # Bright white
-  map-house: 3
-  map-mountains: 3
-  map-wall:  cyan # Bright black
+  map-default: 8
   map-legend: 8
   trail-dead: 8
   trail-weak: 7
@@ -154,6 +141,7 @@ colors:
   user-corpse: 143
   tip-text: 219
   character-joined: 120
+  md-p: 8
   md-h1-prefix: black-bold
   md-h1: magenta
   md-h2: yellow-bold

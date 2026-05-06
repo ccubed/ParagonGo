@@ -114,6 +114,7 @@
                     <tr><td>Burns</td><td>bool</td><td>Can catch fire.</td></tr>
                     <tr><td>RequiredItemId</td><td>int</td><td>Item the player must carry to safely traverse this biome. 0 = none.</td></tr>
                     <tr><td>UsesItem</td><td>bool</td><td>When true, the required item is consumed on each entry.</td></tr>
+                    <tr><td>ColorCode</td><td>int</td><td>Desired ANSI color code, or 0 for none</td></tr>
                 </tbody>
             </table>
 
@@ -128,7 +129,8 @@
   "DarkArea": false,
   "Burns": false,
   "RequiredItemId": 0,
-  "UsesItem": false
+  "UsesItem": false,
+  "ColorCode": 0
 }'</span> \
      <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/biomes</span></div>
 

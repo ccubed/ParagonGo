@@ -421,6 +421,18 @@ func (r *Room) GetScript() string {
 	return ``
 }
 
+func (r *Room) HasScript() bool {
+
+	scriptPath := r.GetScriptPath()
+
+	// Load the script into a string
+	if _, err := os.Stat(scriptPath); err == nil {
+		return true
+	}
+
+	return false
+}
+
 func (r *Room) GetScriptPath() string {
 	// Load any script for the room
 	return strings.Replace(configs.GetFilePathsConfig().DataFiles.String()+`/rooms/`+r.Filepath(), `.yaml`, `.js`, 1)

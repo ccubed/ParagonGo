@@ -31,62 +31,8 @@
     var CURRENT_ROOM_TEXT_COLOR = '#ffffff'; // Symbol character color inside the current room; should contrast with CURRENT_ROOM_COLOR
     var SYMBOL_TEXT_COLOR       = '#e0e0e0'; // Symbol character color inside all non-current rooms; lower contrast = subtler symbols
 
-    var SYMBOL_COLORS = {
-        '~':  '#2a53f7',   // shore / water edge
-        '\u2248':  '#0033cd',   // open water
-        '\u2663':  '#1a6b1a',   // forest
-        '\u2668':  '#4a6b20',   // swamp
-        '\u2744':  '#b8d8f0',   // snow
-        '\u232c':  '#5a4a38',   // cave
-        '\u2a55':  '#7a6a50',   // mountains
-        '\u25bc':  '#8a7a5a',   // cliffs
-        '\u2302':  '#8a6a3a',   // house / building
-        '*':  '#d4aa55',   // desert
-        "'":  '#6a8a30',   // farmland
-        '=':  '#a07840',   // road
-        '$':  '#2a7a2a',   // shop
-        '%':  '#2a5a8a',   // trainer
-        '\u265c':  '#4a4a4a',   // wall
-        '+':  '#5fb7ff',   // healer
-        '\u2022':  '#3a3a4a',   // generic / default
-    };
-
     var DEFAULT_ROOM_COLOR = '#3a3a4a';
 
-    var ENVIRONMENT_SYMBOLS = {
-        'Forest':    '\u2663',
-        'Swamp':     '\u2668',
-        'Snow':      '\u2744',
-        'Cave':      '\u232c',
-        'Dungeon':   '\u232c',
-        'Mountains': '\u2a55',
-        'Cliffs':    '\u25bc',
-        'House':     '\u2302',
-        'Desert':    '*',
-        'Farmland':  "'",
-        'Road':      '=',
-        'Shore':     '~',
-        'Water':     '\u2248',
-    };
-
-    var ENVIRONMENT_COLORS = {
-        'Forest':    '#1a6b1a',
-        'Swamp':     '#4a6b20',
-        'Snow':      '#b8d8f0',
-        'Cave':      '#5a4a38',
-        'Dungeon':   '#5a4a38',
-        'Mountains': '#7a6a50',
-        'Cliffs':    '#8a7a5a',
-        'House':     '#8a6a3a',
-        'Desert':    '#d4aa55',
-        'Farmland':  '#6a8a30',
-        'Road':      '#a07840',
-        'Shore':     '#2a53f7',
-        'Water':     '#0033cd',
-        'City':      '#5a5a6a',
-        'Fort':      '#5a5a6a',
-        'Land':      '#3a3a4a',
-    };
 
     // =========================================================================
     // Shared helpers
@@ -94,15 +40,10 @@
 
     function symbolForRoom(info) {
         if (info.mapsymbol) { return info.mapsymbol; }
-        if (info.environment && ENVIRONMENT_SYMBOLS[info.environment]) {
-            return ENVIRONMENT_SYMBOLS[info.environment];
-        }
         return '\u2022';
     }
 
     function colorForSymbol(sym, env) {
-        if (sym && SYMBOL_COLORS[sym]) { return SYMBOL_COLORS[sym]; }
-        if (env && ENVIRONMENT_COLORS[env]) { return ENVIRONMENT_COLORS[env]; }
         return DEFAULT_ROOM_COLOR;
     }
 

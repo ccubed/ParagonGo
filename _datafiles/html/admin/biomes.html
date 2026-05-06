@@ -65,13 +65,37 @@
 
     /* symbol preview */
     .symbol-wrap { display: flex; gap: 0.6rem; align-items: center; }
-    .symbol-wrap input { flex: 1; }
+    .symbol-wrap input[type="text"] { flex: 1; }
     .symbol-preview {
         font-size: 1.6rem; width: 2.4rem; height: 2.4rem;
         display: flex; align-items: center; justify-content: center;
-        border: 1px solid var(--color-border-medium); border-radius: 4px; background: var(--color-code-bg);
-        color: var(--color-code-text); font-family: monospace; flex-shrink: 0;
+        border: 1px solid var(--color-border-medium); border-radius: 4px; background: #111;
+        font-family: monospace; flex-shrink: 0;
     }
+    .color-code-wrap { display: flex; gap: 0.5rem; align-items: center; position: relative; }
+    .color-code-wrap input[type="number"] { width: 80px; flex-shrink: 0; }
+    .color-swatch {
+        width: 2rem; height: 2rem; border-radius: 4px;
+        border: 1px solid var(--color-border-medium);
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+    .color-swatch:hover { box-shadow: 0 0 0 2px var(--color-focus); }
+    .color-code-hint { font-size: 0.72rem; color: var(--color-text-faint); }
+    .ansi-palette-popup {
+        position: absolute; top: 100%; left: 0; z-index: 200; margin-top: 0.35rem;
+        background: var(--color-surface); border: 1px solid var(--color-border);
+        border-radius: 6px; padding: 0.5rem;
+        box-shadow: 0 4px 16px var(--color-shadow);
+        display: flex; flex-wrap: wrap; gap: 2px;
+        width: 404px;
+    }
+    .ansi-palette-cell {
+        width: 18px; height: 18px; border-radius: 2px; cursor: pointer;
+        border: 2px solid transparent; flex-shrink: 0; transition: transform 0.08s;
+    }
+    .ansi-palette-cell:hover { transform: scale(1.4); border-color: rgba(255,255,255,0.6); z-index: 1; position: relative; }
+    .ansi-palette-cell.selected { border-color: var(--color-surface-white); box-shadow: 0 0 0 2px var(--color-focus); }
 
     /* flags grid */
     .flags-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; grid-column: 1 / -1; }
@@ -103,6 +127,40 @@
     .btn-delete { padding: 0.45rem 1rem; background: var(--color-surface-white); color: var(--color-error-text); border: 1px solid var(--color-btn-delete-border); border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
     .btn-delete:hover { background: var(--color-error-bg); }
     .btn-delete:disabled { opacity: 0.4; cursor: default; }
+
+    /* Symbol overrides table */
+    .sym-ov-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.4rem; }
+    .sym-ov-table th { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); padding: 0 0.4rem 0.35rem; text-align: left; border-bottom: 1px solid var(--color-border-light); }
+    .sym-ov-table td { padding: 0.3rem 0.4rem; vertical-align: middle; border-bottom: 1px solid var(--color-border-faint); }
+    .sym-ov-table tr:last-child td { border-bottom: none; }
+    .sym-ov-sym-input {
+        width: 3.2rem; text-align: center; font-family: monospace; font-size: 1rem;
+        padding: 0.25rem 0.3rem; border: 1px solid var(--color-border-medium); border-radius: 3px;
+        background: var(--color-surface-white);
+    }
+    .sym-ov-sym-input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .sym-ov-preview {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 1.8rem; height: 1.8rem; border-radius: 3px; font-family: monospace;
+        font-size: 1rem; border: 1px solid var(--color-border-medium); background: #111;
+        flex-shrink: 0; vertical-align: middle;
+    }
+    .sym-ov-del {
+        background: none; border: none; color: var(--color-text-dim); font-size: 1rem;
+        cursor: pointer; padding: 0 4px; line-height: 1; border-radius: 3px;
+    }
+    .sym-ov-del:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+    .sym-ov-add {
+        background: none; border: 1px dashed var(--color-border);
+        color: var(--color-text-dim); border-radius: 3px; padding: 0.3rem 0.8rem;
+        font-family: monospace; font-size: 0.75rem; cursor: pointer; margin-top: 0.4rem;
+    }
+    .sym-ov-add:hover { color: var(--color-text); border-color: var(--color-text-dim); }
+    .sym-ov-color-wrap { display: flex; gap: 0.3rem; align-items: center; position: relative; }
+    .sym-ov-color-num { width: 52px; padding: 0.25rem 0.3rem; font-size: 0.8rem; border: 1px solid var(--color-border-medium); border-radius: 3px; background: var(--color-surface-white); }
+    .sym-ov-color-num:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .sym-ov-swatch { width: 1.5rem; height: 1.5rem; border-radius: 3px; border: 1px solid var(--color-border-medium); flex-shrink: 0; cursor: pointer; }
+    .sym-ov-swatch:hover { box-shadow: 0 0 0 2px var(--color-focus); }
 </style>
 
 <h1>Biomes</h1>
@@ -136,14 +194,28 @@
                     <input type="text" id="fName" placeholder="e.g. Forest" />
                 </div>
 
-                <div class="field">
-                    <label>Symbol</label>
+                <div class="field span2">
+                    <label>Symbol &amp; Colors</label>
                     <div class="symbol-wrap">
                         <input type="text" id="fSymbol" placeholder="e.g. &amp;" maxlength="4"
-                               oninput="updateSymbolPreview()" />
+                               oninput="updateSymbolPreview()" style="max-width:6rem" />
                         <div class="symbol-preview" id="symbolPreview">&nbsp;</div>
+                        <div style="display:flex;gap:0.5rem;align-items:center;margin-left:0.5rem">
+                            <span style="font-size:0.72rem;color:var(--color-text-muted);white-space:nowrap">FG</span>
+                            <div class="color-code-wrap">
+                                <input type="number" id="fFGColor" min="0" max="255" placeholder="0"
+                                       oninput="updateSymbolPreview()" />
+                                <div class="color-swatch" id="fgColorSwatch" onclick="toggleBiomePalette('fg')" title="Pick foreground color"></div>
+                            </div>
+                            <span style="font-size:0.72rem;color:var(--color-text-muted);white-space:nowrap">BG</span>
+                            <div class="color-code-wrap">
+                                <input type="number" id="fBGColor" min="0" max="255" placeholder="0"
+                                       oninput="updateSymbolPreview()" />
+                                <div class="color-swatch" id="bgColorSwatch" onclick="toggleBiomePalette('bg')" title="Pick background color"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="field-hint">Single character shown on the map for rooms with this biome.</div>
+                    <div class="field-hint">Single character shown on the map. 0 = use built-in color.</div>
                 </div>
                 <div class="field">
                     <label>Required Item ID</label>
@@ -154,6 +226,22 @@
                 <div class="field span2">
                     <label>Description</label>
                     <textarea id="fDescription" rows="3" placeholder="Atmospheric description shown to players in rooms with this biome."></textarea>
+                </div>
+
+                <div class="section-title span2">Symbol Color Overrides</div>
+                <div class="field span2">
+                    <div class="field-hint" style="margin-bottom:0.5rem">Override FG/BG colors for specific symbols within this biome. Takes priority over the biome default colors.</div>
+                    <table class="sym-ov-table">
+                        <thead><tr>
+                            <th>Symbol</th>
+                            <th>Preview</th>
+                            <th>FG</th>
+                            <th>BG</th>
+                            <th></th>
+                        </tr></thead>
+                        <tbody id="symOvRows"></tbody>
+                    </table>
+                    <button class="sym-ov-add" onclick="addSymOvRow()">+ Add override</button>
                 </div>
 
                 <div class="section-title">Lighting &amp; Behaviour Flags</div>
@@ -285,6 +373,17 @@
         document.getElementById('fBiomeId').style.background = isNew ? '' : 'var(--color-page-bg)';
         document.getElementById('fName').value            = b.Name           || '';
         document.getElementById('fSymbol').value          = b.Symbol         || '';
+        document.getElementById('fFGColor').value          = (b.Color && b.Color.FGColor) || 0;
+        document.getElementById('fBGColor').value          = (b.Color && b.Color.BGColor) || 0;
+
+        // Populate symbol overrides
+        const symOvRows = document.getElementById('symOvRows');
+        symOvRows.innerHTML = '';
+        const overrides = (b && b.SymbolOverrides) || {};
+        Object.keys(overrides).sort().forEach(sym => {
+            const ov = overrides[sym] || {};
+            addSymOvRow(sym, ov.FGColor || 0, ov.BGColor || 0);
+        });
         document.getElementById('fDescription').value     = b.Description    || '';
         document.getElementById('fRequiredItemId').value  = b.RequiredItemId || 0;
 
@@ -301,9 +400,190 @@
     // Symbol preview
     // -------------------------------------------------------------------------
     window.updateSymbolPreview = function () {
-        const val = document.getElementById('fSymbol').value;
-        document.getElementById('symbolPreview').textContent = val ? val.charAt(0) : '\u00a0';
+        const val    = document.getElementById('fSymbol').value;
+        const fgCode = parseInt(document.getElementById('fFGColor').value, 10);
+        const bgCode = parseInt(document.getElementById('fBGColor').value, 10);
+        const fgHex  = (!isNaN(fgCode) && fgCode > 0) ? AnsiColors.toHex(fgCode) : null;
+        const bgHex  = (!isNaN(bgCode) && bgCode > 0) ? AnsiColors.toHex(bgCode) : null;
+
+        const preview = document.getElementById('symbolPreview');
+        preview.textContent      = val ? val.charAt(0) : '\u00a0';
+        preview.style.color      = fgHex || '#e0e0e0';
+        preview.style.background = bgHex || '#111';
+
+        const fgSwatch = document.getElementById('fgColorSwatch');
+        fgSwatch.style.background = fgHex || 'var(--color-code-bg)';
+        fgSwatch.title = fgHex
+            ? 'FG: ANSI ' + fgCode + ' \u2192 ' + fgHex + ' (click to change)'
+            : 'No FG override (click to pick)';
+
+        const bgSwatch = document.getElementById('bgColorSwatch');
+        bgSwatch.style.background = bgHex || 'var(--color-code-bg)';
+        bgSwatch.title = bgHex
+            ? 'BG: ANSI ' + bgCode + ' \u2192 ' + bgHex + ' (click to change)'
+            : 'No BG override (click to pick)';
     };
+
+    // -------------------------------------------------------------------------
+    // Symbol overrides
+    // -------------------------------------------------------------------------
+    function symOvUpdateRow(tr) {
+        const sym    = tr.querySelector('.sym-ov-sym').value.trim();
+        const fgCode = parseInt(tr.querySelector('.sym-ov-fg-num').value, 10);
+        const bgCode = parseInt(tr.querySelector('.sym-ov-bg-num').value, 10);
+        const fgHex  = (!isNaN(fgCode) && fgCode > 0) ? AnsiColors.toHex(fgCode) : null;
+        const bgHex  = (!isNaN(bgCode) && bgCode > 0) ? AnsiColors.toHex(bgCode) : null;
+        const preview = tr.querySelector('.sym-ov-preview');
+        preview.textContent      = sym ? sym.charAt(0) : '\u00a0';
+        preview.style.color      = fgHex || '#e0e0e0';
+        preview.style.background = bgHex || '#111';
+        tr.querySelector('.sym-ov-fg-swatch').style.background = fgHex || 'var(--color-code-bg)';
+        tr.querySelector('.sym-ov-bg-swatch').style.background = bgHex || 'var(--color-code-bg)';
+    }
+
+    window.addSymOvRow = function(sym, fgCode, bgCode) {
+        sym = sym || '';
+        fgCode = fgCode || 0;
+        bgCode = bgCode || 0;
+        const tbody = document.getElementById('symOvRows');
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><input class="sym-ov-sym-input sym-ov-sym" type="text" maxlength="4" value="' + escAttr(sym) + '" placeholder="" /></td>' +
+            '<td><span class="sym-ov-preview">\u00a0</span></td>' +
+            '<td><div class="sym-ov-color-wrap">' +
+                '<input class="sym-ov-color-num sym-ov-fg-num" type="number" min="0" max="255" value="' + fgCode + '" placeholder="0" />' +
+                '<div class="sym-ov-swatch sym-ov-fg-swatch" title="Pick FG color"></div>' +
+            '</div></td>' +
+            '<td><div class="sym-ov-color-wrap">' +
+                '<input class="sym-ov-color-num sym-ov-bg-num" type="number" min="0" max="255" value="' + bgCode + '" placeholder="0" />' +
+                '<div class="sym-ov-swatch sym-ov-bg-swatch" title="Pick BG color"></div>' +
+            '</div></td>' +
+            '<td><button class="sym-ov-del" title="Remove">&times;</button></td>';
+        tbody.appendChild(tr);
+        symOvUpdateRow(tr);
+        tr.querySelector('.sym-ov-sym').addEventListener('input', () => symOvUpdateRow(tr));
+        tr.querySelector('.sym-ov-fg-num').addEventListener('input', () => symOvUpdateRow(tr));
+        tr.querySelector('.sym-ov-bg-num').addEventListener('input', () => symOvUpdateRow(tr));
+        tr.querySelector('.sym-ov-del').addEventListener('click', () => tr.remove());
+        tr.querySelector('.sym-ov-fg-swatch').addEventListener('click', function() {
+            openSymOvPalette(this, tr.querySelector('.sym-ov-fg-num'), tr);
+        });
+        tr.querySelector('.sym-ov-bg-swatch').addEventListener('click', function() {
+            openSymOvPalette(this, tr.querySelector('.sym-ov-bg-num'), tr);
+        });
+        if (!sym) tr.querySelector('.sym-ov-sym').focus();
+    };
+
+    function collectSymOvRows() {
+        const result = {};
+        document.querySelectorAll('#symOvRows tr').forEach(tr => {
+            const sym = tr.querySelector('.sym-ov-sym').value.trim();
+            if (!sym) return;
+            const key = sym.charAt(0);
+            result[key] = {
+                FGColor: parseInt(tr.querySelector('.sym-ov-fg-num').value, 10) || 0,
+                BGColor: parseInt(tr.querySelector('.sym-ov-bg-num').value, 10) || 0,
+            };
+        });
+        return Object.keys(result).length > 0 ? result : null;
+    }
+
+    // Lightweight palette popup for symbol override rows (reuses same CSS classes)
+    let _symOvPalettePopup = null;
+    let _symOvPaletteAnchor = null;
+
+    function openSymOvPalette(swatchEl, numInput, tr) {
+        if (_symOvPalettePopup && _symOvPaletteAnchor === swatchEl) {
+            closeSymOvPalette(); return;
+        }
+        closeSymOvPalette();
+        _symOvPaletteAnchor = swatchEl;
+        const currentCode = parseInt(numInput.value, 10);
+        const popup = document.createElement('div');
+        popup.className = 'ansi-palette-popup';
+        let html = '';
+        for (let i = 0; i < 256; i++) {
+            const sel = i === currentCode ? ' selected' : '';
+            html += '<div class="ansi-palette-cell' + sel + '" data-code="' + i + '" style="background:' + AnsiColors.toHex(i) + '" title="' + i + '"></div>';
+        }
+        popup.innerHTML = html;
+        popup.addEventListener('click', function(e) {
+            const cell = e.target.closest('.ansi-palette-cell');
+            if (!cell) return;
+            numInput.value = cell.dataset.code;
+            symOvUpdateRow(tr);
+            closeSymOvPalette();
+        });
+        swatchEl.closest('.sym-ov-color-wrap').appendChild(popup);
+        _symOvPalettePopup = popup;
+        setTimeout(() => document.addEventListener('click', onSymOvPaletteOutside), 0);
+    }
+
+    function closeSymOvPalette() {
+        if (_symOvPalettePopup) { _symOvPalettePopup.remove(); _symOvPalettePopup = null; }
+        _symOvPaletteAnchor = null;
+        document.removeEventListener('click', onSymOvPaletteOutside);
+    }
+
+    function onSymOvPaletteOutside(e) {
+        if (_symOvPalettePopup &&
+            !_symOvPalettePopup.contains(e.target) &&
+            e.target !== _symOvPaletteAnchor) {
+            closeSymOvPalette();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // ANSI palette picker (shared for FG and BG)
+    // -------------------------------------------------------------------------
+    let biomePalettePopup = null;
+    let biomePaletteTarget = null; // 'fg' or 'bg'
+
+    window.toggleBiomePalette = function (target) {
+        if (biomePalettePopup && biomePaletteTarget === target) { closeBiomePalette(); return; }
+        if (biomePalettePopup) { closeBiomePalette(); }
+
+        biomePaletteTarget = target;
+        const inputId  = target === 'bg' ? 'fBGColor'      : 'fFGColor';
+        const swatchId = target === 'bg' ? 'bgColorSwatch' : 'fgColorSwatch';
+        const currentCode = parseInt(document.getElementById(inputId).value, 10);
+
+        biomePalettePopup = document.createElement('div');
+        biomePalettePopup.className = 'ansi-palette-popup';
+
+        let html = '';
+        for (let i = 0; i < 256; i++) {
+            const sel = i === currentCode ? ' selected' : '';
+            html += '<div class="ansi-palette-cell' + sel + '" data-code="' + i + '" style="background:' + AnsiColors.toHex(i) + '" title="' + i + '"></div>';
+        }
+        biomePalettePopup.innerHTML = html;
+
+        biomePalettePopup.addEventListener('click', function (e) {
+            const cell = e.target.closest('.ansi-palette-cell');
+            if (!cell) return;
+            document.getElementById(inputId).value = cell.dataset.code;
+            updateSymbolPreview();
+            closeBiomePalette();
+        });
+
+        document.getElementById(swatchId).closest('.color-code-wrap').appendChild(biomePalettePopup);
+        setTimeout(() => document.addEventListener('click', onBiomePaletteOutsideClick), 0);
+    };
+
+    function closeBiomePalette() {
+        if (biomePalettePopup) { biomePalettePopup.remove(); biomePalettePopup = null; }
+        biomePaletteTarget = null;
+        document.removeEventListener('click', onBiomePaletteOutsideClick);
+    }
+
+    function onBiomePaletteOutsideClick(e) {
+        if (biomePalettePopup &&
+            !biomePalettePopup.contains(e.target) &&
+            e.target.id !== 'fgColorSwatch' &&
+            e.target.id !== 'bgColorSwatch') {
+            closeBiomePalette();
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Flag toggles
@@ -344,6 +624,11 @@
             BiomeId:        document.getElementById('fBiomeId').value.trim().toLowerCase(),
             Name:           document.getElementById('fName').value.trim(),
             Symbol:         document.getElementById('fSymbol').value.trim().charAt(0) || '',
+            Color: {
+                FGColor: parseInt(document.getElementById('fFGColor').value, 10) || 0,
+                BGColor: parseInt(document.getElementById('fBGColor').value, 10) || 0,
+            },
+            SymbolOverrides: collectSymOvRows(),
             Description:    document.getElementById('fDescription').value.trim(),
             RequiredItemId: parseInt(document.getElementById('fRequiredItemId').value, 10) || 0,
             LitArea:        document.getElementById('fLitArea').checked,

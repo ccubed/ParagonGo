@@ -493,21 +493,36 @@ func GetMap(mapRoomId int, zoomLevel int, mapHeight int, mapWidth int, mapName s
 	legend := mapOutput.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
 	displayLines := []string{}
-	for i, line := range mapOutput.Render {
-		displayLines = append(displayLines, string(line))
-		for sym, txtLegend := range legend {
-			txtLc := strings.ToLower(txtLegend)
-			displayLines[i] = strings.Replace(displayLines[i], string(sym), fmt.Sprintf(`<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, sym), -1)
+	for _, row := range mapOutput.Render {
+		var sb strings.Builder
+		for _, cell := range row {
+			if cell.Symbol == ' ' {
+				sb.WriteRune(' ')
+				continue
+			}
+			if cell.FGColor > 0 {
+				if cell.BGColor > 0 {
+					fmt.Fprintf(&sb, `<ansi fg="map-room"><ansi fg="%d" bg="%d">%c</ansi></ansi>`, cell.FGColor, cell.BGColor, cell.Symbol)
+				} else {
+					fmt.Fprintf(&sb, `<ansi fg="map-room"><ansi fg="%d">%c</ansi></ansi>`, cell.FGColor, cell.Symbol)
+				}
+			} else if name, ok := legend[cell.Symbol]; ok {
+				txtLc := strings.ToLower(name)
+				fmt.Fprintf(&sb, `<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, cell.Symbol)
+			} else {
+				sb.WriteRune(cell.Symbol)
+			}
 		}
+		displayLines = append(displayLines, sb.String())
 	}
 
 	mapData := map[string]any{
 		"Title":        mapName,
 		"DisplayLines": displayLines,
 		"Height":       len(displayLines),
-		"Width":        runewidth.StringWidth(string(displayLines[0])),
+		"Width":        runewidth.StringWidth(displayLines[0]),
 		"Legend":       legend,
-		"LegendWidth":  runewidth.StringWidth(string(displayLines[0])),
+		"LegendWidth":  runewidth.StringWidth(displayLines[0]),
 		"LeftBorder": map[string]any{
 			"Top":    ".-=~=-.",
 			"Mid":    []string{"( _ __)", "(__  _)"},

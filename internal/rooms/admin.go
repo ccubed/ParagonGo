@@ -154,7 +154,7 @@ func GetPaginatedRoomSummaries(zone string, search string, page int, perPage int
 			SpawnCount:    len(r.SpawnInfo),
 			IsBank:        r.IsBank,
 			Pvp:           r.Pvp,
-			HasScript:     r.GetScript() != "",
+			HasScript:     r.HasScript(),
 			TrainingCount: len(r.SkillTraining),
 		})
 	}
@@ -325,10 +325,8 @@ type MapperRoomData struct {
 	MapLegend      string                    `json:"MapLegend"`
 	Biome          string                    `json:"Biome,omitempty"`
 	Tags           []string                  `json:"Tags,omitempty"`
-	Nouns          map[string]string         `json:"Nouns,omitempty"`
 	HasScript      bool                      `json:"HasScript,omitempty"`
 	HasMobSpawn    bool                      `json:"HasMobSpawn,omitempty"`
-	SpawnInfo      []SpawnInfo               `json:"SpawnInfo,omitempty"`
 	Exits          map[string]MapperExitData `json:"Exits"`
 }
 
@@ -393,10 +391,8 @@ func GetMapperRooms(zoneName string) ([]MapperRoomData, error) {
 			MapLegend:      r.MapLegend,
 			Biome:          biome,
 			Tags:           r.Tags,
-			Nouns:          r.Nouns,
-			HasScript:      r.GetScript() != "",
+			HasScript:      r.HasScript(),
 			HasMobSpawn:    hasMobSpawn,
-			SpawnInfo:      r.SpawnInfo,
 			Exits:          exits,
 		})
 	}
@@ -455,10 +451,8 @@ func GetAllMapperRooms() []MapperRoomData {
 			MapLegend:      r.MapLegend,
 			Biome:          biome,
 			Tags:           r.Tags,
-			Nouns:          r.Nouns,
-			HasScript:      r.GetScript() != "",
+			HasScript:      r.HasScript(),
 			HasMobSpawn:    hasMobSpawn2,
-			SpawnInfo:      r.SpawnInfo,
 			Exits:          exits,
 		})
 	}

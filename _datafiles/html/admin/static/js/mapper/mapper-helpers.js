@@ -7,7 +7,7 @@
  * throwaway DOM node for correctness).
  */
 /* jshint esversion: 11, browser: true */
-/* globals DIRECTION_DELTAS, DIRECTIONAL_EXITS, ENVIRONMENT_SYMBOLS, ENVIRONMENT_COLORS, SYMBOL_COLORS, BIOME_SYMBOLS, BIOME_COLORS, DEFAULT_ROOM_COLOR, ZONE_BOX_PADDING, MapperState */
+/* globals DIRECTION_DELTAS, DIRECTIONAL_EXITS, BIOME_SYMBOLS, BIOME_COLORS, BIOME_BG_COLORS, BIOME_SYMBOL_OVERRIDES, DEFAULT_ROOM_COLOR, ZONE_BOX_PADDING, MapperState */
 'use strict';
 
 // --- Exit & Direction Helpers ---
@@ -36,6 +36,42 @@ function exitDelta(dir, room) {
     return null;
 }
 
+/**
+ * Converts an ANSI 256-color index to a CSS hex string.
+ * Returns null for index 0 (treated as "no override") or out-of-range values.
+ */
+function ansi256ToHex(n) {
+    if (!n || n <= 0 || n > 255) return null;
+    var named = [
+        '#000000','#800000','#008000','#808000','#000080','#800080','#008080','#c0c0c0',
+        '#808080','#ff0000','#00ff00','#ffff00','#0000ff','#ff00ff','#00ffff','#ffffff'
+    ];
+    if (n < 16) return named[n];
+    if (n < 232) {
+        var idx = n - 16;
+        var bv = idx % 6, gv = Math.floor(idx / 6) % 6, rv = Math.floor(idx / 36);
+        var cv = function(i) { return i === 0 ? 0 : 55 + i * 40; };
+        var toH = function(i) { return ('0' + cv(i).toString(16)).slice(-2); };
+        return '#' + toH(rv) + toH(gv) + toH(bv);
+    }
+    var gray = 8 + (n - 232) * 10;
+    var h = ('0' + gray.toString(16)).slice(-2);
+    return '#' + h + h + h;
+}
+
+/**
+ * Returns the bg hex color for a biome, or null if none is set.
+ * Checks per-symbol overrides first when a symbol is provided.
+ */
+function bgColorForBiome(biome, sym) {
+    if (!biome) return null;
+    if (sym && BIOME_SYMBOL_OVERRIDES[biome]) {
+        var ov = BIOME_SYMBOL_OVERRIDES[biome][sym];
+        if (ov && ov.bg) return ov.bg;
+    }
+    return BIOME_BG_COLORS[biome] || null;
+}
+
 // --- Symbol & Color Resolution ---
 
 /**
@@ -46,23 +82,23 @@ function exitDelta(dir, room) {
  */
 function symbolForRoom(room) {
     if (room.MapSymbol) return room.MapSymbol;
-    var env = biomeEnvName(room.Biome);
-    if (env && ENVIRONMENT_SYMBOLS[env]) return ENVIRONMENT_SYMBOLS[env];
-    if (room.Biome && BIOME_SYMBOLS[room.Biome]) return BIOME_SYMBOLS[room.Biome];
+    var biome = room._effectiveBiome || room.Biome || '';
+    var env = biomeEnvName(biome);
+    if (biome && BIOME_SYMBOLS[biome]) return BIOME_SYMBOLS[biome];
     return '•';
 }
 
 /**
- * Determines the fill color for a symbol, cascading through symbol-specific,
- * environment-level, biome-level, and finally the default room color.
- * @param  {string} sym   - Map symbol character.
- * @param  {string} biome - Biome identifier.
- * @return {string} CSS hex color.
+ * Determines the fill color for a symbol, cascading through:
+ * 1. Per-symbol biome override (SymbolOverrides[sym].fg)
+ * 2. Biome default FG color (BIOME_COLORS)
+ * 3. Default room color
  */
 function colorForSymbol(sym, biome) {
-    if (sym && SYMBOL_COLORS[sym]) return SYMBOL_COLORS[sym];
-    var env = biomeEnvName(biome);
-    if (env && ENVIRONMENT_COLORS[env]) return ENVIRONMENT_COLORS[env];
+    if (biome && sym && BIOME_SYMBOL_OVERRIDES[biome]) {
+        var ov = BIOME_SYMBOL_OVERRIDES[biome][sym];
+        if (ov && ov.fg) return ov.fg;
+    }
     if (biome && BIOME_COLORS[biome]) return BIOME_COLORS[biome];
     return DEFAULT_ROOM_COLOR;
 }
@@ -102,7 +138,6 @@ function invalidateZoneBoundsCache() {
  */
 function biomeEnvName(biomeId) {
     if (!biomeId) return '';
-    if (ENVIRONMENT_COLORS[biomeId]) return biomeId;
     return biomeEnvMap[biomeId] || '';
 }
 

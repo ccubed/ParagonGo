@@ -10,16 +10,24 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
+type SymbolColor struct {
+	FGColor int `yaml:"fgcolor"` // ANSI 256 foreground color code (0 = no override)
+	BGColor int `yaml:"bgcolor"` // ANSI 256 background color code (0 = no override)
+}
+
 type BiomeInfo struct {
-	BiomeId        string `yaml:"biomeid"`
-	Name           string `yaml:"name"`
-	Symbol         string `yaml:"symbol"`
-	Description    string `yaml:"description"`
-	DarkArea       bool   `yaml:"darkarea"`
-	LitArea        bool   `yaml:"litarea"`
-	RequiredItemId int    `yaml:"requireditemid"`
-	UsesItem       bool   `yaml:"usesitem"`
-	Burns          bool   `yaml:"burns"`
+	BiomeId        string      `yaml:"biomeid"`
+	Name           string      `yaml:"name"`
+	Symbol         string      `yaml:"symbol"`
+	Color          SymbolColor `yaml:"color"`
+	Description    string      `yaml:"description"`
+	DarkArea       bool        `yaml:"darkarea"`
+	LitArea        bool        `yaml:"litarea"`
+	RequiredItemId int         `yaml:"requireditemid"`
+	UsesItem       bool        `yaml:"usesitem"`
+	Burns          bool        `yaml:"burns"`
+	// Overrides for symbols in this biome
+	SymbolOverrides map[string]SymbolColor `yaml:"symboloverrides"`
 
 	// Private fields for runtime use
 	symbolRune rune

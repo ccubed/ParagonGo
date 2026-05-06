@@ -8,3 +8,5 @@ litarea: false
 requireditemid: 20030
 usesitem: false
 burns: false
+color:
+  fgcolor: 12

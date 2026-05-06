@@ -612,7 +612,9 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 		if dstPos.z == 0 && dstPos.x >= 0 && dstPos.y >= 0 && dstPos.x < c.Width && dstPos.y < c.Height {
 			// Draw the room to the output
-			out.Render[dstPos.y][dstPos.x] = symbol
+			fg, bg := resolveNodeColors(node, symbol)
+			mudlog.Debug("TEST", "symbol", string(symbol), "fg", fg, "bg", bg)
+			out.Render[dstPos.y][dstPos.x] = MapCell{Symbol: symbol, FGColor: fg, BGColor: bg}
 			if _, ok := out.legend[symbol]; !ok {
 				out.legend[symbol] = legend
 			}
@@ -702,12 +704,12 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 					if drawX >= 0 && drawY >= 0 && drawX < c.Width && drawY < c.Height {
 
 						if exitInfo.Secret {
-							out.Render[drawY][drawX] = SecretSymbol
+							out.Render[drawY][drawX] = MapCell{Symbol: SecretSymbol}
 							if _, ok := out.legend[SecretSymbol]; !ok {
 								out.legend[SecretSymbol] = `Secret`
 							}
 						} else if exitInfo.LockDifficulty > 0 {
-							out.Render[drawY][drawX] = LockedSymbol
+							out.Render[drawY][drawX] = MapCell{Symbol: LockedSymbol}
 							if _, ok := out.legend[LockedSymbol]; !ok {
 								out.legend[LockedSymbol] = `Locked`
 							}
@@ -716,7 +718,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 								break
 							}
 						} else {
-							out.Render[drawY][drawX] = exitInfo.Direction.arrow
+							out.Render[drawY][drawX] = MapCell{Symbol: exitInfo.Direction.arrow}
 						}
 
 					}
@@ -817,7 +819,8 @@ func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender {
 					}
 				}
 
-				out.Render[dstPos.y+drawY][dstPos.x+drawX] = symbol
+				fg2, bg2 := resolveNodeColors(node, symbol)
+				out.Render[dstPos.y+drawY][dstPos.x+drawX] = MapCell{Symbol: symbol, FGColor: fg2, BGColor: bg2}
 
 				if _, ok := out.legend[symbol]; !ok {
 					out.legend[symbol] = legend
@@ -869,17 +872,17 @@ func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender {
 						}
 
 						if exitInfo.Secret {
-							out.Render[drawY2][drawX2] = SecretSymbol
+							out.Render[drawY2][drawX2] = MapCell{Symbol: SecretSymbol}
 							if _, ok := out.legend[SecretSymbol]; !ok {
 								out.legend[SecretSymbol] = `Secret`
 							}
 						} else if exitInfo.LockDifficulty > 0 {
-							out.Render[drawY2][drawX2] = LockedSymbol
+							out.Render[drawY2][drawX2] = MapCell{Symbol: LockedSymbol}
 							if _, ok := out.legend[LockedSymbol]; !ok {
 								out.legend[LockedSymbol] = `Locked`
 							}
 						} else {
-							out.Render[drawY2][drawX2] = exitInfo.Direction.arrow
+							out.Render[drawY2][drawX2] = MapCell{Symbol: exitInfo.Direction.arrow}
 						}
 
 					}
@@ -893,6 +896,28 @@ func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender {
 	}
 
 	return out
+}
+
+// resolveNodeColors returns the fg/bg ANSI color codes for a node+symbol,
+// applying per-symbol biome overrides before falling back to the biome default.
+func resolveNodeColors(node *mapNode, symbol rune) (fg, bg int) {
+	symStr := string(symbol)
+	if node.SymbolOverrides != nil {
+		mudlog.Debug("TEST", "symbol", symStr, "ALL", node.SymbolOverrides, "chosen", node.SymbolOverrides[symStr])
+		if ov, ok := node.SymbolOverrides[symStr]; ok {
+			fg = ov.FGColor
+			bg = ov.BGColor
+			// Fill in biome default where override is zero
+			if fg == 0 {
+				fg = node.Color.FGColor
+			}
+			if bg == 0 {
+				bg = node.Color.BGColor
+			}
+			return fg, bg
+		}
+	}
+	return node.Color.FGColor, node.Color.BGColor
 }
 
 func (r *mapper) getMapNode(roomId int) *mapNode {
@@ -919,21 +944,23 @@ func (r *mapper) getMapNode(roomId int) *mapNode {
 		mNode.Pos = positionDelta{x: room.MapX, y: room.MapY, z: room.MapZ}
 	}
 
+	b := room.GetBiome()
 	if room.MapSymbol != `` {
 		mNode.Symbol = []rune(room.MapSymbol)[0]
 		if room.MapLegend != `` {
 			mNode.Legend = room.MapLegend
 		}
 	} else {
-		b := room.GetBiome()
 		if b != nil && b.GetSymbol() != 0 {
 			mNode.Symbol = b.GetSymbol()
+			mNode.Legend = b.Name
 		} else {
 			mNode.Symbol = defaultMapSymbol
 		}
-		if b != nil && b.Name != `` {
-			mNode.Legend = b.Name
-		}
+	}
+	if b != nil {
+		mNode.Color = b.Color
+		mNode.SymbolOverrides = b.SymbolOverrides
 	}
 
 	for exitName, exitInfo := range room.Exits {

@@ -1,0 +1,11 @@
+biomeid: slums
+name: Slums
+symbol: •
+description: A lawless region of a city. Generally poor and often dangerous.
+darkarea: false
+litarea: true
+requireditemid: 0
+usesitem: false
+burns: false
+color:
+  fgcolor: 242

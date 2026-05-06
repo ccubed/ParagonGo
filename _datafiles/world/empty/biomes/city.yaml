@@ -1,6 +1,9 @@
 biomeid: city
 name: City
 symbol: •
+color:
+  fgcolor: 7
+  bgcolor: 0
 description: Cities are generally well protected. Law enforcement will attempt to
   subdue those who murder or steal. It's generally considered a safe area although
   it's not unknown for predators to hunt within their walls.
@@ -9,3 +12,28 @@ litarea: true
 requireditemid: 0
 usesitem: false
 burns: false
+symboloverrides:
+  '!':
+    fgcolor: 228
+    bgcolor: 0
+  $:
+    fgcolor: 2
+    bgcolor: 0
+  '%':
+    fgcolor: 12
+    bgcolor: 0
+  '&':
+    fgcolor: 27
+    bgcolor: 0
+  +:
+    fgcolor: 8
+    bgcolor: 15
+  ★:
+    fgcolor: 10
+    bgcolor: 0
+  ♜:
+    fgcolor: 6
+    bgcolor: 0
+  P:
+    fgcolor: 18
+    bgcolor: 0

@@ -45,6 +45,8 @@ var DEFAULT_ROOM_COLOR        = '#3a3a4a';
 var ROOM_BORDER_MOB_SPAWN     = 'rgb(255, 90, 90)';  // border color when room has a mob spawn
 var ROOM_BORDER_SCRIPT_GLOW   = '#d4a843';  // script glow border color
 var ROOM_ARROW_COLOR          = '#ff00ff';  // up/down Z-arrow color
+var ROOM_ARROW_STROKE_COLOR   = 'rgba(0,0,0,0.75)';  // stroke/outline color for Z-arrows (set to '' to disable)
+var ROOM_ARROW_STROKE_WIDTH   = 3;                   // stroke line width in px (before zoom scaling)
 
 // Line badge colors
 var BADGE_SECRET_COLOR        = '#d4a843';  // secret exit badge
@@ -76,67 +78,11 @@ var QB_OCCUPIED_COLOR         = '255,255,255'; // RGB components for occupied sl
 var SELECT_RECT_FILL          = 'rgba(100,160,255,0.12)';
 var SELECT_RECT_BORDER        = 'rgba(100,160,255,0.6)';
 
-// --- Symbol & Environment Lookup Tables ---
-// Each symbol has a fixed color so the palette stays consistent across biomes.
-
-var SYMBOL_COLORS = {
-    '~':  '#2a53f7',
-    '≈': '#0033cd',
-    '♣': '#1a6b1a',
-    '♨': '#4a6b20',
-    '❄': '#b8d8f0',
-    '⌬': '#5a4a38',
-    '⩕': '#7a6a50',
-    '▼': '#8a7a5a',
-    '⌂': '#8a6a3a',
-    '*':  '#d4aa55',
-    "'":  '#6a8a30',
-    '=':  '#a07840',
-    '$':  '#2a7a2a',
-    '%':  '#2a5a8a',
-    '♜': '#4a4a4a',
-    '+':  '#5fb7ff',
-    '•': '#3a3a4a'
-};
-
-var ENVIRONMENT_SYMBOLS = {
-    'Forest':    '♣',
-    'Swamp':     '♨',
-    'Snow':      '❄',
-    'Cave':      '⌬',
-    'Dungeon':   '⌬',
-    'Mountains': '⩕',
-    'Cliffs':    '▼',
-    'House':     '⌂',
-    'Desert':    '*',
-    'Farmland':  "'",
-    'Road':      '=',
-    'Shore':     '~',
-    'Water':     '≈'
-};
-
-var ENVIRONMENT_COLORS = {
-    'Forest':    '#1a6b1a',
-    'Swamp':     '#4a6b20',
-    'Snow':      '#b8d8f0',
-    'Cave':      '#5a4a38',
-    'Dungeon':   '#5a4a38',
-    'Mountains': '#7a6a50',
-    'Cliffs':    '#8a7a5a',
-    'House':     '#8a6a3a',
-    'Desert':    '#d4aa55',
-    'Farmland':  '#6a8a30',
-    'Road':      '#a07840',
-    'Shore':     '#2a53f7',
-    'Water':     '#0033cd',
-    'City':      '#5a5a6a',
-    'Fort':      '#5a5a6a',
-    'Land':      '#3a3a4a'
-};
-
 // Populated at runtime when custom biome data is loaded from the server
-var BIOME_SYMBOLS = {};
-var BIOME_COLORS  = {};
+var BIOME_SYMBOLS          = {};
+var BIOME_COLORS           = {};  // biomeId -> hex fg color
+var BIOME_BG_COLORS        = {};  // biomeId -> hex bg color
+var BIOME_SYMBOL_OVERRIDES = {};  // biomeId -> { symbol -> { fg: hex|null, bg: hex|null } }
 
 // --- Direction & Grid Geometry ---
 // Deltas are [dx, dy, dz]. Suffixes like -x2/-x3 represent multi-cell jumps;

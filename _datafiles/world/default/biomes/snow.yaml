@@ -1,9 +1,16 @@
 biomeid: snow
 name: Snow
 symbol: ❄
+color:
+  fgcolor: 153
+  bgcolor: 0
 description: Cold and wet.
 darkarea: false
 litarea: false
 requireditemid: 0
 usesitem: false
 burns: false
+symboloverrides:
+  ^:
+    fgcolor: 153
+    bgcolor: 237

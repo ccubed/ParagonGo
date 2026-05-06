@@ -1,5 +1,5 @@
 /* jshint esversion: 11, browser: true */
-/* globals MapperEvents, AdminAPI, symbolForRoom, colorForSymbol, contrastColor, escapeHtml, isDirectionalExit, DIRECTION_DELTAS, isExitConstraintSatisfied, buildDragConstraints, breakExitLocally, BIOME_SYMBOLS, biomeEnvMap, invalidateZoneBoundsCache */
+/* globals MapperEvents, AdminAPI, symbolForRoom, colorForSymbol, bgColorForBiome, contrastColor, escapeHtml, isDirectionalExit, DIRECTION_DELTAS, isExitConstraintSatisfied, buildDragConstraints, breakExitLocally, BIOME_SYMBOLS, BIOME_COLORS, BIOME_BG_COLORS, BIOME_SYMBOL_OVERRIDES, biomeEnvMap, invalidateZoneBoundsCache */
 'use strict';
 
 /**
@@ -66,7 +66,6 @@ var MapperState = (function() {
     // --- Data Layer ---
 
     var tagDescriptions = {};  // tag -> module
-    var mobNames = {};          // mobId -> name
 
     var mapperData = {
         allZones: [],
@@ -145,7 +144,7 @@ var MapperState = (function() {
     var activeZ2d = 0;
     var spacingScale2d = (function() {
         var s = parseFloat(localStorage.getItem('mapper.spacing2d'));
-        return (isFinite(s) && s >= 0.75 && s <= 3.0) ? s : 1.30;
+        return (isFinite(s) && s >= 1.0 && s <= 3.0) ? s : 1.30;
     })();
     var showBounds = localStorage.getItem('mapper.showBounds') === 'true';
     var selectedZoneOnly = localStorage.getItem('mapper.selectedZoneOnly') === 'true';
@@ -463,11 +462,14 @@ var MapperState = (function() {
         var tempRoom = {
             RoomId: tempId, Zone: resolvedZone, Title: 'New Room',
             MapX: gx, MapY: gy, MapZ: gz,
-            HasCoordinates: true, MapSymbol: '', MapLegend: '', Biome: biome, Exits: {}
+            HasCoordinates: true, MapSymbol: '', MapLegend: '', Biome: biome,
+            _effectiveBiome: biome,
+            Exits: {}
         };
         tempRoom._symbol = symbolForRoom(tempRoom);
-        tempRoom._color = colorForSymbol(tempRoom._symbol, tempRoom.Biome);
-        tempRoom._symbolColor = contrastColor(tempRoom._color);
+        tempRoom._color = colorForSymbol(tempRoom._symbol, biome);
+        tempRoom._bgColor = bgColorForBiome(biome, tempRoom._symbol) || null;
+        tempRoom._symbolColor = contrastColor(tempRoom._bgColor || tempRoom._color);
 
         mapperData.rooms.set(tempId, tempRoom);
         mapperData.roomsByCoord.set(gx + ',' + gy + ',' + gz, tempId);
@@ -565,25 +567,36 @@ var MapperState = (function() {
         }
     }
 
-    async function loadMobNames() {
-        var res = await AdminAPI.get('/admin/api/v1/mobs');
-        var list = res.ok && res.data ? res.data.data : null;
-        if (Array.isArray(list)) {
-            list.forEach(function(m) {
-                var id = m.MobId;
-                var name = m.Character && m.Character.Name ? m.Character.Name : null;
-                if (id && name) mobNames[id] = name;
-            });
-        }
-    }
-
     async function loadBiomes() {
         var res = await AdminAPI.get('/admin/api/v1/biomes');
         var biomeList = res.ok && res.data ? res.data.data : null;
         if (Array.isArray(biomeList)) {
             biomeList.forEach(function(b) {
-                if (b.Name) biomeEnvMap[b.BiomeId || b.Name] = b.Name;
-                if (b.Symbol) BIOME_SYMBOLS[b.BiomeId || b.Name] = b.Symbol;
+                var key = b.BiomeId || b.Name;
+                if (b.Name) biomeEnvMap[key] = b.Name;
+                if (b.Symbol) BIOME_SYMBOLS[key] = b.Symbol;
+                var color = b.Color || {};
+                if (color.FGColor && color.FGColor > 0) {
+                    var hex = ansi256ToHex(color.FGColor);
+                    if (hex) BIOME_COLORS[key] = hex;
+                }
+                if (color.BGColor && color.BGColor > 0) {
+                    var bgHex = ansi256ToHex(color.BGColor);
+                    if (bgHex) BIOME_BG_COLORS[key] = bgHex;
+                }
+                // Build per-symbol override map: symbol -> { fg, bg }
+                var overrides = b.SymbolOverrides || {};
+                var ovMap = {};
+                Object.keys(overrides).forEach(function(sym) {
+                    var ov = overrides[sym] || {};
+                    ovMap[sym] = {
+                        fg: (ov.FGColor && ov.FGColor > 0) ? ansi256ToHex(ov.FGColor) : null,
+                        bg: (ov.BGColor && ov.BGColor > 0) ? ansi256ToHex(ov.BGColor) : null
+                    };
+                });
+                if (Object.keys(ovMap).length > 0) {
+                    BIOME_SYMBOL_OVERRIDES[key] = ovMap;
+                }
             });
         }
     }
@@ -597,14 +610,22 @@ var MapperState = (function() {
 
         mapperData.allZones = data.Zones || [];
         mapperData.zoneRootRooms.clear();
+
+        // Build zone -> defaultBiome lookup for rooms that have no biome set
+        var zoneDefaultBiome = {};
         mapperData.allZones.forEach(function(z) {
             mapperData.zoneRootRooms.set(z.Name, z.RoomId);
+            if (z.DefaultBiome) zoneDefaultBiome[z.Name] = z.DefaultBiome;
         });
 
         mapperData.rawRooms = (data.Rooms || []).map(function(r) {
+            // Resolve effective biome: room biome -> zone default biome -> ''
+            var effectiveBiome = r.Biome || zoneDefaultBiome[r.Zone] || '';
+            r._effectiveBiome = effectiveBiome;
             r._symbol = symbolForRoom(r);
-            r._color = colorForSymbol(r._symbol, r.Biome);
-            r._symbolColor = contrastColor(r._color);
+            r._color = colorForSymbol(r._symbol, effectiveBiome);
+            r._bgColor = bgColorForBiome(effectiveBiome, r._symbol) || null;
+            r._symbolColor = contrastColor(r._bgColor || r._color);
             return r;
         });
 
@@ -711,8 +732,6 @@ var MapperState = (function() {
         toggleRoomSelection: toggleRoomSelection,
         loadBiomes: loadBiomes,
         loadTags: loadTags,
-        loadMobNames: loadMobNames,
-        mobNames: mobNames,
         tagDescriptions: tagDescriptions,
         loadAllRooms: loadAllRooms,
         buildCrossZoneGraph: null,

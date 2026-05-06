@@ -504,25 +504,42 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			output := zMapper.GetLimitedMap(room.RoomId, c)
 			tinyMap := []string{}
 			tinyMap = append(tinyMap, `╔═════╗`)
-			for _, mapLine := range output.Render {
-				tinyMap = append(tinyMap, `║`+string(mapLine)+`║`)
+			// placeholder rows filled by the render loop below
+			for range output.Render {
+				tinyMap = append(tinyMap, ``)
 			}
 			tinyMap = append(tinyMap, `╚═════╝`)
 			// This additional check is for ephemeral room copies,
 			// which can slightly mess with the map render of the @
-			if tinyMap[3][3] != '@' {
-				youLine := []rune(tinyMap[3])
-				youLine[3] = '@'
-				tinyMap[3] = string(youLine)
+			if len(output.Render) > 2 && output.Render[2][2].Symbol != '@' {
+				output.Render[2][2] = mapper.MapCell{Symbol: '@'}
 			}
 
 			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
-			for i := 1; i <= c.Height; i++ {
-				for sym, txtLegend := range legend {
-					txtLc := strings.ToLower(txtLegend)
-					tinyMap[i] = strings.Replace(tinyMap[i], string(sym), fmt.Sprintf(`<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, sym), -1)
+			for i, row := range output.Render {
+				var sb strings.Builder
+				for _, cell := range row {
+					if cell.Symbol == ' ' {
+						sb.WriteRune(' ')
+						continue
+					}
+
+					if cell.FGColor > 0 || cell.BGColor > 0 {
+						if cell.FGColor > 0 && cell.BGColor > 0 {
+							fmt.Fprintf(&sb, `<ansi fg="%d" bg="%d">%c</ansi>`, cell.FGColor, cell.BGColor, cell.Symbol)
+						} else if cell.BGColor > 0 {
+							fmt.Fprintf(&sb, `<ansi fg="map-room" bg="%d">%c</ansi>`, cell.BGColor, cell.Symbol)
+						} else {
+							fmt.Fprintf(&sb, `<ansi fg="%d">%c</ansi>`, cell.FGColor, cell.Symbol)
+						}
+					} else if _, ok := legend[cell.Symbol]; ok {
+						fmt.Fprintf(&sb, `<ansi fg="map-room">%c</ansi>`, cell.Symbol)
+					} else {
+						sb.WriteRune(cell.Symbol)
+					}
 				}
+				tinyMap[i+1] = `║` + sb.String() + `║`
 			}
 
 			details = rooms.GetDetails(room, user, tinyMap)

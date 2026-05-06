@@ -1,0 +1,11 @@
+biomeid: default
+name: Default
+symbol: •
+description: A default biome used when no other biome is specified.
+darkarea: false
+litarea: true
+requireditemid: 0
+usesitem: false
+burns: false
+color:
+  fgcolor: 8

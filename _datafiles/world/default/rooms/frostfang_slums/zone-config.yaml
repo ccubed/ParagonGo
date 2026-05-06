@@ -6,4 +6,4 @@ autoscale:
 mutators:
   - mutatorid: pvp-enabled
 musicfile: static/audio/music/frostfang-slums.mp3
-defaultbiome: city
+defaultbiome: slums

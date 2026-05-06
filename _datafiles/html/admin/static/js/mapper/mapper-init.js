@@ -540,7 +540,6 @@
     (async function() {
         await MapperState.loadBiomes();
         await MapperState.loadTags();
-        await MapperState.loadMobNames();
         await MapperState.loadAllRooms();
         MapperUI.populateZoneDropdown();
         MapperRender.initResizeObserver();
