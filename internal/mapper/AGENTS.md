@@ -10,7 +10,7 @@
 - Preserve pathfinding correctness before optimizing output shape or performance.
 - Be careful with room graph assumptions, exit handling, and distance/radius logic. Several systems depend on those helpers indirectly.
 - If you change map output formatting, keep rendering concerns separate from traversal logic where possible.
-- When the mapper is used by higher-level features such as automation or navigation commands, inspect the caller’s assumptions too.
+- When the mapper is used by higher-level features such as automation or navigation commands, inspect the caller's assumptions too.
 
 ## Verification
 

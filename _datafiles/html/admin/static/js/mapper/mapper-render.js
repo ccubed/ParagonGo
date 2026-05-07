@@ -5,7 +5,7 @@
    CONNECTION_COLOR, ABNORMAL_CONNECTION_COLOR, SELECTED_ROOM_COLOR, SELECTED_ROOM_TEXT_COLOR, SYMBOL_TEXT_COLOR,
    ZONE_BOX_PADDING, ZONE_BOX_COLOR, ZONE_BOX_COLOR_HOV, ZONE_BOX_BORDER, ZONE_BOX_BORDER_HOV,
    ROOM_ARROW_COLOR, ROOM_ARROW_STROKE_COLOR, ROOM_ARROW_STROKE_WIDTH,
-   ROOM_BORDER_MOB_SPAWN, ROOM_BORDER_SCRIPT_GLOW, ROOM_BORDER_TAGS, BADGE_SECRET_COLOR, BADGE_LOCK_COLOR,
+   ROOM_BORDER_MOB_SPAWN, ROOM_BORDER_SCRIPT_GLOW, ROOM_BORDER_TAGS, ROOM_BORDER_UNSAVED, BADGE_SECRET_COLOR, BADGE_LOCK_COLOR,
    GHOST_CELL_BORDER, GHOST_CELL_FILL, GHOST_CELL_SYMBOL,
    EXIT_DRAW_TARGET_HIGHLIGHT, EXIT_DRAW_LINE_COLOR,
    DRAG_ORIGIN_MARKER, DRAG_SNAP_BLOCKED, DRAG_SNAP_BROKEN, DRAG_SNAP_CLEAN, DRAG_CONSTRAINT_BROKEN, DRAG_CONSTRAINT_OK, DRAG_GHOST_BROKEN_FILL,
@@ -359,6 +359,7 @@ var MapperRender = (function() {
     var _glowRooms     = [];   // { p, room, rx, ry, scaledSize, scaledBorder }
     var _tagRooms      = [];   // { rx, ry, scaledSize, scaledBorder }
     var _arrowRooms    = [];   // { p, room, rx, ry, scaledSize }
+    var _unsavedRooms  = [];   // { rx, ry, scaledSize, scaledBorder } — temp (negative-ID) rooms
 
     // --- 2D Core Renderer ---
 
@@ -403,6 +404,7 @@ var MapperRender = (function() {
         _glowRooms.length = 0;
         _tagRooms.length = 0;
         _arrowRooms.length = 0;
+        _unsavedRooms.length = 0;
 
         // Pass 1: normal directional edges
         ctx.strokeStyle = CONNECTION_COLOR;
@@ -518,6 +520,10 @@ var MapperRender = (function() {
                     _arrowRooms.push({ p: p, scaledSize: scaledSize, rx: rx, ry: ry, hasUp: hasUp, hasDown: hasDown });
                 }
             }
+
+            if (!isSelected && id < 0) {
+                _unsavedRooms.push({ rx: rx, ry: ry, scaledSize: scaledSize, scaledBorder: scaledBorder });
+            }
         });
 
         // Pass 4: tags border — one save/restore for all rooms with tags
@@ -578,6 +584,20 @@ var MapperRender = (function() {
 
         if (_deferredBadges.length > 0) {
             drawLineBadges2d(_deferredBadges);
+        }
+
+        // Pass 7: unsaved (pending) rooms -- dashed amber border drawn on top
+        if (_unsavedRooms.length > 0) {
+            ctx.save();
+            ctx.strokeStyle = ROOM_BORDER_UNSAVED;
+            ctx.setLineDash([Math.max(3, 3 * cam.zoomScale), Math.max(6, 6 * cam.zoomScale)]);
+            for (var ui = 0; ui < _unsavedRooms.length; ui++) {
+                var ur = _unsavedRooms[ui];
+                ctx.lineWidth = Math.max(1, ur.scaledBorder * 0.85);
+                ctx.strokeRect(ur.rx, ur.ry, ur.scaledSize, ur.scaledSize);
+            }
+            ctx.setLineDash([]);
+            ctx.restore();
         }
 
         renderToolOverlays2d();

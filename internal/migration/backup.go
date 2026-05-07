@@ -49,7 +49,7 @@ func copyDir(src string, dst string) error {
 			return nil
 		}
 
-		// It’s a file
+		// It's a file
 		return copyFile(path, destPath)
 	})
 }

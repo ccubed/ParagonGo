@@ -1,21 +1,25 @@
 roomid: 785
 zone: Frostfang
-title: Inside a Residence
-description: As you step into this residence, a sense of artistic flair is immediately
-  apparent. The room is filled with eclectic decorations, from vibrant, hand-painted
-  murals on the walls to an assortment of colorful cushions and throws scattered across
-  a low, informal seating area. The light from various candles and lanterns casts
-  a warm, inviting glow, and small plants in ornate pots add a touch of greenery.
-  An array of musical instruments, from lutes to flutes, rests against one wall, suggesting
-  the owner's artistic inclinations. This home feels like a personal retreat, a place
-  for creativity and relaxation amidst the harshness of Frostfang.
+title: The Mayors House
+description: As you step into the entryway of the mayor's house, a sense of authority
+  and refinement is immediately apparent. Polished stone floors gleam beneath the
+  warm glow of iron lanterns mounted along the walls, their light reflecting off rich
+  tapestries depicting the history and triumphs of Frostfang. A broad staircase rises
+  toward the upper floors, while sturdy oak doors lead deeper into the residence and
+  its halls of governance. Decorative suits of armor stand watch beside carefully
+  carved benches and tables adorned with fresh winter flowers in silver vases. The
+  faint scent of pine and burning cedar lingers in the air, lending warmth to the
+  otherwise imposing chamber. Every detail of the entryway speaks of prestige, duty,
+  and the enduring strength of Frostfang's leadership.
+mapsymbol: ☖
 biome: house
 exits:
   south:
     roomid: 779
-spawninfo:
-- mobid: 26
-  respawnrate: 5 real minutes
+  up:
+    roomid: 1068
+tags:
+- elected officials only
 mapx: -4
 mapy: -3
 mapz: 0

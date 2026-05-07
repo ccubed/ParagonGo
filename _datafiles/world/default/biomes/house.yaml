@@ -1,11 +1,16 @@
 biomeid: house
 name: House
 symbol: ⌂
+color:
+  fgcolor: 3
+  bgcolor: 0
 description: Standard domiciles and other dwellings.
 darkarea: false
 litarea: true
 requireditemid: 0
 usesitem: false
 burns: true
-color:
-  fgcolor: 3
+symboloverrides:
+  ☖:
+    fgcolor: 202
+    bgcolor: 0

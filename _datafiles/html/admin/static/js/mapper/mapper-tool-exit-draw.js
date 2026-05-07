@@ -2,13 +2,13 @@
  * mapper-tool-exit-draw.js -- Rubber-band line drawing mode for wiring exits.
  *
  * Activated from the context menu "Add Exit" item. A dashed line stretches
- * from the source room to the cursor; clicking on a different room finishes
- * the connection after prompting for the exit name (and optional return
- * exit). Directional exit names are validated against the spatial
- * relationship between the two rooms so "north" cannot point south, etc.
+ * from the source room to the cursor; clicking on a different room opens a
+ * modal to confirm the exit name and optional return exit. Directional exit
+ * names are validated against the spatial relationship between the two rooms
+ * so "north" cannot point south, etc.
  *
  * A separate "Add Exit (By Room Number)" path skips the visual rubber-band
- * and just prompts for a target room ID directly.
+ * and just opens the same modal after prompting for a target room ID.
  */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperCtxMenu, MapperState, MapperRender,
@@ -18,6 +18,56 @@
 'use strict';
 
 (function() {
+
+    // =====================================================================
+    //  Spatial direction inference
+    // =====================================================================
+
+    var OPPOSITES = {
+        north: 'south', south: 'north', east: 'west', west: 'east',
+        northeast: 'southwest', southwest: 'northeast',
+        northwest: 'southeast', southeast: 'northwest',
+        up: 'down', down: 'up'
+    };
+
+    /**
+     * Infer a cardinal/intercardinal exit name from the grid delta between
+     * two rooms. Returns null when the relationship is ambiguous (neither
+     * perfectly orthogonal nor perfectly diagonal on the XY plane, or when
+     * either room lacks coordinates).
+     *
+     * Z-only connections (pure up/down) are also resolved.
+     */
+    function inferExitName(srcRoom, tgtRoom) {
+        if (!srcRoom || !tgtRoom) return null;
+        if (!srcRoom.HasCoordinates || !tgtRoom.HasCoordinates) return null;
+
+        var dx = tgtRoom.MapX - srcRoom.MapX;
+        var dy = tgtRoom.MapY - srcRoom.MapY;
+        var dz = tgtRoom.MapZ - srcRoom.MapZ;
+
+        // Pure Z movement
+        if (dx === 0 && dy === 0 && dz !== 0) {
+            return dz > 0 ? 'up' : 'down';
+        }
+
+        // Must be on the same Z level for XY directional names
+        if (dz !== 0) return null;
+
+        // Perfectly orthogonal
+        if (dx === 0 && dy !== 0) return dy < 0 ? 'north' : 'south';
+        if (dy === 0 && dx !== 0) return dx > 0 ? 'east' : 'west';
+
+        // Perfectly diagonal (|dx| == |dy|)
+        if (Math.abs(dx) === Math.abs(dy)) {
+            if (dx > 0 && dy < 0) return 'northeast';
+            if (dx < 0 && dy < 0) return 'northwest';
+            if (dx > 0 && dy > 0) return 'southeast';
+            if (dx < 0 && dy > 0) return 'southwest';
+        }
+
+        return null;
+    }
 
     // =====================================================================
     //  Exit-name validation
@@ -44,87 +94,162 @@
     }
 
     // =====================================================================
+    //  Exit draw modal
+    // =====================================================================
+
+    /**
+     * Open the exit-draw modal.
+     *
+     * @param {number} sourceRoomId
+     * @param {number} targetRoomId
+     * @param {function} onConfirm  Called with (dir, returnDir) on confirm.
+     *                              returnDir may be empty string.
+     * @param {function} onCancel   Called when the modal is dismissed without
+     *                              confirming.
+     */
+    function openExitModal(sourceRoomId, targetRoomId, onConfirm, onCancel) {
+        var backdrop   = document.getElementById('exit-draw-backdrop');
+        var srcEl      = document.getElementById('exit-draw-src');
+        var tgtEl      = document.getElementById('exit-draw-tgt');
+        var dirEl      = document.getElementById('exit-draw-dir');
+        var retEl      = document.getElementById('exit-draw-ret');
+        var errorEl    = document.getElementById('exit-draw-error');
+        var confirmBtn = document.getElementById('exit-draw-confirm');
+        var cancelBtn  = document.getElementById('exit-draw-cancel');
+        var closeBtn   = document.getElementById('exit-draw-close');
+        if (!backdrop) { onCancel(); return; }
+
+        var srcRoom = MapperState.data.rooms.get(sourceRoomId);
+        var tgtRoom = MapperState.data.rooms.get(targetRoomId);
+
+        srcEl.textContent = srcRoom ? srcRoom.Title + ' (#' + sourceRoomId + ')' : '#' + sourceRoomId;
+        tgtEl.textContent = tgtRoom ? tgtRoom.Title + ' (#' + targetRoomId + ')' : '#' + targetRoomId;
+        errorEl.textContent = '';
+        confirmBtn.disabled = false;
+
+        // Pre-populate exit names when the spatial relationship is unambiguous.
+        var inferredDir = inferExitName(srcRoom, tgtRoom);
+        var inferredRet = inferredDir ? (OPPOSITES[inferredDir] || '') : '';
+        dirEl.value = inferredDir || '';
+        retEl.value = inferredRet;
+
+        backdrop.classList.add('visible');
+        setTimeout(function() {
+            if (inferredDir) {
+                // Names are already filled; put focus on the confirm button so
+                // the user can just press Enter to accept without tabbing.
+                confirmBtn.focus();
+            } else {
+                dirEl.focus();
+            }
+        }, 40);
+
+        function close() {
+            backdrop.classList.remove('visible');
+            backdrop._keyHandler && document.removeEventListener('keydown', backdrop._keyHandler);
+        }
+
+        function cancel() {
+            close();
+            onCancel();
+        }
+
+        function confirm() {
+            var dir = dirEl.value.trim();
+            var ret = retEl.value.trim();
+            errorEl.textContent = '';
+
+            if (!dir) {
+                errorEl.textContent = 'Exit name is required.';
+                dirEl.focus();
+                return;
+            }
+
+            var err = validateExitName(dir, srcRoom, tgtRoom);
+            if (err) { errorEl.textContent = err; dirEl.focus(); return; }
+
+            if (ret) {
+                var err2 = validateExitName(ret, tgtRoom, srcRoom);
+                if (err2) { errorEl.textContent = 'Return exit: ' + err2; retEl.focus(); return; }
+            }
+
+            close();
+            onConfirm(dir, ret);
+        }
+
+        // Replace listeners to avoid stacking
+        function rewire(el, handler) {
+            var clone = el.cloneNode(true);
+            el.parentNode.replaceChild(clone, el);
+            clone.addEventListener('click', handler);
+            return clone;
+        }
+        rewire(document.getElementById('exit-draw-confirm'), confirm);
+        rewire(document.getElementById('exit-draw-cancel'),  cancel);
+        rewire(document.getElementById('exit-draw-close'),   cancel);
+
+        backdrop._keyHandler && document.removeEventListener('keydown', backdrop._keyHandler);
+        backdrop._keyHandler = function(e) {
+            if (!backdrop.classList.contains('visible')) return;
+            if (e.key === 'Escape') { e.stopPropagation(); cancel(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); confirm(); }
+            if (e.key === 'Enter' && document.activeElement !== retEl) { e.preventDefault(); confirm(); }
+        };
+        document.addEventListener('keydown', backdrop._keyHandler);
+
+        backdrop.onclick = function(e) { if (e.target === backdrop) cancel(); };
+    }
+
+    // =====================================================================
     //  Finish / cancel
     // =====================================================================
 
-    /** Complete the rubber-band draw: prompt for exit names and wire them up. */
+    /** Complete the rubber-band draw: open modal to confirm exit names. */
     function finishExitDraw(targetRoomId) {
         var edm = MapperState.exitDrawMode;
         if (targetRoomId === edm.sourceRoomId) {
             MapperTools.activate('pan');
             return;
         }
-        var sourceRoom = MapperState.data.rooms.get(edm.sourceRoomId);
-        var targetRoom = MapperState.data.rooms.get(targetRoomId);
+        var sourceRoomId = edm.sourceRoomId;
 
-        var dir = null;
-        while (true) {
-            dir = prompt('Exit name (e.g. "north", "portal", "trapdoor"):');
-            if (!dir || !dir.trim()) { MapperTools.activate('pan'); return; }
-            dir = dir.trim();
-            var err = validateExitName(dir, sourceRoom, targetRoom);
-            if (!err) break;
-            alert(err);
-        }
-
-        MapperState.addExitLocally(edm.sourceRoomId, dir, targetRoomId);
-
-        var returnDir = prompt('Return exit name (leave blank for no return exit):');
-        if (returnDir && returnDir.trim()) {
-            returnDir = returnDir.trim();
-            var err2 = validateExitName(returnDir, targetRoom, sourceRoom);
-            if (err2) {
-                alert(err2 + '\nReturn exit not created.');
-            } else {
-                MapperState.addExitLocally(targetRoomId, returnDir, edm.sourceRoomId);
-            }
-        }
-
+        // Deactivate the rubber-band before opening the modal so the overlay
+        // is not drawn while the modal is visible.
         MapperTools.activate('pan');
-        MapperRender.render();
+
+        openExitModal(sourceRoomId, targetRoomId,
+            function onConfirm(dir, ret) {
+                MapperState.addExitLocally(sourceRoomId, dir, targetRoomId);
+                if (ret) {
+                    MapperState.addExitLocally(targetRoomId, ret, sourceRoomId);
+                }
+                MapperRender.render();
+            },
+            function onCancel() {
+                MapperRender.render();
+            }
+        );
     }
 
-    /** Prompt-only path that skips the visual rubber-band altogether. */
+    /** Prompt-only path: ask for a room ID then open the modal. */
     function addExitByRoomNumber(sourceRoomId) {
         var targetIdStr = prompt('Target room number:');
         if (!targetIdStr || !targetIdStr.trim()) return;
         var targetRoomId = parseInt(targetIdStr.trim(), 10);
         if (isNaN(targetRoomId)) { alert('Invalid room number.'); return; }
         if (targetRoomId === sourceRoomId) { alert('Cannot connect a room to itself.'); return; }
+        if (!MapperState.data.rooms.has(targetRoomId)) { alert('Room #' + targetRoomId + ' not found.'); return; }
 
-        var sourceRoom = MapperState.data.rooms.get(sourceRoomId);
-        var targetRoom = MapperState.data.rooms.get(targetRoomId);
-
-        var dir = null;
-        while (true) {
-            dir = prompt('Exit name (e.g. "north", "portal", "trapdoor"):');
-            if (!dir || !dir.trim()) return;
-            dir = dir.trim();
-            if (sourceRoom && targetRoom) {
-                var err = validateExitName(dir, sourceRoom, targetRoom);
-                if (err) { alert(err); continue; }
-            }
-            break;
-        }
-
-        MapperState.addExitLocally(sourceRoomId, dir, targetRoomId);
-
-        var returnDir = prompt('Return exit name (leave blank for no return exit):');
-        if (returnDir && returnDir.trim()) {
-            returnDir = returnDir.trim();
-            if (sourceRoom && targetRoom) {
-                var err2 = validateExitName(returnDir, targetRoom, sourceRoom);
-                if (err2) {
-                    alert(err2 + '\nReturn exit not created.');
-                } else {
-                    MapperState.addExitLocally(targetRoomId, returnDir, sourceRoomId);
+        openExitModal(sourceRoomId, targetRoomId,
+            function onConfirm(dir, ret) {
+                MapperState.addExitLocally(sourceRoomId, dir, targetRoomId);
+                if (ret) {
+                    MapperState.addExitLocally(targetRoomId, ret, sourceRoomId);
                 }
-            } else {
-                MapperState.addExitLocally(targetRoomId, returnDir, sourceRoomId);
-            }
-        }
-
-        MapperRender.render();
+                MapperRender.render();
+            },
+            function onCancel() {}
+        );
     }
 
     // =====================================================================

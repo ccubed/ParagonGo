@@ -29,4 +29,4 @@
 ## Documentation
 
 - Keep this file about module-authoring rules, not a full plugin API tutorial.
-- Put reusable module-specific details in the module’s own directory guide when they are not repo-wide rules.
+- Put reusable module-specific details in the module's own directory guide when they are not repo-wide rules.

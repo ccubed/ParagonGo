@@ -9,8 +9,6 @@ description: The cobblestone streets, worn smooth by a myriad of footsteps, weav
 exits:
   east:
     roomid: 779
-  north:
-    roomid: 786
   west:
     roomid: 781
 mapx: -5

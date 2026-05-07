@@ -326,6 +326,56 @@
     .instance-modal textarea { width:100%; min-height:380px; font-family:monospace; font-size:0.82rem; padding:0.6rem 0.75rem; border:1px solid var(--color-border-medium); border-radius:4px; resize:vertical; box-sizing:border-box; line-height:1.55; }
     .instance-modal-footer { display:flex; gap:0.6rem; align-items:center; }
     .instance-empty-hint { font-size:0.8rem; color:var(--color-text-faint); font-style:italic; }
+
+    /* container cards */
+    .container-card {
+        border: 1px solid var(--color-border); border-radius: 6px; margin-bottom: 0.6rem;
+        background: var(--color-surface-alt); overflow: hidden;
+    }
+    .container-card-header {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.4rem 0.6rem; background: var(--color-border-faint); cursor: pointer;
+        font-size: 0.83rem; font-weight: 600; user-select: none;
+    }
+    .container-card-header::before { content: "\25B6"; font-size: 0.55rem; transition: transform 0.15s; }
+    .container-card-header.open::before { transform: rotate(90deg); }
+    .container-card-body { display: none; padding: 0.75rem; }
+    .container-card-body.open { display: block; }
+    .container-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 0.75rem; }
+    .container-card-grid .span2 { grid-column: 1 / -1; }
+    .container-field label { display: block; font-size: 0.73rem; font-weight: 600; color: var(--color-text-subtle); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .container-field input[type="text"],
+    .container-field input[type="number"],
+    .container-field select { width: 100%; }
+    .container-field .field-hint { font-size: 0.71rem; color: var(--color-text-secondary); margin-top: 0.15rem; }
+    .container-lock-badge { font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--color-error-bg); color: var(--color-error-text); }
+    .container-recipe-badge { font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--color-success-bg); color: var(--color-success-text); }
+
+    /* recipe rows */
+    .recipe-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .recipe-row {
+        border: 1px solid var(--color-border-light); border-radius: 5px;
+        background: var(--color-surface-white); padding: 0.6rem 0.75rem;
+    }
+    .recipe-row-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .recipe-output-label { font-size: 0.72rem; font-weight: 700; color: var(--color-text-subtle); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+    .recipe-output-display {
+        flex: 1; font-family: monospace; padding: 0.3rem 0.5rem;
+        border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.82rem; background: var(--color-surface-alt);
+        min-height: 1.7rem; display: flex; align-items: center; cursor: pointer;
+    }
+    .recipe-output-display:hover { border-color: var(--color-focus); }
+    .recipe-output-display.empty { color: var(--color-text-placeholder); font-style: italic; font-family: inherit; }
+    .recipe-ingredients-label { font-size: 0.72rem; font-weight: 700; color: var(--color-text-subtle); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.3rem; }
+    .recipe-ingredients-wrap { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+    .recipe-ingredient-chip {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        background: var(--color-chip-bg); color: var(--color-chip-text); border-radius: 10px;
+        padding: 0.15rem 0.5rem; font-size: 0.78rem;
+    }
+    .recipe-ingredient-chip button { background: none; border: none; cursor: pointer; color: var(--color-chip-text); font-size: 0.82rem; line-height: 1; padding: 0; }
+    .recipe-ingredient-chip button:hover { color: var(--color-danger); }
 </style>
 
 <h1>Rooms</h1>
@@ -524,6 +574,14 @@
                 <div class="collapse-body">
                     <div id="training-list"></div>
                     <button class="btn-add-sm" onclick="addTraining()">+ Add Skill</button>
+                </div>
+
+                <!-- Containers -->
+                <div class="collapse-toggle" onclick="toggleSection(this)">Containers</div>
+                <div class="collapse-body">
+                    <div id="containers-list"></div>
+                    <button class="btn-add-sm" onclick="addContainer()">+ Add Container</button>
+                    <div class="field-hint" style="margin-top:0.4rem;">Containers are named objects players can put items into and interact with. They can be locked and may have crafting recipes.</div>
                 </div>
 
                 <!-- Idle Messages -->
@@ -793,6 +851,7 @@
         renderExits(r.Exits || {});
         renderSpawns(r.SpawnInfo || []);
         renderTraining(r.SkillTraining || {});
+        renderContainers(r.Containers || {});
         renderIdleMsgs('idle-list', r.IdleMessages || []);
         renderNouns(r.Nouns || {});
 
@@ -1305,6 +1364,265 @@
             exits[name] = exitObj;
         });
         return exits;
+    }
+
+    // -------------------------------------------------------------------------
+    // Containers
+    // -------------------------------------------------------------------------
+    function renderContainers(containers) {
+        const list = document.getElementById('containers-list');
+        list.innerHTML = '';
+        for (const [name, c] of Object.entries(containers || {})) {
+            appendContainerCard(list, name, c);
+        }
+    }
+
+    function appendContainerCard(list, name, c) {
+        c = c || {};
+        const lock = c.Lock || {};
+        const hasLock = (lock.Difficulty || 0) > 0;
+        const trapBuffIds = lock.TrapBuffIds || [];
+        const recipes = c.Recipes || {};
+        const recipeCount = Object.keys(recipes).length;
+
+        const card = document.createElement('div');
+        card.className = 'container-card';
+
+        const lockBadge = hasLock ? '<span class="container-lock-badge">lock lvl ' + lock.Difficulty + '</span>' : '';
+        const recipeBadge = recipeCount > 0 ? '<span class="container-recipe-badge">' + recipeCount + ' recipe' + (recipeCount !== 1 ? 's' : '') + '</span>' : '';
+
+        card.innerHTML =
+            '<div class="container-card-header" onclick="toggleContainerCard(this)">' +
+                esc(name || 'New Container') +
+                (lockBadge ? ' ' + lockBadge : '') +
+                (recipeBadge ? ' ' + recipeBadge : '') +
+                '<button class="btn-icon" style="margin-left:auto;" title="Remove container">&times;</button>' +
+            '</div>' +
+            '<div class="container-card-body">' +
+                '<div class="container-card-grid">' +
+
+                    '<div class="container-field span2">' +
+                        '<label>Container Name</label>' +
+                        '<input type="text" class="container-name" value="' + esc(name) + '" ' +
+                            'placeholder="e.g. chest, barrel, loom" ' +
+                            'oninput="updateContainerHeader(this)" />' +
+                        '<div class="field-hint">The name players use to interact with this container (e.g. &ldquo;look chest&rdquo;, &ldquo;put sword chest&rdquo;).</div>' +
+                    '</div>' +
+
+                    '<div class="container-field span2">' +
+                        '<label>Lock</label>' +
+                        '<div class="toggle-wrap">' +
+                            '<label class="toggle-switch">' +
+                                '<input type="checkbox" class="container-has-lock" ' +
+                                    'onchange="toggleContainerLockSection(this)"' + (hasLock ? ' checked' : '') + ' />' +
+                                '<span class="toggle-slider"></span>' +
+                            '</label>' +
+                            '<span class="toggle-label">Locked</span>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="container-lock-section span2" style="' + (hasLock ? '' : 'display:none;') + '">' +
+                        '<div class="lock-section">' +
+                            '<div class="lock-section-title">Lock Settings</div>' +
+                            '<div class="container-card-grid">' +
+                                '<div class="container-field">' +
+                                    '<label>Difficulty (2&ndash;32)</label>' +
+                                    '<div class="slider-wrap">' +
+                                        '<input type="range" class="lock-difficulty" min="2" max="32" ' +
+                                            'value="' + (lock.Difficulty || 5) + '" ' +
+                                            'oninput="syncSlider(this); updateContainerHeader(this);" />' +
+                                        '<span class="slider-value">' + (lock.Difficulty || 5) + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="container-field">' +
+                                    '<label>Relock Interval</label>' +
+                                    '<input type="text" class="lock-relock" value="' + esc(lock.RelockInterval || '') + '" ' +
+                                        'placeholder="e.g. 1 hour (default)" />' +
+                                '</div>' +
+                                '<div class="container-field span2">' +
+                                    '<label>Trap Buff IDs (on failed pick)</label>' +
+                                    '<div class="buff-ids-wrap lock-trap-buffs">' + renderTrapBuffChips(trapBuffIds) + '</div>' +
+                                    '<button class="btn-add-sm" style="margin-top:0.3rem;" onclick="pickContainerTrapBuff(this)">+ Add Trap Buff</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="container-field span2">' +
+                        '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">' +
+                            '<label style="margin-bottom:0;">Recipes</label>' +
+                            '<button class="btn-add-sm" style="margin-top:0;" onclick="addContainerRecipe(this)">+ Add Recipe</button>' +
+                        '</div>' +
+                        '<div class="field-hint" style="margin-bottom:0.5rem;">Each recipe defines a set of ingredient items that, when all placed in the container and &ldquo;use&rdquo;d, are consumed and replaced by the output item.</div>' +
+                        '<div class="recipe-list">' + buildRecipeListHTML(recipes) + '</div>' +
+                    '</div>' +
+
+                '</div>' +
+            '</div>';
+
+        card.querySelector('.container-card-header .btn-icon').onclick = function (e) {
+            this.closest('.container-card').remove();
+            e.stopPropagation();
+        };
+
+        if (!name) {
+            card.querySelector('.container-card-header').classList.add('open');
+            card.querySelector('.container-card-body').classList.add('open');
+        }
+
+        list.appendChild(card);
+    }
+
+    function buildRecipeListHTML(recipes) {
+        let html = '';
+        for (const [outputId, inputIds] of Object.entries(recipes || {})) {
+            html += buildRecipeRowHTML(parseInt(outputId, 10), inputIds || []);
+        }
+        return html;
+    }
+
+    function buildRecipeRowHTML(outputItemId, inputItemIds) {
+        const outputLabel = outputItemId ? '#' + outputItemId : 'Click to pick output item…';
+        const outputEmpty = !outputItemId;
+        const ingredientChips = (inputItemIds || []).map(id =>
+            '<span class="recipe-ingredient-chip" data-item-id="' + id + '">' +
+                '#' + id +
+                ' <button onclick="this.closest(\'.recipe-ingredient-chip\').remove()" title="Remove">&times;</button>' +
+            '</span>'
+        ).join('');
+
+        return '<div class="recipe-row">' +
+            '<div class="recipe-row-header">' +
+                '<span class="recipe-output-label">Output</span>' +
+                '<div class="recipe-output-display' + (outputEmpty ? ' empty' : '') + '" ' +
+                    'data-item-id="' + (outputItemId || 0) + '" ' +
+                    'onclick="pickRecipeOutput(this)" title="Click to pick output item">' +
+                    outputLabel +
+                '</div>' +
+                '<button class="btn-icon" title="Remove recipe" onclick="this.closest(\'.recipe-row\').remove()">&times;</button>' +
+            '</div>' +
+            '<div class="recipe-ingredients-label">Ingredients</div>' +
+            '<div class="recipe-ingredients-wrap">' +
+                ingredientChips +
+                '<button class="btn-add-sm" style="margin-top:0;" onclick="addRecipeIngredient(this)">+ Add Ingredient</button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    window.toggleContainerCard = function (header) {
+        header.classList.toggle('open');
+        header.nextElementSibling.classList.toggle('open');
+    };
+
+    window.updateContainerHeader = function (input) {
+        const card = input.closest('.container-card');
+        const header = card.querySelector('.container-card-header');
+        const nameVal = card.querySelector('.container-name').value.trim() || 'New Container';
+        const hasLock = card.querySelector('.container-has-lock').checked;
+        const lockDiff = hasLock ? parseInt(card.querySelector('.lock-difficulty').value, 10) || 0 : 0;
+        const recipeCount = card.querySelectorAll('.recipe-row').length;
+
+        const lockBadge = (hasLock && lockDiff > 0) ? '<span class="container-lock-badge">lock lvl ' + lockDiff + '</span>' : '';
+        const recipeBadge = recipeCount > 0 ? '<span class="container-recipe-badge">' + recipeCount + ' recipe' + (recipeCount !== 1 ? 's' : '') + '</span>' : '';
+
+        const removeBtn = header.querySelector('.btn-icon').outerHTML;
+        header.innerHTML =
+            esc(nameVal) +
+            (lockBadge ? ' ' + lockBadge : '') +
+            (recipeBadge ? ' ' + recipeBadge : '') +
+            removeBtn;
+        header.querySelector('.btn-icon').onclick = function (e) { this.closest('.container-card').remove(); e.stopPropagation(); };
+        header.onclick = function () { toggleContainerCard(this); };
+    };
+
+    window.toggleContainerLockSection = function (cb) {
+        const lockDiv = cb.closest('.container-card').querySelector('.container-lock-section');
+        lockDiv.style.display = cb.checked ? '' : 'none';
+        updateContainerHeader(cb);
+    };
+
+    window.pickContainerTrapBuff = function (btn) {
+        buffPickerTarget = btn.previousElementSibling;
+        openBuffModal();
+    };
+
+    window.addContainer = function () {
+        appendContainerCard(document.getElementById('containers-list'), '', {});
+    };
+
+    window.addContainerRecipe = function (btn) {
+        const recipeList = btn.closest('.container-field').querySelector('.recipe-list');
+        const rowEl = document.createElement('div');
+        rowEl.innerHTML = buildRecipeRowHTML(0, []);
+        recipeList.appendChild(rowEl.firstElementChild);
+        updateContainerHeader(btn);
+    };
+
+    window.pickRecipeOutput = function (displayEl) {
+        Picker.open({
+            ...PickerConfigs.items,
+            title: 'Select Output Item',
+            onSelect: (item) => {
+                displayEl.dataset.itemId = item.ItemId;
+                displayEl.textContent = '#' + item.ItemId + ' ' + item.Name;
+                displayEl.classList.remove('empty');
+                updateContainerHeader(displayEl);
+            },
+        });
+    };
+
+    window.addRecipeIngredient = function (btn) {
+        const wrap = btn.closest('.recipe-ingredients-wrap');
+        Picker.open({
+            ...PickerConfigs.items,
+            title: 'Select Ingredient Item',
+            onSelect: (item) => {
+                const chip = document.createElement('span');
+                chip.className = 'recipe-ingredient-chip';
+                chip.dataset.itemId = item.ItemId;
+                chip.innerHTML = '#' + item.ItemId + ' ' + esc(item.Name) +
+                    ' <button onclick="this.closest(\'.recipe-ingredient-chip\').remove()" title="Remove">&times;</button>';
+                wrap.insertBefore(chip, btn);
+                updateContainerHeader(btn);
+            },
+        });
+    };
+
+    function collectContainers() {
+        const containers = {};
+        document.querySelectorAll('#containers-list .container-card').forEach(card => {
+            const name = card.querySelector('.container-name').value.trim();
+            if (!name) return;
+
+            const hasLock = card.querySelector('.container-has-lock').checked;
+            const c = {};
+
+            if (hasLock) {
+                const diff = parseInt(card.querySelector('.lock-difficulty').value, 10) || 5;
+                const relock = card.querySelector('.lock-relock').value.trim();
+                const trapBuffIds = Array.from(card.querySelectorAll('.lock-trap-buffs .buff-chip'))
+                    .map(ch => parseInt(ch.dataset.buffId, 10))
+                    .filter(n => !isNaN(n));
+                c.Lock = { Difficulty: diff };
+                if (relock) c.Lock.RelockInterval = relock;
+                if (trapBuffIds.length) c.Lock.TrapBuffIds = trapBuffIds;
+            }
+
+            const recipes = {};
+            card.querySelectorAll('.recipe-row').forEach(row => {
+                const outputId = parseInt(row.querySelector('.recipe-output-display').dataset.itemId, 10);
+                if (!outputId) return;
+                const inputIds = Array.from(row.querySelectorAll('.recipe-ingredient-chip'))
+                    .map(ch => parseInt(ch.dataset.itemId, 10))
+                    .filter(n => !isNaN(n) && n > 0);
+                if (inputIds.length === 0) return;
+                recipes[outputId] = inputIds;
+            });
+            if (Object.keys(recipes).length > 0) c.Recipes = recipes;
+
+            containers[name] = c;
+        });
+        return containers;
     }
 
     // -------------------------------------------------------------------------
@@ -1965,6 +2283,7 @@
             Exits:         collectExits(),
             SpawnInfo:     collectSpawns(),
             SkillTraining: collectTraining(),
+            Containers:    collectContainers(),
             IdleMessages:  collectIdleMsgs('idle-list'),
             Nouns:         collectNouns(),
         };

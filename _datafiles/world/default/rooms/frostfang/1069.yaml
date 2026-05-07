@@ -1,0 +1,28 @@
+roomid: 1069
+zone: Frostfang
+title: The Mayors House - Master Bedroom
+description: The master bedroom of the mayor's house is spacious yet restrained, favoring
+  comfort and dignity over needless extravagance. A large bed crafted from dark polished
+  oak dominates the room, draped in thick furs and heavy wool blankets to ward off
+  the relentless chill of Frostfang's winters. A stone hearth crackles softly along
+  one wall, filling the chamber with warmth and the scent of burning cedarwood. Shelves
+  lined with books, maps, and neatly rolled documents hint that the mayor's duties
+  often follow them even into private hours. Rich curtains frame tall windows overlooking
+  the city, where the distant glow of lanterns can be seen through drifting snow.
+  Modest decorative touches—a finely woven rug, carved wooden furniture, and a few
+  carefully chosen paintings—lend the room an air of quiet sophistication. Despite
+  its status, the chamber feels lived in and practical, a sanctuary where the burdens
+  of leadership are set aside, if only briefly.
+mapsymbol: ☖
+biome: house
+exits:
+  south:
+    roomid: 1068
+  west:
+    roomid: 1071
+tags:
+- elected officials only
+mapx: -4
+mapy: -4
+mapz: 1
+hascoordinates: true

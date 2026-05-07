@@ -1,0 +1,22 @@
+roomid: 1071
+zone: Frostfang
+title: The Mayors House - Storage
+description: This small storage room sits just beyond the master bedroom, neatly arranged
+  with shelves of folded blankets, spare clothing, crates, and labeled boxes of personal
+  records. Heavy trunks and winter travel gear rest against the walls, prepared for
+  Frostfang's harsh climate. Near the center of the room stands a large iron-banded
+  coffer secured with thick locks, used to store the mayor's collected taxes and civic
+  funds. A single lantern casts a warm glow over the chamber, while the scent of cedar
+  and aged parchment lingers faintly in the air.
+mapsymbol: ☖
+biome: house
+exits:
+  east:
+    roomid: 1069
+tags:
+- elected officials only
+- coffer
+mapx: -5
+mapy: -4
+mapz: 1
+hascoordinates: true

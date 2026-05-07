@@ -16,7 +16,7 @@
 
 - Run targeted package tests for load/save, validation, or concurrent batch behavior changes.
 - If a change affects how files are laid out or written, verify both successful load and successful save paths.
-- Use a higher-level caller test when the change affects a real subsystem’s persistence flow.
+- Use a higher-level caller test when the change affects a real subsystem's persistence flow.
 
 ## Documentation
 

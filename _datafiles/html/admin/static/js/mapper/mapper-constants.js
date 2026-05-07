@@ -75,6 +75,9 @@ var DRAG_GHOST_BROKEN_FILL    = 'rgba(255,180,60,0.2)';
 var QB_COLOR                  = '95,183,122';  // RGB components for quick-build green
 var QB_OCCUPIED_COLOR         = '255,255,255'; // RGB components for occupied slot
 
+// Unsaved (pending) room indicator
+var ROOM_BORDER_UNSAVED       = 'rgb(255, 0, 255)'; // dashed amber border for temp rooms
+
 // Selection rectangle
 var SELECT_RECT_FILL          = 'rgba(100,160,255,0.12)';
 var SELECT_RECT_BORDER        = 'rgba(100,160,255,0.6)';

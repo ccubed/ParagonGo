@@ -103,7 +103,7 @@ func (p *Parser) parseList(baseIndent int) *baseNode {
 		currIndent := len(line) - len(strings.TrimLeft(line, " "))
 		trimmed := strings.TrimSpace(line)
 
-		// if it’s not a bullet or we’ve de-indented, this list is done
+		// if it's not a bullet or we've de-indented, this list is done
 		if !strings.HasPrefix(trimmed, "- ") || currIndent < baseIndent {
 			break
 		}

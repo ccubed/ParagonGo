@@ -9,6 +9,7 @@ description: The Bank of Frostfang Vault, upon closer inspection, reveals itself
   most of which stand open and empty, their contents likely transferred to more secure
   locations. In the center of the room, a sturdy table holds a few scattered coins
   and bits of jewelry, remnants of transactions in progress or items awaiting relocation.
+biome: city
 exits:
   down:
     roomid: 111
@@ -19,8 +20,6 @@ items:
 spawninfo:
 - itemid: 5
   respawnrate: 1 real day
-tags:
-- coffer
 mapx: -1
 mapy: -1
 mapz: 0

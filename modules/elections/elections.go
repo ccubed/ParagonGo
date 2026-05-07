@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -25,9 +26,10 @@ var (
 )
 
 const (
-	pollTag   = "election poll"
-	cofferTag = "coffer"
-	maxCoffer = 100000000
+	pollTag         = "election poll"
+	cofferTag       = "coffer"
+	officialOnlyTag = "elected officials only"
+	maxCoffer       = 100000000
 )
 
 func init() {
@@ -39,7 +41,7 @@ func init() {
 		panic(err)
 	}
 
-	m.plug.ReserveTags(pollTag, cofferTag)
+	m.plug.ReserveTags(pollTag, cofferTag, officialOnlyTag)
 
 	m.plug.Web.AdminPage("Config", "elections-config", "html/admin/elections-config.html", true, "Modules", "Elections", nil)
 	m.plug.Web.AdminPage("About", "elections-about", "html/admin/elections-about.html", true, "Modules", "Elections", nil)
@@ -51,6 +53,7 @@ func init() {
 	m.plug.Callbacks.SetOnSave(m.save)
 
 	events.RegisterListener(events.Input{}, m.onInput, events.First)
+	events.RegisterListener(events.Input{}, m.onMovementGate, events.First)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.Purchase{}, m.onPurchase)
@@ -672,23 +675,98 @@ func (m *ElectionsModule) onRoomLook(d rooms.RoomTemplateDetails) rooms.RoomTemp
 				d.RoomAlerts = append(d.RoomAlerts,
 					`<ansi fg="yellow-bold">This is a polling location!</ansi> <ansi fg="command">vote</ansi> for or <ansi fg="command">nominate</ansi> someone.`,
 				)
-			} else {
-				//d.RoomAlerts = append(d.RoomAlerts,
-				//	`<ansi fg="yellow-bold">This is a polling location.</ansi> No election is currently in progress.`,
-				//)
 			}
-			return d
-		}
-		if strings.EqualFold(t, cofferTag) {
-			zoneKey := strings.ToLower(d.Zone)
-			bal := m.state.Coffers[zoneKey]
+		} else if strings.EqualFold(t, cofferTag) {
 			d.RoomAlerts = append(d.RoomAlerts,
-				fmt.Sprintf(`<ansi fg="yellow-bold">This room holds the zone coffer.</ansi> Balance: <ansi fg="gold">%d gold</ansi>. Type <ansi fg="command">coffer</ansi> to manage it.`, bal),
+				`<ansi fg="yellow-bold">This room holds the local coffer.</ansi> Type <ansi fg="command">coffer</ansi> to manage it.`,
 			)
-			return d
+		} else if strings.EqualFold(t, officialOnlyTag) {
+			zoneKey := strings.ToLower(d.Zone)
+			if winner, hasWinner := m.state.Winners[zoneKey]; hasWinner {
+				d.RoomAlerts = append(d.RoomAlerts,
+					fmt.Sprintf(`<ansi fg="yellow-bold">This area is restricted to the <ansi fg="white-bold">%s</ansi> and their party.</ansi>`, winner.Title),
+				)
+			} else {
+				d.RoomAlerts = append(d.RoomAlerts,
+					`<ansi fg="yellow-bold">This area is restricted to elected officials only.</ansi>`,
+				)
+			}
 		}
 	}
 	return d
+}
+
+// isAllowedInOfficialRoom returns true when the user may enter a room tagged
+// officialOnlyTag. Allowed: admins, the zone's elected official, and members
+// of the elected official's active party.
+func (m *ElectionsModule) isAllowedInOfficialRoom(user *users.UserRecord, zoneKey string) bool {
+	if user.Role == users.RoleAdmin {
+		return true
+	}
+	winner, hasWinner := m.state.Winners[zoneKey]
+	if !hasWinner {
+		return false
+	}
+	if winner.UserId == user.UserId {
+		return true
+	}
+	if officialParty := parties.Get(winner.UserId); officialParty != nil {
+		for _, memberId := range officialParty.UserIds {
+			if memberId == user.UserId {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// onMovementGate intercepts movement commands and blocks entry into rooms
+// tagged officialOnlyTag when the player is not permitted.
+func (m *ElectionsModule) onMovementGate(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.Input)
+	if !ok || evt.UserId == 0 {
+		return events.Continue
+	}
+
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+
+	sourceRoom := rooms.LoadRoom(user.Character.RoomId)
+	if sourceRoom == nil {
+		return events.Continue
+	}
+
+	// Already inside a restricted area — movement between tagged rooms is allowed.
+	if sourceRoom.HasTag(officialOnlyTag) {
+		return events.Continue
+	}
+
+	cmd := strings.ToLower(strings.TrimSpace(strings.Fields(evt.InputText)[0]))
+
+	_, destRoomId := sourceRoom.FindExitByName(cmd)
+	if destRoomId == 0 {
+		return events.Continue
+	}
+
+	destRoom := rooms.LoadRoom(destRoomId)
+	if destRoom == nil || !destRoom.HasTag(officialOnlyTag) {
+		return events.Continue
+	}
+
+	zoneKey := strings.ToLower(destRoom.Zone)
+	if m.isAllowedInOfficialRoom(user, zoneKey) {
+		return events.Continue
+	}
+
+	winner, hasWinner := m.state.Winners[zoneKey]
+	if hasWinner {
+		user.SendText(fmt.Sprintf(`Only the <ansi fg="white-bold">%s</ansi> and their party may enter here.`, winner.Title))
+	} else {
+		user.SendText(`This area is restricted to elected officials only.`)
+	}
+	return events.Cancel
 }
 
 // onGetFormattedName appends the player's title (if any) to their formatted name.

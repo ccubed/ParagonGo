@@ -1,0 +1,28 @@
+roomid: 1070
+zone: Frostfang
+title: The Mayors House - Home Office
+description: The home office is a room of careful order and constant purpose, reflecting
+  the demands placed upon Frostfang's mayor. A broad oak desk sits near the center
+  of the chamber, its surface covered with neatly stacked ledgers, sealed correspondence,
+  and detailed maps of the city and surrounding territories. Shelves packed with records,
+  law books, and weathered journals line the walls from floor to ceiling, while a
+  nearby cabinet holds rolled decrees and official documents secured with wax seals.
+  The steady glow of brass lanterns and the low crackle of a small hearth provide
+  warmth against the northern cold, giving the otherwise formal space a quiet sense
+  of comfort. Tall windows overlook the city below, offering a clear view of Frostfang's
+  streets, walls, and harbor through the drifting snow. Though plainly furnished compared
+  to the grand halls downstairs, every detail of the office speaks to discipline,
+  responsibility, and the endless work of governing a harsh frontier city.
+mapsymbol: ☖
+biome: house
+containers:
+  chest: {}
+exits:
+  east:
+    roomid: 1068
+tags:
+- elected officials only
+mapx: -5
+mapy: -3
+mapz: 1
+hascoordinates: true

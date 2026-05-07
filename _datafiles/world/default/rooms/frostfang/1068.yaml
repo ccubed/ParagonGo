@@ -1,0 +1,30 @@
+roomid: 1068
+zone: Frostfang
+title: The Mayors House - Upstairs
+description: As you make your way upstairs, the grand atmosphere of the mayor's house
+  gives way to a quieter sense of private dignity. The hallway stretches beneath a
+  vaulted wooden ceiling supported by dark timber beams, its polished floors softened
+  by long crimson runners embroidered with the crest of Frostfang. Brass lanterns
+  mounted at even intervals cast a steady amber glow across framed portraits of past
+  mayors, respected warriors, and notable figures from the city's history. Several
+  finely crafted doors line the corridor, each marked with subtle carvings that hint
+  at guest chambers, studies, and personal quarters beyond. Tall windows at the far
+  end overlook the snow-covered streets of Frostfang, allowing pale northern light
+  to mingle with the warmth inside. The upper hall feels calm and orderly, a place
+  removed from the bustle of governance below while still carrying the weight of responsibility
+  and tradition.
+mapsymbol: ☖
+biome: house
+exits:
+  down:
+    roomid: 785
+  north:
+    roomid: 1069
+  west:
+    roomid: 1070
+tags:
+- elected officials only
+mapx: -4
+mapy: -3
+mapz: 1
+hascoordinates: true

@@ -287,32 +287,37 @@
                 MapperState.toggleRoomSelection(id);
             } else {
                 MapperState.selectRoom(id);
-                var room = MapperState.data.rooms.get(id);
-                var target = { type: 'room', roomId: id, room: room, gx: room ? room.MapX : 0, gy: room ? room.MapY : 0, gz: room ? room.MapZ : 0 };
-                MapperCtxMenu.show(e.clientX, e.clientY, target);
-                e.stopPropagation();
             }
         } else {
             MapperState.selectRoom(null);
-            if (MapperState.data.rooms.size > 0) {
-                var gc = MapperRender.canvasToGrid(cx, cy);
-                var cZ = MapperRender.currentZ();
-                if (!MapperRender.gridCellOccupied(gc.gx, gc.gy, cZ)) {
-                    var target2 = { type: 'empty', roomId: null, room: null, gx: gc.gx, gy: gc.gy, gz: cZ };
-                    MapperCtxMenu.show(e.clientX, e.clientY, target2);
-                    e.stopPropagation();
-                }
-            }
         }
     });
 
-    // Right-click cancels special tool modes instead of opening browser menu
+    // Right-click: cancel special tool modes, or open the context menu.
     canvas.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         e.stopPropagation();
         var activeTool = MapperTools.getActive();
         if (activeTool && activeTool.name === 'quick-build') { MapperTools.activate('pan'); return; }
         if (activeTool && activeTool.name === 'exit-draw') { MapperTools.activate('pan'); return; }
+
+        var rect = _getCanvasRect();
+        var cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+        var id = MapperRender.roomAtPoint(cx, cy);
+
+        if (id !== null) {
+            MapperState.selectRoom(id);
+            var room = MapperState.data.rooms.get(id);
+            var target = { type: 'room', roomId: id, room: room, gx: room ? room.MapX : 0, gy: room ? room.MapY : 0, gz: room ? room.MapZ : 0 };
+            MapperCtxMenu.show(e.clientX, e.clientY, target);
+        } else if (MapperState.data.rooms.size > 0) {
+            var gc = MapperRender.canvasToGrid(cx, cy);
+            var cZ = MapperRender.currentZ();
+            if (!MapperRender.gridCellOccupied(gc.gx, gc.gy, cZ)) {
+                var target2 = { type: 'empty', roomId: null, room: null, gx: gc.gx, gy: gc.gy, gz: cZ };
+                MapperCtxMenu.show(e.clientX, e.clientY, target2);
+            }
+        }
     });
 
     // Wheel zoom: accumulate delta across rapid scroll events and apply once

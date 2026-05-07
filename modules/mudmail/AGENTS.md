@@ -10,7 +10,7 @@
 - Preserve inbox storage compatibility unless the task explicitly includes a migration.
 - Be careful with offline delivery and legacy inbox migration. Those paths are easy to break without immediate local symptoms.
 - Keep admin API behavior, admin UI behavior, and inbox side effects aligned when changing message create/read/delete flow.
-- Other modules should continue using the exported inbox function rather than bypassing the module’s storage path.
+- Other modules should continue using the exported inbox function rather than bypassing the module's storage path.
 
 ## Verification
 

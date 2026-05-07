@@ -10,6 +10,8 @@
  *
  * Slots are organized by distance tier (1, 2, 3) and fade progressively
  * so the nearest directions are the most prominent.
+ *
+ * Copied traits: Title, Description, Symbol, Biome, Legend.
  */
 /* jshint esversion: 11, browser: true */
 /* globals MapperTools, MapperCtxMenu, MapperState, MapperRender,
@@ -86,6 +88,7 @@
         var newRoom = MapperState.data.rooms.get(newId);
         if (srcRoom && newRoom) {
             newRoom.Title = srcRoom.Title;
+            newRoom.Description = srcRoom.Description;
             newRoom.Biome = srcRoom.Biome;
             newRoom.MapSymbol = srcRoom.MapSymbol;
             newRoom.MapLegend = srcRoom.MapLegend;
