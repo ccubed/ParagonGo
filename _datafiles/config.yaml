@@ -82,7 +82,7 @@ Server:
   - Server.NextRoomId
   - Server.Seed
   - Server.OnLoginCommands
-  - Server.BannedNames
+  - Validation.BannedNames
 
 ################################################################################
 #
@@ -192,7 +192,7 @@ FilePaths:
   # - PublicHtml -
   #   The folder where all web html files/templates reside.
   PublicHtml: _datafiles/html/public
-  # - PublicHtml -
+  # - AdminHtml -
   #   The folder where all web ADMIN files/templates reside.
   AdminHtml: _datafiles/html/admin
   # - CarefulSaveFiles -
@@ -247,8 +247,7 @@ GamePlay:
     #   What penalty is applies to a players XP when they die.
     #   none - no penalty
     #   level - lose all XP gained over their current level.
-    #   10% - lose 10% of XP
-    #   50% - lose 50% of XP
+    #   10%, 25%, 50%, 75%, 90%, 100% - lose that percentage of total XP
     XPPenalty: none
     # - ProtectionLevels -
     #   Players do not incur death penalties up to and including this level.
@@ -370,13 +369,13 @@ TextFormats:
   #   Default prompt formatting.
   #   See: "help prompt" in game to learn more about this.
   Prompt: '{8}[{t} {T} {255}HP:{hp}{8}/{HP} {255}MP:{13}{mp}{8}/{13}{MP}{8}]{239}{h}{8}:'
-  # - TimeFormat -
+  # - Time -
   #   When real world time is shown, what format should be used?
   #   This uses a Go time format string, which is kinda weird.
   #   See: https://go.dev/src/time/format.go
   Time: 'Monday, 02-Jan-2006 3:04:05PM'
-  # - TimeFormatShort -
-  #   Same as TimeFormat, but shorter form
+  # - TimeShort -
+  #   Same as Time, but shorter form
   TimeShort: 'Jan 2 ''06 3:04PM'
   # - EnterRoomMessageWrapper -
   #   Decorate entrance text with this. Put a %s where the message should be.
