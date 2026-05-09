@@ -342,7 +342,7 @@ func LoadColorPatterns() {
 
 	start := time.Now()
 
-	path := string(configs.GetFilePathsConfig().DataFiles) + `/color-patterns.yaml`
+	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles) + `/color-patterns.yaml`)
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {

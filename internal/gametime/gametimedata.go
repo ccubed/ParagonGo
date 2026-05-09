@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert/yaml"
 )
@@ -95,7 +96,7 @@ func LoadGameTimeConfigs() {
 
 	start := time.Now()
 
-	path := string(configs.GetFilePathsConfig().DataFiles) + `/gametime.yaml`
+	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles) + `/gametime.yaml`)
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {

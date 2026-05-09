@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func SaveSpellSpec(spec *SpellData) error {
@@ -36,7 +37,7 @@ func DeleteSpellSpec(spellId string) error {
 		return fmt.Errorf("spell %q not found", spellId)
 	}
 
-	basePath := configs.GetFilePathsConfig().DataFiles.String() + `/spells/`
+	basePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/spells/`)
 
 	yamlPath := basePath + spec.Filepath()
 	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {

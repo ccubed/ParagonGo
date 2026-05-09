@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -125,7 +126,7 @@ func DeleteAttackMessage(subtype ItemSubType, intensity Intensity, proximity, ta
 }
 
 func SaveAttackMessageGroup(group *WeaponAttackMessageGroup) error {
-	basePath := configs.GetFilePathsConfig().DataFiles.String() + `/combat-messages/`
+	basePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/combat-messages/`)
 	filePath := basePath + group.Filepath()
 
 	sectionComments := extractCombatComments(filePath)
@@ -232,7 +233,7 @@ func DeleteItemSpec(itemId int) error {
 		return fmt.Errorf("item %d not found", itemId)
 	}
 
-	basePath := configs.GetFilePathsConfig().DataFiles.String() + `/items/`
+	basePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/items/`)
 
 	yamlPath := basePath + spec.Filepath()
 	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {

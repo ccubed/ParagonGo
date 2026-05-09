@@ -255,7 +255,7 @@ func main() {
 
 	// Load the round count from the file
 	if !isCopyover {
-		if util.LoadRoundCount(c.FilePaths.DataFiles.String()+`/`+util.RoundCountFilename) == util.RoundCountMinimum {
+		if util.LoadRoundCount(util.FilePath(c.FilePaths.DataFiles.String()+`/`+util.RoundCountFilename)) == util.RoundCountMinimum {
 			gametime.SetToDay(-3)
 		}
 	}
@@ -379,7 +379,7 @@ func main() {
 
 	serverAlive.Store(false) // immediately stop processing incoming connections
 
-	util.SaveRoundCount(c.FilePaths.DataFiles.String() + `/` + util.RoundCountFilename)
+	util.SaveRoundCount(util.FilePath(c.FilePaths.DataFiles.String() + `/` + util.RoundCountFilename))
 
 	// some last minute stats reporting
 	totalConnections, totalDisconnections := connections.Stats()

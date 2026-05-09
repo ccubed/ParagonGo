@@ -7,13 +7,15 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func httpsIndex(w http.ResponseWriter, r *http.Request) {
+	tmlPath := configs.GetFilePathsConfig().AdminHtml.String()
 	tmpl, err := template.New("https.html").Funcs(funcMap).ParseFiles(
-		configs.GetFilePathsConfig().AdminHtml.String()+"/_header.html",
-		configs.GetFilePathsConfig().AdminHtml.String()+"/https.html",
-		configs.GetFilePathsConfig().AdminHtml.String()+"/_footer.html",
+		util.FilePath(tmlPath+"/_header.html"),
+		util.FilePath(tmlPath+"/https.html"),
+		util.FilePath(tmlPath+"/_footer.html"),
 	)
 	if err != nil {
 		mudlog.Error("HTML Template", "error", err)

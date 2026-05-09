@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // SaveQuest persists a Quest to its data file and updates the in-memory cache.
@@ -39,7 +40,7 @@ func DeleteQuest(questId int) error {
 		return fmt.Errorf("quest %d not found", questId)
 	}
 
-	yamlPath := configs.GetFilePathsConfig().DataFiles.String() + `/quests/` + q.Filepath()
+	yamlPath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/quests/` + q.Filepath())
 	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("removing quest yaml: %w", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -46,7 +47,7 @@ func DeleteColorPattern(name string) error {
 }
 
 func saveColorPatternsFile() error {
-	path := configs.GetFilePathsConfig().DataFiles.String() + `/color-patterns.yaml`
+	path := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/color-patterns.yaml`)
 	bytes, err := yaml.Marshal(numericPatterns)
 	if err != nil {
 		return fmt.Errorf("marshaling color patterns: %w", err)

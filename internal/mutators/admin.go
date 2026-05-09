@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 var validMutatorIdPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
@@ -126,7 +127,7 @@ func DeleteMutatorSpec(mutatorId string) error {
 		return fmt.Errorf("mutator not found: %s", mutatorId)
 	}
 
-	basePath := configs.GetFilePathsConfig().DataFiles.String() + `/mutators/`
+	basePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/mutators/`)
 
 	yamlPath := basePath + spec.Filepath()
 	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {

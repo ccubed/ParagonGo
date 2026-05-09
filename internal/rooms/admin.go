@@ -278,7 +278,7 @@ func SaveZoneConfigForAdmin(name string, cfg *ZoneConfig) error {
 		return err
 	}
 
-	roomsBasePath := configs.GetFilePathsConfig().DataFiles.String() + `/rooms`
+	roomsBasePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/rooms`)
 
 	saveModes := []fileloader.SaveOption{}
 	if configs.GetFilePathsConfig().CarefulSaveFiles {

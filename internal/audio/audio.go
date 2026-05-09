@@ -10,6 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -70,7 +71,7 @@ func SaveAudio(entries map[string]AudioConfig) error {
 		return fmt.Errorf("audio entries cannot be nil")
 	}
 
-	path := configs.GetFilePathsConfig().DataFiles.String() + `/audio.yaml`
+	path := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/audio.yaml`)
 
 	bytes, err := yaml.Marshal(entries)
 	if err != nil {
@@ -93,7 +94,7 @@ func LoadAudioConfig() {
 
 	start := time.Now()
 
-	path := string(configs.GetFilePathsConfig().DataFiles) + `/audio.yaml`
+	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles) + `/audio.yaml`)
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {

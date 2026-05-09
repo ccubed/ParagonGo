@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // GetAllBuffSpecs returns a copy of all loaded buff specs keyed by buffId.
@@ -49,7 +50,7 @@ func DeleteBuffSpec(buffId int) error {
 		return fmt.Errorf("buff %d not found", buffId)
 	}
 
-	basePath := configs.GetFilePathsConfig().DataFiles.String() + `/buffs/`
+	basePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String() + `/buffs/`)
 
 	yamlPath := basePath + spec.Filepath()
 	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {
