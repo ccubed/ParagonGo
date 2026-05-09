@@ -519,9 +519,10 @@ func Load(dataFilesPath string) {
 
 		// Register module admin pages and API endpoints.
 		if moduleAdminRegistrar != nil {
+
 			for _, page := range p.Web.adminPages {
 				htmlContent := ""
-				if b, err := p.files.ReadFile(page.HTMLFile); err == nil {
+				if b, err := p.files.ReadFile(util.FilePath(page.HTMLFile)); err == nil {
 					htmlContent = string(b)
 				} else {
 					mudlog.Error("plugins", "admin page html not found", page.HTMLFile, "plugin", p.name)
