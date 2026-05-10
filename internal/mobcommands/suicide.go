@@ -300,6 +300,12 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		for _, item := range mob.Character.Items {
 			msg := fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName())
 			room.SendText(msg)
+			events.AddToQueue(events.MobItemDrop{
+				MobId:  int(mob.MobId),
+				RoomId: room.RoomId,
+				Zone:   mob.Character.Zone,
+				ItemId: item.ItemId,
+			})
 			room.AddItem(item, false)
 		}
 
@@ -317,6 +323,12 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			msg := fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName())
 			room.SendText(msg)
+			events.AddToQueue(events.MobItemDrop{
+				MobId:  int(mob.MobId),
+				RoomId: room.RoomId,
+				Zone:   mob.Character.Zone,
+				ItemId: item.ItemId,
+			})
 			room.AddItem(item, false)
 		}
 

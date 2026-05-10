@@ -48,6 +48,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/suggestions"
+	"github.com/GoMudEngine/GoMud/internal/telemetry"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -211,6 +212,9 @@ func main() {
 	})
 
 	hooks.RegisterListeners()
+
+	telemetry.Load(configs.GetFilePathsConfig().DataFiles.String())
+	telemetry.RegisterListeners()
 
 	// Discord integration
 	if webhookUrl := string(c.Integrations.Discord.WebhookUrl); webhookUrl != "" {

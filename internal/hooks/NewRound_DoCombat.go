@@ -1110,6 +1110,9 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 			if user.Character.Health <= -10 {
 
+				if user.Character.Aggro != nil && user.Character.Aggro.MobInstanceId > 0 {
+					user.Character.KillerMobInstanceId = user.Character.Aggro.MobInstanceId
+				}
 				user.Command(`suicide`) // suicide drops all money/items and transports to land of the dead.
 
 			} else if user.Character.Health < 1 {

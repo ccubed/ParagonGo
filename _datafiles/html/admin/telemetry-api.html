@@ -1,0 +1,129 @@
+{{template "header" .}}
+
+<style>
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .api-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .api-entry { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+    .api-entry summary { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.65rem 1rem; cursor: pointer; user-select: none; list-style: none; }
+    .api-entry summary::-webkit-details-marker { display: none; }
+    .api-entry summary::before { content: "\25B6"; font-size: 0.65rem; color: var(--color-text-faint); transition: transform 0.15s; flex-shrink: 0; }
+    .api-entry[open] summary::before { transform: rotate(90deg); }
+    .api-entry summary:hover { background: var(--color-surface-alt); }
+    .method { font-family: monospace; font-size: 0.8rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; flex-shrink: 0; }
+    .method-get    { background: var(--color-success-bg); color: var(--color-success-text); }
+    .method-delete { background: var(--color-error-bg); color: var(--color-error-text); }
+    .api-path { font-family: monospace; font-size: 0.9rem; color: var(--color-primary); }
+    .api-desc { font-size: 0.85rem; color: var(--color-text-muted); margin-left: auto; text-align: right; }
+    .api-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
+    .api-body p { font-size: 0.85rem; color: var(--color-text-tertiary); margin-bottom: 0.5rem; }
+    .curl-block { background: var(--color-code-bg); color: var(--color-code-text); font-family: monospace; font-size: 0.82rem; padding: 0.85rem 1rem; border-radius: 5px; white-space: pre; overflow-x: auto; line-height: 1.6; margin-bottom: 0.5rem; }
+    .curl-block .kw   { color: var(--color-api-kw); }
+    .curl-block .str  { color: var(--color-api-str); }
+    .curl-block .flag { color: var(--color-api-flag); }
+    .response-examples { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .resp-entry { border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden; }
+    .resp-entry summary { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.45rem 0.75rem; cursor: pointer; user-select: none; list-style: none; background: var(--color-page-bg); font-size: 0.82rem; }
+    .resp-entry summary::-webkit-details-marker { display: none; }
+    .resp-entry summary::before { content: "\25B6"; font-size: 0.6rem; color: var(--color-text-faint); transition: transform 0.15s; flex-shrink: 0; }
+    .resp-entry[open] summary::before { transform: rotate(90deg); }
+    .resp-entry summary:hover { background: var(--color-api-summary-hover); }
+    .resp-body { padding: 0.6rem 0.75rem 0.75rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
+    .resp-body p { font-size: 0.82rem; color: var(--color-text-tertiary); margin-bottom: 0.4rem; }
+    .status-ok  { background: var(--color-success-bg); color: var(--color-success-text); }
+    .status-err { background: var(--color-error-bg); color: var(--color-error-text); }
+    .resp-label { font-size: 0.8rem; color: var(--color-text-tertiary); }
+    code { background: var(--color-border-faint); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
+    .params-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin: 0.6rem 0 0.25rem; }
+    .params-table th { text-align: left; padding: 0.3rem 0.6rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
+    .params-table td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--color-border-faint); vertical-align: top; }
+    .params-table tr:last-child td { border-bottom: none; }
+    .param-name { font-family: monospace; color: var(--color-primary); }
+    .param-opt  { font-size: 0.72rem; color: var(--color-text-faint); }
+</style>
+
+<h1>Telemetry API Reference</h1>
+<p class="subtitle">REST endpoints for querying and clearing aggregated game event counters.</p>
+
+<div class="api-list">
+
+    <details class="api-entry" open>
+        <summary>
+            <span class="method method-get">GET</span>
+            <span class="api-path">/admin/api/v1/telemetry</span>
+            <span class="api-desc">Query telemetry records</span>
+        </summary>
+        <div class="api-body">
+            <p>Returns an array of <code>Record</code> objects matching the supplied filters. All parameters are optional; omitting a parameter matches any value for that field. Results are sorted by <code>count</code> descending by default.</p>
+            <table class="params-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td class="param-name">category</td><td>string <span class="param-opt">optional</span></td><td>One of <code>item_drop</code>, <code>item_pickup</code>, <code>mob_kill</code>, <code>player_death</code>, <code>item_purchase</code></td></tr>
+                    <tr><td class="param-name">itemId</td><td>int <span class="param-opt">optional</span></td><td>Filter by item spec ID</td></tr>
+                    <tr><td class="param-name">mobId</td><td>int <span class="param-opt">optional</span></td><td>Filter by mob spec ID</td></tr>
+                    <tr><td class="param-name">roomId</td><td>int <span class="param-opt">optional</span></td><td>Filter by room ID</td></tr>
+                    <tr><td class="param-name">zone</td><td>string <span class="param-opt">optional</span></td><td>Exact zone name match</td></tr>
+                    <tr><td class="param-name">date</td><td>string <span class="param-opt">optional</span></td><td>Exact date <code>YYYYMMDD</code>. Shorthand for <code>dateFrom</code> + <code>dateTo</code> set to the same value.</td></tr>
+                    <tr><td class="param-name">dateFrom</td><td>string <span class="param-opt">optional</span></td><td>Start of date range <code>YYYYMMDD</code>, inclusive</td></tr>
+                    <tr><td class="param-name">dateTo</td><td>string <span class="param-opt">optional</span></td><td>End of date range <code>YYYYMMDD</code>, inclusive</td></tr>
+                    <tr><td class="param-name">sort</td><td>string <span class="param-opt">optional</span></td><td><code>asc</code> or <code>desc</code> (default <code>desc</code>). Sorts by <code>count</code>.</td></tr>
+                </tbody>
+            </table>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="str">"http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/telemetry?category=item_drop&amp;sort=desc"</span></div>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="str">"http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/telemetry?category=mob_kill&amp;zone=frostfang&amp;dateFrom=20260101&amp;dateTo=20261231"</span></div>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="str">"http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/telemetry?category=item_drop&amp;itemId=42"</span></div>
+            <div class="response-examples">
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":true,"data":[
+  {"date":"20260510","category":"item_drop","itemid":42,"mobid":7,"roomid":100,"zone":"frostfang","count":14},
+  {"date":"20260510","category":"item_drop","itemid":42,"mobid":12,"roomid":105,"zone":"frostfang","count":3}
+]}</div></div>
+                </details>
+            </div>
+        </div>
+    </details>
+
+    <details class="api-entry">
+        <summary>
+            <span class="method method-delete">DELETE</span>
+            <span class="api-path">/admin/api/v1/telemetry</span>
+            <span class="api-desc">Clear matching telemetry records</span>
+        </summary>
+        <div class="api-body">
+            <p>Removes all records matching the supplied filters and saves the result to disk. Omit all parameters to clear every record. Accepts the same filter parameters as <code>GET</code> except <code>sort</code>.</p>
+            <table class="params-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td class="param-name">category</td><td>string <span class="param-opt">optional</span></td><td>Restrict deletion to one category</td></tr>
+                    <tr><td class="param-name">zone</td><td>string <span class="param-opt">optional</span></td><td>Restrict deletion to one zone</td></tr>
+                    <tr><td class="param-name">date</td><td>string <span class="param-opt">optional</span></td><td>Delete records for a single day <code>YYYYMMDD</code></td></tr>
+                    <tr><td class="param-name">dateFrom</td><td>string <span class="param-opt">optional</span></td><td>Start of date range to delete, inclusive</td></tr>
+                    <tr><td class="param-name">dateTo</td><td>string <span class="param-opt">optional</span></td><td>End of date range to delete, inclusive</td></tr>
+                </tbody>
+            </table>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="flag">-X</span> DELETE \
+     <span class="str">"http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/telemetry?category=item_drop&amp;date=20260101"</span></div>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="flag">-X</span> DELETE \
+     <span class="str">"http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/telemetry?dateFrom=20260101&amp;dateTo=20260131"</span></div>
+            <div class="response-examples">
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":true}</div></div>
+                </details>
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-err">500</span> <span class="resp-label">Save Error</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":false,"error":"telemetry.Save write: ..."}</div></div>
+                </details>
+            </div>
+        </div>
+    </details>
+
+</div>
+
+{{template "footer" .}}

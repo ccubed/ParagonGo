@@ -131,6 +131,7 @@ var (
 		`quit`:        {Quit, true, false},
 		`questtoken`:  {QuestToken, false, true}, // Admin only
 		`rank`:        {Rank, false, false},
+		`rankings`:    {Rankings, false, true}, // Admin only
 		`read`:        {Read, false, false},
 		`recover`:     {Recover, false, false},
 		`reload`:      {Reload, true, true}, // Admin only
@@ -159,7 +160,8 @@ var (
 		`status`:      {Status, true, false},
 
 		`suicide`:    {Suicide, true, false},
-		`syslogs`:    {SysLogs, true, true}, // Admin only
+		`syslogs`:    {SysLogs, true, true},   // Admin only
+		`telemetry`:  {Telemetry, true, true}, // Admin only
 		`tame`:       {Tame, false, false},
 		`teleport`:   {Teleport, true, true}, // Admin only
 		`throw`:      {Throw, false, false},

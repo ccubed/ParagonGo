@@ -1,0 +1,19 @@
+The <ansi fg="command">rankings</ansi> command displays balance rankings for pets, weapons, and armor.
+
+<ansi fg="command">rankings pets [combat/utility/overall]</ansi>
+  Show pet rankings. Default sort: <ansi fg="yellow">overall</ansi>
+  <ansi fg="command">combat</ansi>   - Ranked by weighted combat DPS across all levels
+  <ansi fg="command">utility</ansi>  - Ranked by stat mods, buffs, and carry capacity
+  <ansi fg="command">overall</ansi>  - Combined combat and utility score
+
+<ansi fg="command">rankings weapons [dps/dps-adj/max]</ansi>
+  Show weapon rankings. Default sort: <ansi fg="yellow">dps</ansi>
+  <ansi fg="command">dps</ansi>      - Raw expected DPS against an equal-stat opponent
+  <ansi fg="command">dps-adj</ansi>  - DPS penalized for two-handed and wait-round cost
+  <ansi fg="command">max</ansi>      - Theoretical maximum single-hit damage
+
+<ansi fg="command">rankings armor [def/def-adj/score]</ansi>
+  Show armor rankings. Default sort: <ansi fg="yellow">def</ansi>
+  <ansi fg="command">def</ansi>      - Raw DamageReduction value
+  <ansi fg="command">def-adj</ansi>  - DamageReduction adjusted for slot multiplier (shields x1.5)
+  <ansi fg="command">score</ansi>    - Unified eHP-equivalent score (defense + stats + buffs)

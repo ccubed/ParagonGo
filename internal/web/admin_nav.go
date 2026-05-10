@@ -187,11 +187,11 @@ func buildAdminNav() []WebNavItem {
 					},
 				},
 				{
-					Name:   "GameTime",
-					Target: "/admin/gametime",
+					Name:   "Telemetry",
+					Target: "/admin/telemetry",
 					SubItems: []WebNavSub{
-						{Label: "View / Edit", Target: "/admin/gametime"},
-						{Label: "API Docs", Target: "/admin/gametime-api"},
+						{Label: "View / Query", Target: "/admin/telemetry"},
+						{Label: "API Docs", Target: "/admin/telemetry-api"},
 					},
 				},
 				{
@@ -200,6 +200,14 @@ func buildAdminNav() []WebNavItem {
 					SubItems: []WebNavSub{
 						{Label: "View", Target: "/admin/stats"},
 						{Label: "API Docs", Target: "/admin/stats-api"},
+					},
+				},
+				{
+					Name:   "GameTime",
+					Target: "/admin/gametime",
+					SubItems: []WebNavSub{
+						{Label: "View / Edit", Target: "/admin/gametime"},
+						{Label: "API Docs", Target: "/admin/gametime-api"},
 					},
 				},
 				{

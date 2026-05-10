@@ -9,6 +9,14 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/scripting/functions", RunWithMUDLocked(
 		doBasicAuth(apiV1GetScriptFunctions),
 	))
+
+	// Telemetry
+	mux.HandleFunc("GET /admin/api/v1/telemetry", RunWithMUDLocked(
+		doBasicAuth(apiV1GetTelemetry),
+	))
+	mux.HandleFunc("DELETE /admin/api/v1/telemetry", RunWithMUDLocked(
+		doBasicAuth(apiV1DeleteTelemetry),
+	))
 	mux.HandleFunc("POST /admin/api/v1/scripting/validate", RunWithMUDLocked(
 		doBasicAuth(apiV1ValidateScript),
 	))

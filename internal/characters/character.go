@@ -45,55 +45,56 @@ const (
 )
 
 type Character struct {
-	Name             string                         // The name of the character
-	Description      string                         // A description of the character.
-	Adjectives       []string                       `yaml:"adjectives,omitempty"` // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
-	RoomId           int                            // The room id the character is in.
-	RoomIdOnReset    int                            // The room they are sent to if their RoomId isn't found.
-	Zone             string                         // The zone the character is in. The folder the room can be located in too.
-	RaceId           int                            // Character race
-	FormRaceId       int                            `yaml:"formraceid,omitempty"` // Temporary race override (0 = not transformed)
-	Stats            stats.Statistics               // Character stats
-	Level            int                            // The level of the character
-	Experience       int                            // The experience of the character
-	TrainingPoints   int                            // The number of training points the character has
-	StatPoints       int                            // The number of skill points the character has
-	Health           int                            // The health of the character
-	Mana             int                            // The mana of the character
-	ActionPoints     int                            // The resevoir of action points the character has to spend on movement etc.
-	Alignment        int8                           // The alignment of the character
-	Gold             int                            // The gold the character is holding
-	Bank             int                            // The gold the character has in the bank
-	Shop             Shop                           `yaml:"shop,omitempty"`          // Definition of shop services/items this character stocks (or just has at the moment)
-	SpellBook        map[string]int                 `yaml:"spellbook,omitempty"`     // The spells the character has learned
-	Charmed          *CharmInfo                     `yaml:"-"`                       // If they are charmed, this is the info
-	CharmedMobs      []int                          `yaml:"-"`                       // If they have charmed anyone, this is the list of mob instance ids
-	Items            []items.Item                   `yaml:"items,omitempty"`         // The items the character is holding
-	Buffs            buffs.Buffs                    `yaml:"buffs,omitempty"`         // The buffs the character has active
-	Equipment        Worn                           `yaml:"equipment,omitempty"`     // The equipment the character is wearing
-	TNLScale         float32                        `yaml:"-"`                       // The experience scale of the character. Don't write to yaml since is dynamically calculated.
-	HealthMax        stats.StatInfo                 `yaml:"-"`                       // The maximum health of the character. Don't write to yaml since is dynamically calculated.
-	ManaMax          stats.StatInfo                 `yaml:"-"`                       // The maximum mana of the character. Don't write to yaml since is dynamically calculated.
-	ActionPointsMax  stats.StatInfo                 `yaml:"-"`                       // The maximum actions of character. Don't write to yaml since is dynamically calculated.
-	Aggro            *Aggro                         `yaml:"-"`                       // Dont' store this. If they leave they break their aggro
-	Skills           map[string]int                 `yaml:"skills,omitempty"`        // The skills the character has, and what level they are at
-	Cooldowns        Cooldowns                      `yaml:"cooldowns,omitempty"`     // How many rounds until it is cooled down
-	Settings         map[string]string              `yaml:"settings,omitempty"`      // custom setting tracking, used for anything.
-	QuestProgress    map[int]string                 `yaml:"questprogress,omitempty"` // quest progress tracking
-	KeyRing          map[string]string              `yaml:"keyring,omitempty"`       // key is the lock id, value is the sequence
-	KD               KDStats                        `yaml:"kd,omitempty"`            // Kill/Death stats
-	MiscData         map[string]any                 `yaml:"miscdata,omitempty"`      // Any random other data that needs to be stored
-	ExtraLives       int                            `yaml:"extralives,omitempty"`    // How many lives remain. If enabled, players can perma-die if they die at zero
-	MobMastery       MobMasteries                   `yaml:"mobmastery,omitempty"`    // Tracks particular masteries around a given mob
-	Pet              pets.Pet                       `yaml:"pet,omitempty"`           // Do they have a pet?
-	Created          time.Time                      `yaml:"created"`                 // When this character was created
-	Timers           map[string]gametime.RoundTimer `yaml:"timers,omitempty"`        // any special timers added to this character
-	ZonesVisited     map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`  // permanent record of every room visited, keyed by zone name
-	roomHistory      []int                          // A stack FILO of the last X rooms the character has been in
-	PlayerDamage     map[int]int                    `yaml:"-"` // key = who, value = how much
-	LastPlayerDamage uint64                         `yaml:"-"` // last round a player damaged this character
-	permaBuffIds     []int                          // Buff Id's that are always present for this character
-	userId           int                            // User ID of the character if any
+	Name                string                         // The name of the character
+	Description         string                         // A description of the character.
+	Adjectives          []string                       `yaml:"adjectives,omitempty"` // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
+	RoomId              int                            // The room id the character is in.
+	RoomIdOnReset       int                            // The room they are sent to if their RoomId isn't found.
+	Zone                string                         // The zone the character is in. The folder the room can be located in too.
+	RaceId              int                            // Character race
+	FormRaceId          int                            `yaml:"formraceid,omitempty"` // Temporary race override (0 = not transformed)
+	Stats               stats.Statistics               // Character stats
+	Level               int                            // The level of the character
+	Experience          int                            // The experience of the character
+	TrainingPoints      int                            // The number of training points the character has
+	StatPoints          int                            // The number of skill points the character has
+	Health              int                            // The health of the character
+	Mana                int                            // The mana of the character
+	ActionPoints        int                            // The resevoir of action points the character has to spend on movement etc.
+	Alignment           int8                           // The alignment of the character
+	Gold                int                            // The gold the character is holding
+	Bank                int                            // The gold the character has in the bank
+	Shop                Shop                           `yaml:"shop,omitempty"`          // Definition of shop services/items this character stocks (or just has at the moment)
+	SpellBook           map[string]int                 `yaml:"spellbook,omitempty"`     // The spells the character has learned
+	Charmed             *CharmInfo                     `yaml:"-"`                       // If they are charmed, this is the info
+	CharmedMobs         []int                          `yaml:"-"`                       // If they have charmed anyone, this is the list of mob instance ids
+	Items               []items.Item                   `yaml:"items,omitempty"`         // The items the character is holding
+	Buffs               buffs.Buffs                    `yaml:"buffs,omitempty"`         // The buffs the character has active
+	Equipment           Worn                           `yaml:"equipment,omitempty"`     // The equipment the character is wearing
+	TNLScale            float32                        `yaml:"-"`                       // The experience scale of the character. Don't write to yaml since is dynamically calculated.
+	HealthMax           stats.StatInfo                 `yaml:"-"`                       // The maximum health of the character. Don't write to yaml since is dynamically calculated.
+	ManaMax             stats.StatInfo                 `yaml:"-"`                       // The maximum mana of the character. Don't write to yaml since is dynamically calculated.
+	ActionPointsMax     stats.StatInfo                 `yaml:"-"`                       // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	Aggro               *Aggro                         `yaml:"-"`                       // Dont' store this. If they leave they break their aggro
+	Skills              map[string]int                 `yaml:"skills,omitempty"`        // The skills the character has, and what level they are at
+	Cooldowns           Cooldowns                      `yaml:"cooldowns,omitempty"`     // How many rounds until it is cooled down
+	Settings            map[string]string              `yaml:"settings,omitempty"`      // custom setting tracking, used for anything.
+	QuestProgress       map[int]string                 `yaml:"questprogress,omitempty"` // quest progress tracking
+	KeyRing             map[string]string              `yaml:"keyring,omitempty"`       // key is the lock id, value is the sequence
+	KD                  KDStats                        `yaml:"kd,omitempty"`            // Kill/Death stats
+	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`      // Any random other data that needs to be stored
+	ExtraLives          int                            `yaml:"extralives,omitempty"`    // How many lives remain. If enabled, players can perma-die if they die at zero
+	MobMastery          MobMasteries                   `yaml:"mobmastery,omitempty"`    // Tracks particular masteries around a given mob
+	Pet                 pets.Pet                       `yaml:"pet,omitempty"`           // Do they have a pet?
+	Created             time.Time                      `yaml:"created"`                 // When this character was created
+	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`        // any special timers added to this character
+	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`  // permanent record of every room visited, keyed by zone name
+	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
+	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
+	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
+	KillerMobInstanceId int                            `yaml:"-"` // transient: mob instance that delivered the killing blow
+	permaBuffIds        []int                          // Buff Id's that are always present for this character
+	userId              int                            // User ID of the character if any
 }
 
 func New() *Character {

@@ -286,6 +286,7 @@ type PlayerDeath struct {
 	CharacterName string
 	Permanent     bool
 	KilledByUsers []int
+	KillerMobId   int // mob spec ID of the killing mob; 0 if killed by a player or unknown
 }
 
 func (l PlayerDeath) Type() string { return `PlayerDeath` }
@@ -436,6 +437,16 @@ type Purchase struct {
 }
 
 func (p Purchase) Type() string { return `Purchase` }
+
+// Fired for each item that actually drops from a mob on death.
+type MobItemDrop struct {
+	MobId  int
+	RoomId int
+	Zone   string
+	ItemId int
+}
+
+func (m MobItemDrop) Type() string { return `MobItemDrop` }
 
 // If a potentially fire-starting event occured in this room
 type FireBlaze struct {

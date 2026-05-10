@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -90,6 +91,14 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	allowPenalties := user.Character.Level > int(config.Death.ProtectionLevels)
 
+	killerMobId := 0
+	if user.Character.KillerMobInstanceId > 0 {
+		if killerMob := mobs.GetInstance(user.Character.KillerMobInstanceId); killerMob != nil {
+			killerMobId = int(killerMob.MobId)
+		}
+		user.Character.KillerMobInstanceId = 0
+	}
+
 	events.AddToQueue(events.PlayerDeath{
 		UserId:        user.UserId,
 		RoomId:        user.Character.RoomId,
@@ -97,6 +106,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		CharacterName: user.Character.Name,
 		Permanent:     allowPenalties && bool(config.Death.PermaDeath) && user.Character.ExtraLives == 0,
 		KilledByUsers: killedByUserIds,
+		KillerMobId:   killerMobId,
 	})
 
 	// If permadeath is enabled, do some extra bookkeeping
