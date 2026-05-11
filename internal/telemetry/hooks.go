@@ -13,6 +13,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.MobDeath{}, onMobDeath)
 	events.RegisterListener(events.PlayerDeath{}, onPlayerDeath)
 	events.RegisterListener(events.Purchase{}, onPurchase)
+	events.RegisterListener(events.CharacterCreated{}, onCharacterCreated)
 }
 
 func onMobItemDrop(e events.Event) events.ListenerReturn {
@@ -93,5 +94,20 @@ func onPurchase(e events.Event) events.ListenerReturn {
 	}
 
 	Track(CatItemPurchase, "", evt.ItemId, evt.SellerMobId, 0)
+	return events.Continue
+}
+
+func onCharacterCreated(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.CharacterCreated)
+	if !ok {
+		return events.Continue
+	}
+
+	raceId := 0
+	if user := users.GetByUserId(evt.UserId); user != nil {
+		raceId = user.Character.RaceId
+	}
+
+	TrackFull(CatCharCreated, "", 0, 0, 0, raceId, "")
 	return events.Continue
 }

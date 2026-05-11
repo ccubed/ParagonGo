@@ -18,10 +18,12 @@ const (
 	CatMobKill      = "mob_kill"
 	CatPlayerDeath  = "player_death"
 	CatItemPurchase = "item_purchase"
+	CatCharCreated  = "char_created"
+	CatHelpTopic    = "help_topic"
 )
 
 // Record holds a single aggregated counter for a unique combination of
-// (Date, Category, ItemId, MobId, RoomId, Zone).
+// (Date, Category, ItemId, MobId, RoomId, Zone, RaceId, Topic).
 type Record struct {
 	Date     string `yaml:"date"             json:"date"`
 	Category string `yaml:"category"         json:"category"`
@@ -29,6 +31,8 @@ type Record struct {
 	MobId    int    `yaml:"mobid,omitempty"  json:"mobid,omitempty"`
 	RoomId   int    `yaml:"roomid,omitempty" json:"roomid,omitempty"`
 	Zone     string `yaml:"zone,omitempty"   json:"zone,omitempty"`
+	RaceId   int    `yaml:"raceid,omitempty" json:"raceid,omitempty"`
+	Topic    string `yaml:"topic,omitempty"  json:"topic,omitempty"`
 	Count    int    `yaml:"count"            json:"count"`
 }
 
@@ -81,7 +85,7 @@ func Load(dataFilesPath string) {
 
 		for _, r := range loaded {
 			records = append(records, r)
-			index[recordKey(r.Date, r.Category, r.Zone, r.ItemId, r.MobId, r.RoomId)] = len(records) - 1
+			index[recordKey(r.Date, r.Category, r.Zone, r.ItemId, r.MobId, r.RoomId, r.RaceId, r.Topic)] = len(records) - 1
 		}
 		fileCount++
 	}
@@ -149,10 +153,16 @@ func Save() error {
 }
 
 // Track increments the counter for the given combination. Zero values for
-// numeric fields mean "not applicable" for that field.
+// numeric fields and empty strings mean "not applicable" for that field.
 func Track(category, zone string, itemId, mobId, roomId int) {
+	TrackFull(category, zone, itemId, mobId, roomId, 0, "")
+}
+
+// TrackFull is like Track but also accepts the optional raceId and topic
+// dimensions used by char_created and help_topic records.
+func TrackFull(category, zone string, itemId, mobId, roomId, raceId int, topic string) {
 	date := time.Now().Format("20060102")
-	key := recordKey(date, category, zone, itemId, mobId, roomId)
+	key := recordKey(date, category, zone, itemId, mobId, roomId, raceId, topic)
 
 	if i, ok := index[key]; ok {
 		records[i].Count++
@@ -167,6 +177,8 @@ func Track(category, zone string, itemId, mobId, roomId int) {
 		MobId:    mobId,
 		RoomId:   roomId,
 		Zone:     zone,
+		RaceId:   raceId,
+		Topic:    topic,
 		Count:    1,
 	})
 	index[key] = len(records) - 1
@@ -179,7 +191,7 @@ func Track(category, zone string, itemId, mobId, roomId int) {
 func Clear(category, zone, date, dateTo string, itemId, mobId, roomId int) {
 	kept := make([]Record, 0, len(records))
 	for _, r := range records {
-		if matchesFilter(r, category, zone, date, dateTo, itemId, mobId, roomId) {
+		if matchesFilter(r, category, zone, date, dateTo, itemId, mobId, roomId, 0, "") {
 			dirty[r.Date] = true
 			continue
 		}
@@ -202,16 +214,16 @@ func Len() int {
 func rebuildIndex() {
 	index = make(map[string]int, len(records))
 	for i, r := range records {
-		index[recordKey(r.Date, r.Category, r.Zone, r.ItemId, r.MobId, r.RoomId)] = i
+		index[recordKey(r.Date, r.Category, r.Zone, r.ItemId, r.MobId, r.RoomId, r.RaceId, r.Topic)] = i
 	}
 }
 
-func recordKey(date, category, zone string, itemId, mobId, roomId int) string {
-	return fmt.Sprintf("%s|%s|%s|%d|%d|%d", date, category, zone, itemId, mobId, roomId)
+func recordKey(date, category, zone string, itemId, mobId, roomId, raceId int, topic string) string {
+	return fmt.Sprintf("%s|%s|%s|%d|%d|%d|%d|%s", date, category, zone, itemId, mobId, roomId, raceId, topic)
 }
 
 // matchesFilter returns true when r matches all non-zero/non-empty filter values.
-func matchesFilter(r Record, category, zone, date, dateTo string, itemId, mobId, roomId int) bool {
+func matchesFilter(r Record, category, zone, date, dateTo string, itemId, mobId, roomId, raceId int, topic string) bool {
 	if category != "" && r.Category != category {
 		return false
 	}
@@ -231,6 +243,12 @@ func matchesFilter(r Record, category, zone, date, dateTo string, itemId, mobId,
 		return false
 	}
 	if roomId != 0 && r.RoomId != roomId {
+		return false
+	}
+	if raceId != 0 && r.RaceId != raceId {
+		return false
+	}
+	if topic != "" && r.Topic != topic {
 		return false
 	}
 	return true

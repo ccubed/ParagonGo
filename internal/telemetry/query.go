@@ -15,6 +15,8 @@ const (
 	GroupByRoomId
 	GroupByDate
 	GroupByCategory
+	GroupByRaceId
+	GroupByTopic
 )
 
 // QueryBuilder builds a filtered, optionally sorted query over telemetry records.
@@ -27,6 +29,8 @@ type QueryBuilder struct {
 	itemId     int
 	mobId      int
 	roomId     int
+	raceId     int
+	topic      string
 	descSort   bool
 	hasSort    bool
 	groupBy    GroupByField
@@ -38,6 +42,8 @@ func (q *QueryBuilder) Zone(z string) *QueryBuilder     { q.zone = z; return q }
 func (q *QueryBuilder) ItemId(id int) *QueryBuilder     { q.itemId = id; return q }
 func (q *QueryBuilder) MobId(id int) *QueryBuilder      { q.mobId = id; return q }
 func (q *QueryBuilder) RoomId(id int) *QueryBuilder     { q.roomId = id; return q }
+func (q *QueryBuilder) RaceId(id int) *QueryBuilder     { q.raceId = id; return q }
+func (q *QueryBuilder) Topic(t string) *QueryBuilder    { q.topic = t; return q }
 
 // Date filters to an exact YYYYMMDD date.
 func (q *QueryBuilder) Date(d string) *QueryBuilder { q.dateFrom = d; q.dateTo = d; return q }
@@ -69,7 +75,7 @@ func (q *QueryBuilder) GroupBy(field GroupByField) *QueryBuilder {
 func (q *QueryBuilder) Results() []Record {
 	out := make([]Record, 0)
 	for _, r := range records {
-		if !matchesFilter(r, q.category, q.zone, q.dateFrom, q.dateTo, q.itemId, q.mobId, q.roomId) {
+		if !matchesFilter(r, q.category, q.zone, q.dateFrom, q.dateTo, q.itemId, q.mobId, q.roomId, q.raceId, q.topic) {
 			continue
 		}
 		out = append(out, r)
@@ -95,7 +101,7 @@ func (q *QueryBuilder) Results() []Record {
 func (q *QueryBuilder) Total() int {
 	total := 0
 	for _, r := range records {
-		if matchesFilter(r, q.category, q.zone, q.dateFrom, q.dateTo, q.itemId, q.mobId, q.roomId) {
+		if matchesFilter(r, q.category, q.zone, q.dateFrom, q.dateTo, q.itemId, q.mobId, q.roomId, q.raceId, q.topic) {
 			total += r.Count
 		}
 	}
@@ -130,6 +136,10 @@ func rollup(src []Record, field GroupByField) []Record {
 				proto.Date = r.Date
 			case GroupByCategory:
 				proto.Category = r.Category
+			case GroupByRaceId:
+				proto.RaceId = r.RaceId
+			case GroupByTopic:
+				proto.Topic = r.Topic
 			}
 			buckets[key] = &bucket{rec: proto, count: r.Count}
 			order = append(order, key)
@@ -159,6 +169,10 @@ func rollupKey(r Record, field GroupByField) string {
 		return r.Date
 	case GroupByCategory:
 		return r.Category
+	case GroupByRaceId:
+		return fmt.Sprintf("%d", r.RaceId)
+	case GroupByTopic:
+		return r.Topic
 	}
 	return ""
 }

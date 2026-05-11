@@ -352,3 +352,57 @@ func TestOnMobDeath_TracksPlayerKill(t *testing.T) {
 	assert.Equal(t, CatMobKill, records[0].Category)
 	assert.Equal(t, 7, records[0].MobId)
 }
+
+func TestTrackFull_CharCreated_ByRace(t *testing.T) {
+	resetState()
+
+	TrackFull(CatCharCreated, "", 0, 0, 0, 3, "")
+	TrackFull(CatCharCreated, "", 0, 0, 0, 3, "")
+	TrackFull(CatCharCreated, "", 0, 0, 0, 5, "")
+
+	require.Len(t, records, 2)
+
+	results := Query().Category(CatCharCreated).GroupBy(GroupByRaceId).SortDesc().Results()
+	require.Len(t, results, 2)
+	assert.Equal(t, 3, results[0].RaceId)
+	assert.Equal(t, 2, results[0].Count)
+	assert.Equal(t, 5, results[1].RaceId)
+	assert.Equal(t, 1, results[1].Count)
+}
+
+func TestTrackFull_CharCreated_FilterByRaceId(t *testing.T) {
+	resetState()
+
+	TrackFull(CatCharCreated, "", 0, 0, 0, 3, "")
+	TrackFull(CatCharCreated, "", 0, 0, 0, 5, "")
+
+	total := Query().Category(CatCharCreated).RaceId(3).Total()
+	assert.Equal(t, 1, total)
+}
+
+func TestTrackFull_HelpTopic(t *testing.T) {
+	resetState()
+
+	TrackFull(CatHelpTopic, "", 0, 0, 0, 0, "attack")
+	TrackFull(CatHelpTopic, "", 0, 0, 0, 0, "attack")
+	TrackFull(CatHelpTopic, "", 0, 0, 0, 0, "spells")
+
+	require.Len(t, records, 2)
+
+	results := Query().Category(CatHelpTopic).GroupBy(GroupByTopic).SortDesc().Results()
+	require.Len(t, results, 2)
+	assert.Equal(t, "attack", results[0].Topic)
+	assert.Equal(t, 2, results[0].Count)
+	assert.Equal(t, "spells", results[1].Topic)
+	assert.Equal(t, 1, results[1].Count)
+}
+
+func TestTrackFull_HelpTopic_FilterByTopic(t *testing.T) {
+	resetState()
+
+	TrackFull(CatHelpTopic, "", 0, 0, 0, 0, "attack")
+	TrackFull(CatHelpTopic, "", 0, 0, 0, 0, "spells")
+
+	total := Query().Category(CatHelpTopic).Topic("attack").Total()
+	assert.Equal(t, 1, total)
+}
