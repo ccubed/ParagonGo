@@ -104,7 +104,7 @@ func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	user.SendText(buildStatusPanel(user))
 
-	Inventory(``, user, room, flags)
+	//Inventory(``, user, room, flags)
 
 	return true, nil
 }

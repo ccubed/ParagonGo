@@ -35,9 +35,9 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 			p.Add(label, label, line)
 		}
 		p.Add(`<ansi fg="yellow">Type:</ansi>`, `<ansi fg="yellow">Type:</ansi>`,
-			fmt.Sprintf(`%s (%s)`, strings.ToUpper(iSpec.Type.String()), strings.ToUpper(iSpec.Subtype.String())))
+			fmt.Sprintf(`<ansi fg="white">%s</ansi> (<ansi fg="white">%s</ansi>)`, strings.ToUpper(iSpec.Type.String()), strings.ToUpper(iSpec.Subtype.String())))
 		p.Add(`<ansi fg="yellow">Value:</ansi>`, `<ansi fg="yellow">Val:</ansi>`,
-			fmt.Sprintf(`%d gold`, iSpec.Value))
+			fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, iSpec.Value))
 		out.WriteString(layout.Render() + term.CRLFStr)
 	}
 
@@ -52,24 +52,35 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 
 		p := layout.Panel("stats")
 		if inspectLevel > 1 {
-			damage := itm.GetDamage()
-			if iSpec.Type.String() != "weapon" {
-				p.Add(`<ansi fg="yellow">Damage:</ansi>`, `<ansi fg="yellow">Dmg:</ansi>`, `N/A`)
-			} else {
+			if iSpec.Type == items.Weapon {
+				damage := itm.GetDamage()
 				p.Add(`<ansi fg="yellow">Damage:</ansi>`, `<ansi fg="yellow">Dmg:</ansi>`,
-					util.FormatDiceRoll(damage.Attacks, damage.DiceCount, damage.SideCount, damage.BonusDamage, []int{}))
-			}
-			if iSpec.DamageReduction == 0 {
-				p.Add(`<ansi fg="yellow">Defense:</ansi>`, `<ansi fg="yellow">Def:</ansi>`, `N/A`)
+					fmt.Sprintf(`<ansi fg="damage">%s</ansi>`, util.FormatDiceRoll(damage.Attacks, damage.DiceCount, damage.SideCount, damage.BonusDamage, []int{})))
+				if iSpec.Hands == items.TwoHanded {
+					p.Add(`<ansi fg="yellow">Hands:</ansi>`, `<ansi fg="yellow">Hands:</ansi>`, `<ansi fg="white">Two-handed</ansi>`)
+				} else {
+					p.Add(`<ansi fg="yellow">Hands:</ansi>`, `<ansi fg="yellow">Hands:</ansi>`, `<ansi fg="white">One-handed</ansi>`)
+				}
+				if iSpec.WaitRounds > 0 {
+					p.Add(`<ansi fg="yellow">Speed:</ansi>`, `<ansi fg="yellow">Speed:</ansi>`,
+						fmt.Sprintf(`<ansi fg="red">Slow (+%d rounds per attack)</ansi>`, iSpec.WaitRounds))
+				}
 			} else {
+				p.Add(`<ansi fg="yellow">Damage:</ansi>`, `<ansi fg="yellow">Dmg:</ansi>`, `<ansi fg="white">N/A</ansi>`)
+			}
+			if iSpec.DamageReduction > 0 {
 				p.Add(`<ansi fg="yellow">Defense:</ansi>`, `<ansi fg="yellow">Def:</ansi>`,
-					fmt.Sprintf(`%d Armor`, iSpec.DamageReduction))
-			}
-			if iSpec.Uses == 0 {
-				p.Add(`<ansi fg="yellow">Uses Left:</ansi>`, `<ansi fg="yellow">Uses:</ansi>`, `N/A`)
+					fmt.Sprintf(`<ansi fg="cyan">%d%% damage reduction</ansi>`, iSpec.DamageReduction))
 			} else {
+				p.Add(`<ansi fg="yellow">Defense:</ansi>`, `<ansi fg="yellow">Def:</ansi>`, `<ansi fg="white">N/A</ansi>`)
+			}
+			if iSpec.Uses > 0 {
 				p.Add(`<ansi fg="yellow">Uses Left:</ansi>`, `<ansi fg="yellow">Uses:</ansi>`,
-					fmt.Sprintf(`%d/%d`, itm.Uses, iSpec.Uses))
+					fmt.Sprintf(`<ansi fg="white">%d</ansi>/<ansi fg="white">%d</ansi>`, itm.Uses, iSpec.Uses))
+			}
+			if iSpec.BreakChance > 0 {
+				p.Add(`<ansi fg="yellow">Fragility:</ansi>`, `<ansi fg="yellow">Break:</ansi>`,
+					fmt.Sprintf(`<ansi fg="red">%d%% chance to break on use</ansi>`, iSpec.BreakChance))
 			}
 		} else {
 			p.Add(``, ``, `Unknown...`)
@@ -88,28 +99,86 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 
 		p := layout.Panel("mods")
 		if inspectLevel > 2 {
-			if len(iSpec.StatMods) == 0 && len(iSpec.BuffIds) == 0 {
-				p.Add(``, ``, `None`)
-			} else {
-				for statName, qty := range iSpec.StatMods {
-					p.Add(
-						fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, strings.ToUpper(statName+`:`)),
-						fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, strings.ToUpper(statName+`:`)),
-						fmt.Sprintf(`%d`, qty),
-					)
+			added := false
+
+			// Direct stat mods on the item spec (passive while equipped)
+			for statName, qty := range iSpec.StatMods {
+				var valStr string
+				if qty >= 0 {
+					valStr = fmt.Sprintf(`<ansi fg="green">+%d</ansi>`, qty)
+				} else {
+					valStr = fmt.Sprintf(`<ansi fg="red">%d</ansi>`, qty)
 				}
-				for _, buffId := range iSpec.BuffIds {
-					spec := buffs.GetBuffSpec(buffId)
-					if spec == nil {
-						continue
+				p.Add(
+					fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, strings.ToUpper(statName+`:`)),
+					fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, strings.ToUpper(statName+`:`)),
+					valStr,
+				)
+				added = true
+			}
+
+			// Worn buffs: passive buffs active the entire time the item is equipped
+			for _, buffId := range iSpec.WornBuffIds {
+				spec := buffs.GetBuffSpec(buffId)
+				if spec == nil {
+					continue
+				}
+				name, _ := spec.VisibleNameDesc()
+				p.Add(
+					`<ansi fg="yellow">While Worn:</ansi>`,
+					`<ansi fg="yellow">Worn:</ansi>`,
+					fmt.Sprintf(`<ansi fg="spellname">%s</ansi>`, name),
+				)
+				for statName, qty := range spec.StatMods {
+					var valStr string
+					if qty >= 0 {
+						valStr = fmt.Sprintf(`<ansi fg="green">+%d %s</ansi>`, qty, statName)
+					} else {
+						valStr = fmt.Sprintf(`<ansi fg="red">%d %s</ansi>`, qty, statName)
 					}
-					duration := buffDurationString(spec)
-					p.Add(
-						`<ansi fg="yellow">Applies:</ansi>`,
-						`<ansi fg="yellow">Applies:</ansi>`,
-						fmt.Sprintf(`<ansi fg="spellname">%s</ansi> - %s`, spec.Name, duration),
-					)
+					p.Add(``, ``, `  `+valStr)
 				}
+				for _, flag := range spec.Flags {
+					allFlags := buffs.GetAllFlags()
+					if desc, ok := allFlags[flag]; ok {
+						p.Add(``, ``, fmt.Sprintf(`  <ansi fg="cyan">%s</ansi>`, desc))
+					}
+				}
+				added = true
+			}
+
+			// On-use buffs: buffs applied when the item is used/consumed
+			for _, buffId := range iSpec.BuffIds {
+				spec := buffs.GetBuffSpec(buffId)
+				if spec == nil {
+					continue
+				}
+				duration := buffDurationString(spec)
+				p.Add(
+					`<ansi fg="yellow">On Use:</ansi>`,
+					`<ansi fg="yellow">On Use:</ansi>`,
+					fmt.Sprintf(`<ansi fg="spellname">%s</ansi> <ansi fg="white">- %s</ansi>`, spec.Name, duration),
+				)
+				for statName, qty := range spec.StatMods {
+					var valStr string
+					if qty >= 0 {
+						valStr = fmt.Sprintf(`<ansi fg="green">+%d %s</ansi>`, qty, statName)
+					} else {
+						valStr = fmt.Sprintf(`<ansi fg="red">%d %s</ansi>`, qty, statName)
+					}
+					p.Add(``, ``, `  `+valStr)
+				}
+				for _, flag := range spec.Flags {
+					allFlags := buffs.GetAllFlags()
+					if desc, ok := allFlags[flag]; ok {
+						p.Add(``, ``, fmt.Sprintf(`  <ansi fg="cyan">%s</ansi>`, desc))
+					}
+				}
+				added = true
+			}
+
+			if !added {
+				p.Add(``, ``, `None`)
 			}
 		} else {
 			p.Add(``, ``, `Unknown...`)
@@ -135,7 +204,7 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 			}
 			if el := iSpec.Element.String(); len(el) > 0 {
 				p.Add(`<ansi fg="yellow">Element:</ansi>`, `<ansi fg="yellow">Elem:</ansi>`,
-					strings.ToUpper(el))
+					fmt.Sprintf(`<ansi fg="cyan">%s</ansi>`, strings.ToUpper(el)))
 				added = true
 			}
 			for _, buffId := range iSpec.Damage.CritBuffIds {

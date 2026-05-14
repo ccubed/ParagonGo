@@ -51,9 +51,16 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		user.Character.CancelBuffsWithFlag(buffs.Hidden)
 
+		statsBefore := captureStatSnapshot(user.Character)
+
 		if user.Character.RemoveFromBody(matchItem) {
+
+			user.Character.Validate()
+
+			statDiff := formatStatChanges(statsBefore, captureStatSnapshot(user.Character))
+
 			user.SendText(
-				fmt.Sprintf(`You remove your <ansi fg="item">%s</ansi> and return it to your backpack.`, matchItem.DisplayName()),
+				fmt.Sprintf(`You remove your <ansi fg="item">%s</ansi> and return it to your backpack.%s`, matchItem.DisplayName(), statDiff),
 			)
 			room.SendText(
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, user.Character.Name, matchItem.DisplayName()),
@@ -72,8 +79,6 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>.`, matchItem.DisplayName()),
 			)
 		}
-
-		user.Character.Validate()
 
 	}
 
