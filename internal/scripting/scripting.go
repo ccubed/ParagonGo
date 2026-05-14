@@ -101,6 +101,7 @@ func setAllScriptingFunctions(vm *goja.Runtime) {
 	setItemFunctions(vm)
 	setUtilFunctions(vm)
 	setModuleFunctions(vm)
+	setPanelFunctions(vm)
 }
 
 type ValidationResult struct {

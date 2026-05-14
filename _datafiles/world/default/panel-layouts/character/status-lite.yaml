@@ -1,0 +1,23 @@
+# Panel layout for the peep skill status-lite view.
+# Mirrors the structure of character/status but with fewer rows
+# and no zone, XP, bank, or training data.
+
+border: open
+charset: single
+gap: 1
+margin: 1
+
+slots:
+  - rows:
+      - panels:
+          - id: info
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> '
+            min_width: 25
+
+  - rows:
+      - panels:
+          - id: attributes
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi> '
+            min_width: 42
+            columns: 2
+            column_gap: 2

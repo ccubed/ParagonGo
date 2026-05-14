@@ -31,6 +31,8 @@ See [Spell Scripting](SCRIPTING_SPELLS.md)
 
 [Messaging Functions](FUNCTIONS_MESSAGING.md) - Helper and info functions.
 
+[Panel Layout Functions](FUNCTIONS_PANELS.md) - Build formatted multi-panel terminal displays from scripts.
+
 # Time Periods
 
 Whenever you need to specific a "period" of time, it takes the following string format:

@@ -5,7 +5,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -17,20 +16,14 @@ type SkillsOptions struct {
 
 func Skills(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	allSkills := user.Character.GetSkills()
-	allCooldowns := map[string]int{}
-	for skillName := range allSkills {
-		allCooldowns[skillName] = user.Character.GetCooldown(skillName)
-	}
+	user.SendText(buildSkillsPanel(user))
 
-	skillData := SkillsOptions{
-		SkillList:      allSkills, // name to level
-		SkillCooldowns: allCooldowns,
-		TrainingPoints: user.Character.TrainingPoints,
+	tpColor := `red`
+	if user.Character.TrainingPoints > 0 {
+		tpColor = `yellow`
 	}
-
-	skillTxt, _ := templates.Process("character/skills", skillData, user.UserId)
-	user.SendText(skillTxt)
+	user.SendText(fmt.Sprintf(` You have <ansi fg="%s-bold">%d Training Points</ansi>. Level up to earn more.`,
+		tpColor, user.Character.TrainingPoints))
 
 	if rest == `extra` {
 		user.SendText(`<ansi fg="yellow">Cooldown Tracking:</ansi>`)

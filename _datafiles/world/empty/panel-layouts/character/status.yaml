@@ -1,0 +1,51 @@
+# Panel layout for the character status screen.
+#
+# border:  "full"    - every content row has side borders  │ label  value │
+#          "open"    - only the first and last content rows have side borders
+#
+# charset: "single"  - single-line box drawing: ┌─┐ │ └─┘
+#          "double"  - double-line box drawing: ╔═╗ ║ ╚═╝
+#          "rounded" - rounded corners:         ╭─╮ │ ╰─╯
+#
+# gap:    spaces between panels placed side by side, and between top-level slots
+# margin: spaces prepended to every output line (optional, default 0)
+#
+# Layout model:
+#   slots  - top-level horizontal columns, rendered side by side
+#   rows   - within a slot, panels stacked vertically top-to-bottom
+#   panels - within a row, panels placed side by side left-to-right
+#
+# Each panel:
+#   id         - used in Go code: layout.Panel("id").Add(...)
+#   title      - the full title string rendered verbatim into the top border;
+#                may contain ANSI tags - visual width is measured with tags stripped
+#   min_width  - minimum inner content width; expands if content is wider
+#   columns    - optional (default 1): pair rows side by side within the panel
+#   column_gap - optional (default 2): spaces between paired columns
+
+border: open
+charset: single
+gap: 1
+margin: 1
+
+slots:
+  - rows:
+      - panels:
+          - id: info
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> '
+            min_width: 25
+
+  - rows:
+      - panels:
+          - id: attributes
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi> '
+            min_width: 42
+            columns: 2
+            column_gap: 2
+      - panels:
+          - id: wealth
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Wealth</ansi> '
+            min_width: 19
+          - id: training
+            title: ' <ansi fg="black-bold">.:</ansi><ansi fg="20">Training</ansi> '
+            min_width: 20

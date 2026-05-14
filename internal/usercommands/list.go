@@ -69,12 +69,18 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		listedSomething = true
 
+		shopReq := OnShopList.Fire(ShopListRequest{
+			Stock:     mob.Character.Shop.GetInstock(),
+			Buyer:     user,
+			SellerMob: mob,
+		})
+
 		itemsAvailable := characters.Shop{}
 		mercsAvailable := characters.Shop{}
 		buffsAvailable := characters.Shop{}
 		petsAvailable := characters.Shop{}
 
-		for _, saleItem := range mob.Character.Shop.GetInstock() {
+		for _, saleItem := range shopReq.Stock {
 
 			if saleItem.ItemId > 0 {
 				itemsAvailable = append(itemsAvailable, saleItem)
@@ -431,12 +437,18 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		listedSomething = true
 
+		shopReq := OnShopList.Fire(ShopListRequest{
+			Stock:      shopUser.Character.Shop.GetInstock(),
+			Buyer:      user,
+			SellerUser: shopUser,
+		})
+
 		itemsAvailable := characters.Shop{}
 		mercsAvailable := characters.Shop{}
 		buffsAvailable := characters.Shop{}
 		petsAvailable := characters.Shop{}
 
-		for _, saleItem := range shopUser.Character.Shop.GetInstock() {
+		for _, saleItem := range shopReq.Stock {
 
 			if saleItem.ItemId > 0 {
 				itemsAvailable = append(itemsAvailable, saleItem)

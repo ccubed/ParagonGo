@@ -2,12 +2,9 @@ package usercommands
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -16,8 +13,6 @@ import (
 )
 
 func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-
-	//possibleStatuses := []string{`strength`, `speed`, `smarts`, `vitality`, `mysticism`, `perception`}
 
 	if rest != `` {
 
@@ -51,7 +46,7 @@ func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		match, closeMatch := util.FindMatchIn(question.Response, []string{`strength`, `speed`, `smarts`, `vitality`, `mysticism`, `perception`}...)
 
-		question.RejectResponse() // Always reset this question, since we want to keep reusing it.
+		question.RejectResponse()
 
 		if user.Character.StatPoints < 1 {
 			user.SendText(`Oops! You have no stat points to spend!`)
@@ -116,203 +111,9 @@ func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	tplTxt, _ := templates.Process("character/status", user, user.UserId)
-	user.SendText(tplTxt)
+	user.SendText(buildStatusPanel(user))
 
 	Inventory(``, user, room, flags)
 
 	return true, nil
-}
-
-func statusBonuses(user *users.UserRecord) (bool, error) {
-
-	var sb strings.Builder
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Stat Bonuses for </ansi><ansi fg="username">`)
-	sb.WriteString(user.Character.Name)
-	sb.WriteString(`</ansi>`)
-	sb.WriteString(term.CRLFStr)
-
-	type slotItem struct {
-		SlotName string
-		Item     items.Item
-	}
-
-	slots := []slotItem{
-		{`Weapon`, user.Character.Equipment.Weapon},
-		{`Offhand`, user.Character.Equipment.Offhand},
-		{`Head`, user.Character.Equipment.Head},
-		{`Neck`, user.Character.Equipment.Neck},
-		{`Body`, user.Character.Equipment.Body},
-		{`Belt`, user.Character.Equipment.Belt},
-		{`Gloves`, user.Character.Equipment.Gloves},
-		{`Ring`, user.Character.Equipment.Ring},
-		{`Legs`, user.Character.Equipment.Legs},
-		{`Feet`, user.Character.Equipment.Feet},
-	}
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment Bonuses</ansi> ──────────────────────────────────────────────────────┐`)
-
-	equipFound := false
-	for _, slot := range slots {
-		if slot.Item.ItemId < 1 {
-			continue
-		}
-		spec := slot.Item.GetSpec()
-		if len(spec.StatMods) == 0 {
-			continue
-		}
-		equipFound = true
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(fmt.Sprintf(`   <ansi fg="yellow">%-8s</ansi> %s`, slot.SlotName+`:`, slot.Item.DisplayName()))
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`            `)
-		sb.WriteString(formatStatMods(spec.StatMods))
-	}
-
-	if !equipFound {
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`   <ansi fg="black-bold">None</ansi>`)
-	}
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
-
-	activeBuffs := user.Character.Buffs.GetBuffs()
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Buff Bonuses</ansi> ───────────────────────────────────────────────────────────┐`)
-
-	buffFound := false
-	for _, b := range activeBuffs {
-		spec := buffs.GetBuffSpec(b.BuffId)
-		if spec == nil || spec.Secret || len(spec.StatMods) == 0 {
-			continue
-		}
-		buffFound = true
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(fmt.Sprintf(`   <ansi fg="yellow-bold">%s</ansi>`, spec.Name))
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`            `)
-		sb.WriteString(formatStatMods(spec.StatMods))
-	}
-
-	if !buffFound {
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`   <ansi fg="black-bold">None</ansi>`)
-	}
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Pet Bonuses</ansi> ────────────────────────────────────────────────────────────┐`)
-
-	if user.Character.Pet.Exists() {
-		mods := user.Character.Pet.GetEffectiveStatMods()
-		if len(mods) > 0 {
-			sb.WriteString(term.CRLFStr)
-			sb.WriteString(fmt.Sprintf(`   %s`, user.Character.Pet.DisplayName()))
-			sb.WriteString(term.CRLFStr)
-			sb.WriteString(`            `)
-			sb.WriteString(formatStatMods(mods))
-		} else {
-			sb.WriteString(term.CRLFStr)
-			sb.WriteString(fmt.Sprintf(`   %s <ansi fg="black-bold">(no stat bonuses)</ansi>`, user.Character.Pet.DisplayName()))
-		}
-	} else {
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`   <ansi fg="black-bold">No pet</ansi>`)
-	}
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
-
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` <ansi fg="yellow">Total Stat Modifiers:</ansi>`)
-
-	allStatNames := []string{`strength`, `speed`, `smarts`, `vitality`, `mysticism`, `perception`, `healthmax`, `manamax`, `healthrecovery`, `manarecovery`, `attacks`, `damage`}
-	displayNames := map[string]string{
-		`strength`: `Strength`, `speed`: `Speed`, `smarts`: `Smarts`,
-		`vitality`: `Vitality`, `mysticism`: `Mysticism`, `perception`: `Perception`,
-		`healthmax`: `Health Max`, `manamax`: `Mana Max`,
-		`healthrecovery`: `HP Recovery`, `manarecovery`: `MP Recovery`,
-		`attacks`: `Attacks`, `damage`: `Damage`,
-	}
-
-	totalFound := false
-	for _, stat := range allStatNames {
-		total := user.Character.StatMod(stat)
-		if total == 0 {
-			continue
-		}
-		totalFound = true
-		color := `green`
-		sign := `+`
-		if total < 0 {
-			color = `red`
-			sign = ``
-		}
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(fmt.Sprintf(`   <ansi fg="yellow">%-12s</ansi> <ansi fg="%s">%s%d</ansi>`, displayNames[stat]+`:`, color, sign, total))
-	}
-
-	if !totalFound {
-		sb.WriteString(term.CRLFStr)
-		sb.WriteString(`   <ansi fg="black-bold">None</ansi>`)
-	}
-
-	sb.WriteString(term.CRLFStr)
-
-	user.SendText(sb.String())
-
-	return true, nil
-}
-
-func formatStatMods(mods map[string]int) string {
-
-	displayNames := map[string]string{
-		`strength`: `Str`, `speed`: `Spd`, `smarts`: `Smt`,
-		`vitality`: `Vit`, `mysticism`: `Mys`, `perception`: `Per`,
-		`healthmax`: `HP`, `manamax`: `MP`,
-		`healthrecovery`: `HP Rec`, `manarecovery`: `MP Rec`,
-		`attacks`: `Atk`, `damage`: `Dmg`,
-		`casting`: `Cast`, `xpscale`: `XP%`,
-		`picklock`: `Pick`, `tame`: `Tame`,
-	}
-
-	keys := make([]string, 0, len(mods))
-	for k := range mods {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	parts := []string{}
-	for _, k := range keys {
-		v := mods[k]
-		if v == 0 {
-			continue
-		}
-		name := displayNames[k]
-		if name == `` {
-			if strings.HasPrefix(k, `casting-`) {
-				name = `Cast:` + strings.TrimPrefix(k, `casting-`)
-			} else if strings.HasPrefix(k, `racial-bonus-`) {
-				name = `vs ` + strings.TrimPrefix(k, `racial-bonus-`)
-			} else {
-				name = k
-			}
-		}
-		color := `green`
-		sign := `+`
-		if v < 0 {
-			color = `red`
-			sign = ``
-		}
-		parts = append(parts, fmt.Sprintf(`<ansi fg="%s">%s%d %s</ansi>`, color, sign, v, name))
-	}
-
-	return strings.Join(parts, `  `)
 }

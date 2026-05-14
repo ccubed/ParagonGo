@@ -20,7 +20,7 @@ Peep Skill
 Level 1 - Always visibly see the health % of an NPC
 Level 2 - Reveals detailed stats of a player or mob.
 Level 3 - Reveals detailed stats of the player or mob, plus equipment and items
-Level 4 - eveals detailed stats of the player or mob, plus equipment and items, and tells you the % chance of dropping items.
+Level 4 - Reveals detailed stats of the player or mob, plus equipment and items, and tells you the % chance of dropping items.
 */
 func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -49,12 +49,10 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, errors.New(`you're doing that too often`)
 	}
 
-	// valid peep targets are: mobs, players
 	playerId, mobId := room.FindByName(rest)
 
 	if playerId > 0 || mobId > 0 {
 
-		// Fire an event that a skill has been used
 		events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: skills.Peep, Details: ``})
 
 		statusTxt := ""
@@ -71,7 +69,7 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			targetName := u.Character.GetPlayerName(user.UserId).String()
 
 			if skillLevel >= 2 {
-				statusTxt, _ = templates.Process("character/status-lite", u.Character, user.UserId)
+				statusTxt = buildPeepPanel(u.Character)
 			}
 
 			if skillLevel >= 3 {
@@ -86,9 +84,9 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 					iSpec := item.GetSpec()
 					if iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible {
-						if iSpec.Uses > 0 { // Does the spec indicate a number of uses?
-							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)                                               // Display uses left
-							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses) // Display uses left
+						if iSpec.Uses > 0 {
+							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)
+							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 						}
 					}
 					itemNames = append(itemNames, iName)
@@ -139,7 +137,7 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			targetName := m.Character.GetMobName(user.UserId).String()
 
 			if skillLevel >= 2 {
-				statusTxt, _ = templates.Process("character/status-lite", &m.Character, user.UserId)
+				statusTxt = buildPeepPanel(&m.Character)
 			}
 
 			if skillLevel >= 3 {
@@ -154,9 +152,9 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 					iSpec := item.GetSpec()
 					if iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible {
-						if iSpec.Uses > 0 { // Does the spec indicate a number of uses?
-							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)                                               // Display uses left
-							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses) // Display uses left
+						if iSpec.Uses > 0 {
+							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)
+							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 						}
 					}
 					itemNames = append(itemNames, iName)
@@ -183,7 +181,6 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				}
 
 				invTxt, _ = templates.Process("character/inventory", invData, user.UserId)
-
 			}
 
 			if skillLevel >= 4 {
@@ -194,7 +191,6 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> is peeping at %s.`, user.Character.Name, targetName),
 				user.UserId,
 			)
-
 		}
 
 		if statusTxt != `` {
@@ -208,11 +204,9 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		return true, nil
-
 	}
 
 	user.SendText("You don't see that here.")
 
 	return true, errors.New(`you don't see that here`)
-
 }

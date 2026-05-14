@@ -119,9 +119,19 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 
 	var saleItems characters.Shop
 	if shopMob != nil {
-		saleItems = shopMob.Character.Shop.GetInstock()
+		shopReq := OnShopList.Fire(ShopListRequest{
+			Stock:     shopMob.Character.Shop.GetInstock(),
+			Buyer:     user,
+			SellerMob: shopMob,
+		})
+		saleItems = shopReq.Stock
 	} else if shopUser != nil {
-		saleItems = shopUser.Character.Shop.GetInstock()
+		shopReq := OnShopList.Fire(ShopListRequest{
+			Stock:      shopUser.Character.Shop.GetInstock(),
+			Buyer:      user,
+			SellerUser: shopUser,
+		})
+		saleItems = shopReq.Stock
 	}
 
 	for _, saleItem := range saleItems {
