@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -99,21 +98,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					u.UserId)
 			}
 
-			descTxt, _ := templates.Process("character/description", u.Character, user.UserId)
-			user.SendText(descTxt)
+			user.SendText(buildDescriptionPanel(u.Character))
 
 			itemNames := []string{}
 			for _, item := range u.Character.Items {
 				itemNames = append(itemNames, item.DisplayName())
 			}
 
-			invData := map[string]any{
-				`Equipment`: &u.Character.Equipment,
-				`ItemNames`: itemNames,
-			}
-
-			inventoryTxt, _ := templates.Process("character/inventory-look", invData, user.UserId)
-			user.SendText(inventoryTxt)
+			user.SendText(buildInventoryLookPanel(&u.Character.Equipment, itemNames))
 
 		} else if mobId > 0 {
 
@@ -130,21 +122,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				)
 			}
 
-			descTxt, _ := templates.Process("character/description", &m.Character, user.UserId)
-			user.SendText(descTxt)
+			user.SendText(buildDescriptionPanel(&m.Character))
 
 			itemNames := []string{}
 			for _, item := range m.Character.Items {
 				itemNames = append(itemNames, item.DisplayName())
 			}
 
-			invData := map[string]any{
-				`Equipment`: &m.Character.Equipment,
-				`ItemNames`: itemNames,
-			}
-
-			inventoryTxt, _ := templates.Process("character/inventory-look", invData, user.UserId)
-			user.SendText(inventoryTxt)
+			user.SendText(buildInventoryLookPanel(&m.Character.Equipment, itemNames))
 		}
 
 		user.SendText(statusTxt)
@@ -218,15 +203,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		}
 
-		chestStuff := map[string]any{
-			`ItemNames`:          itemNames,
-			`ItemNamesFormatted`: itemNamesFormatted,
-		}
-
-		textOut, _ := templates.Process("descriptions/insidecontainer", chestStuff, user.UserId)
-
 		user.SendText(``)
-		user.SendText(textOut)
+		user.SendText(buildInsideContainerPanel(itemNames, itemNamesFormatted))
 		user.SendText(``)
 
 		return true, nil
@@ -379,15 +357,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at %s.`, user.Character.Name, petUser.Character.Pet.DisplayName()), user.UserId)
 
-			petData := struct {
-				Character *characters.Character
-				IsOwner   bool
-			}{
-				Character: petUser.Character,
-				IsOwner:   petUser.UserId == user.UserId,
-			}
-			textOut, _ := templates.Process("character/pet", petData, user.UserId)
-			user.SendText(textOut)
+			user.SendText(buildPetPanel(petUser.Character, petUser.UserId == user.UserId))
 
 			return true, nil
 		}
@@ -432,8 +402,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			user.SendText(fmt.Sprintf(`You look at the <ansi fg="%s">%s corpse</ansi>.`, corpseColor, corpse.Character.Name))
 			room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="%s">%s corpse</ansi>.`, user.Character.Name, corpseColor, corpse.Character.Name), user.UserId)
 
-			descTxt, _ := templates.Process("character/description-corpse", &corpse.Character, user.UserId)
-			user.SendText(descTxt)
+			user.SendText(buildCorpseDescriptionPanel(&corpse.Character))
 
 			return true, nil
 
@@ -560,8 +529,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ := templates.Process("descriptions/room-title", details, user.UserId)
 	user.SendText(textOut)
 
-	textOut, _ = templates.Process("descriptions/room", details, user.UserId)
-	user.SendText(textOut)
+	user.SendText(buildRoomDescPanel(details))
 
 	signCt := 0
 	privateSigns := room.GetPrivateSigns()

@@ -5,7 +5,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -18,8 +17,7 @@ func Biome(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return false, fmt.Errorf(`biome %s not found`, room.Biome)
 	}
 
-	biomeTxt, _ := templates.Process("descriptions/biome", biome, user.UserId)
-	user.SendText(biomeTxt)
+	user.SendText(buildBiomePanel(biome))
 
 	return true, nil
 }

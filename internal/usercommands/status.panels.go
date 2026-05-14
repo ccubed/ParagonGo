@@ -81,7 +81,51 @@ func buildStatusPanel(user *users.UserRecord) string {
 	return header + term.CRLFStr + layout.Render()
 }
 
-// Used in `status bonuses`
+// buildStatusTrainPanel renders the status train stat panel.
+// highlighted is the stat name that was just trained (empty string for none).
+func buildStatusTrainPanel(user *users.UserRecord, highlighted string) string {
+	c := user.Character
+
+	layout := templates.NewPanelLayout("open", "single", 1, 2)
+	slot := layout.AddSlot()
+	layout.AddPanelsToSlot(slot, "train")
+
+	layout.Panel("train").
+		SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Base Value</ansi> `).
+		SetMinWidth(38).SetLabelWidth(12)
+
+	type statEntry struct {
+		name  string
+		label string
+		base  int
+		mods  int
+	}
+
+	stats := []statEntry{
+		{`strength`, `Strength:`, c.Stats.Strength.Value - c.Stats.Strength.Mods, c.Stats.Strength.Mods},
+		{`vitality`, `Vitality:`, c.Stats.Vitality.Value - c.Stats.Vitality.Mods, c.Stats.Vitality.Mods},
+		{`speed`, `Speed:`, c.Stats.Speed.Value - c.Stats.Speed.Mods, c.Stats.Speed.Mods},
+		{`mysticism`, `Mysticism:`, c.Stats.Mysticism.Value - c.Stats.Mysticism.Mods, c.Stats.Mysticism.Mods},
+		{`smarts`, `Smarts:`, c.Stats.Smarts.Value - c.Stats.Smarts.Mods, c.Stats.Smarts.Mods},
+		{`perception`, `Perception:`, c.Stats.Perception.Value - c.Stats.Perception.Mods, c.Stats.Perception.Mods},
+	}
+
+	panel := layout.Panel("train")
+	for _, s := range stats {
+		var label, value string
+		if s.name == highlighted {
+			label = fmt.Sprintf(`<ansi bg="highlight"><ansi fg="yellow">%-12s</ansi></ansi>`, s.label)
+			value = fmt.Sprintf(`<ansi bg="highlight"><ansi fg="201">%-4d</ansi></ansi>  <ansi fg="black-bold">gear & buffs:</ansi> <ansi fg="statmod">%-4d</ansi>`, s.base, s.mods)
+		} else {
+			label = fmt.Sprintf(`<ansi fg="yellow">%-12s</ansi>`, s.label)
+			value = fmt.Sprintf(`<ansi fg="201">%-4d</ansi>  <ansi fg="black-bold">gear & buffs:</ansi> <ansi fg="statmod">%-4d</ansi>`, s.base, s.mods)
+		}
+		panel.Add(label, label, value)
+	}
+
+	return layout.Render() + term.CRLFStr +
+		fmt.Sprintf(`  You have <ansi fg="201">%d</ansi> points left to spend.`, c.StatPoints) + term.CRLFStr
+}
 func statusBonuses(user *users.UserRecord) (bool, error) {
 
 	var sb strings.Builder

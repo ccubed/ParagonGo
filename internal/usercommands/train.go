@@ -98,8 +98,7 @@ func Train(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if rest == "" {
-		exitTxt, _ := templates.Process("descriptions/train", trainingData, user.UserId)
-		user.SendText(exitTxt)
+		user.SendText(buildTrainPanel(trainingData))
 	} else {
 
 		user.Character.CancelBuffsWithFlag(buffs.Hidden)

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/suggestions"
+	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -403,16 +404,27 @@ func (m *StorageModule) storageCommand(rest string, user *users.UserRecord, room
 	return true, nil
 }
 
-// buildStorageText renders the storage listing for the player.
+// buildStorageText renders the storage listing for the player using a panel.
 func buildStorageText(itemNames []string) string {
+	layout := templates.NewPanelLayout("open", "single", 1, 1)
+	slot := layout.AddSlot()
+	layout.AddPanelsToSlot(slot, "storage")
+
+	layout.Panel("storage").
+		SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">In Storage</ansi> `).
+		SetMinWidth(74)
+
+	panel := layout.Panel("storage")
 	if len(itemNames) == 0 {
-		return `<ansi fg="yellow">Your storage is empty.</ansi>` + "\n"
+		panel.Add(``, ``, `Nothing`)
+	} else {
+		for i, name := range itemNames {
+			panel.Add(``, ``,
+				fmt.Sprintf(`<ansi fg="cyan">%d.</ansi> <ansi fg="itemname">%s</ansi>`, i+1, name),
+			)
+		}
 	}
 
-	var sb strings.Builder
-	sb.WriteString(`<ansi fg="yellow-bold">Items in storage:</ansi>` + "\n")
-	for i, name := range itemNames {
-		sb.WriteString(fmt.Sprintf(`  <ansi fg="cyan">%d)</ansi> <ansi fg="itemname">%s</ansi>%s`, i+1, name, "\n"))
-	}
-	return sb.String()
+	return layout.Render() + term.CRLFStr +
+		` <ansi fg="command">unstore [itemname]</ansi> or <ansi fg="command">unstore [#]</ansi> to remove items from storage.` + term.CRLFStr
 }

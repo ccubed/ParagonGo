@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -155,8 +154,7 @@ func Track(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// If a any visitors are revealed...
 		//
 		if len(visitorData) > 0 {
-			trackTxt, _ := templates.Process("descriptions/track", visitorData, user.UserId)
-			user.SendText(trackTxt)
+			user.SendText(buildTrackPanel(visitorData))
 		} else {
 			user.SendText("You don't see any tracks.")
 		}
@@ -397,8 +395,7 @@ func Track(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// If a any visitors are revealed...
 		//
 		if len(visitorData) > 0 {
-			trackTxt, _ := templates.Process("descriptions/track", visitorData, user.UserId)
-			user.SendText(trackTxt)
+			user.SendText(buildTrackPanel(visitorData))
 		} else {
 			user.SendText("You don't see any tracks.")
 		}

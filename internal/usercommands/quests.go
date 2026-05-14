@@ -1,43 +1,16 @@
 package usercommands
 
 import (
-	"fmt"
-	"math"
-	"sort"
-
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	type QuestRecord struct {
-		Id          int
-		Name        string
-		Description string
-		Completion  string
-		BarFull     string
-		BarEmpty    string
-	}
-
-	type QuestInfo struct {
-		QuestsTotal int
-		QuestsFound int
-		Records     []QuestRecord
-	}
-
 	showHidden := rest == `all+`
 	showComplete := (rest == `all`) || showHidden
-
-	qInfo := QuestInfo{}
-	allQuests := []QuestRecord{}
-	var completion float64
-
-	qInfo.QuestsTotal = 0
 
 	allQuestProgress := user.Character.GetQuestProgress()
 
@@ -48,20 +21,20 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 			allQuestProgress[quest.QuestId] = `all+`
 		}
-	} else {
-
 	}
+
+	var rows []questRow
+	questsTotal := 0
 
 	for questId, questStep := range allQuestProgress {
 		questToken := quests.PartsToToken(questId, questStep)
 		if questInfo := quests.GetQuest(questToken); questInfo != nil {
 
-			// Secret quests are not rendered
 			if !showHidden && questInfo.Secret {
 				continue
 			}
 
-			qInfo.QuestsTotal++
+			questsTotal++
 
 			totalSteps := len(questInfo.Steps)
 			completedSteps := 0
@@ -77,37 +50,29 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 			}
 
-			completion = float64(completedSteps) / float64(totalSteps)
+			completion := float64(completedSteps) / float64(totalSteps)
 
 			if !showComplete && completion >= 1 {
 				continue
 			}
 
-			barFull, barEmpty := util.ProgressBar(completion, 25)
-
-			qDisplay := QuestRecord{
-				Id:          questInfo.QuestId,
-				Name:        questInfo.Name,
-				Description: description,
-				Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
-				BarFull:     barFull,
-				BarEmpty:    barEmpty,
-			}
-
-			allQuests = append(allQuests, qDisplay)
+			rows = append(rows, questRow{
+				id:          questInfo.QuestId,
+				name:        questInfo.Name,
+				description: description,
+				completion:  completion,
+			})
 		}
 	}
 
-	qInfo.QuestsFound = len(allQuests)
-	qInfo.Records = allQuests
+	// Sort by quest id
+	for i := 1; i < len(rows); i++ {
+		for j := i; j > 0 && rows[j].id < rows[j-1].id; j-- {
+			rows[j], rows[j-1] = rows[j-1], rows[j]
+		}
+	}
 
-	// Sort lexigraphically
-	sort.Slice(allQuests, func(i, j int) bool {
-		return allQuests[i].Id < allQuests[j].Id
-	})
-
-	questTxt, _ := templates.Process("character/quests", qInfo, user.UserId)
-	user.SendText(questTxt)
+	user.SendText(buildQuestsPanel(rows, len(rows), questsTotal))
 
 	return true, nil
 }

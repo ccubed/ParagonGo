@@ -10,6 +10,8 @@ function onCommand_read(user, item, room) {
         SendUserMessage(user.UserId(), "The book disinigrates in your hands.");
         
         item.SetUsesLeft(0);
+    } else {
+        SendUserMessage(user.UserId(), "There is nothing of interest.");   
     }
 
     return true;

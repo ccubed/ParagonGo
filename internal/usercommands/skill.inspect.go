@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -58,22 +56,9 @@ func Inspect(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			user.UserId,
 		)
 
-		type inspectDetails struct {
-			InspectLevel int
-			Item         *items.Item
-			ItemSpec     *items.ItemSpec
-		}
-
 		iSpec := matchItem.GetSpec()
 
-		details := inspectDetails{
-			InspectLevel: skillLevel,
-			Item:         &matchItem,
-			ItemSpec:     &iSpec,
-		}
-
-		inspectTxt, _ := templates.Process("descriptions/inspect", details, user.UserId)
-		user.SendText(inspectTxt)
+		user.SendText(buildInspectPanel(skillLevel, &matchItem, &iSpec))
 
 	}
 

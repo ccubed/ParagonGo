@@ -2,11 +2,9 @@ package usercommands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -30,8 +28,7 @@ func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		cmdPrompt, isNew := user.StartPrompt(`status`, rest)
 
 		if isNew {
-			tplTxt, _ := templates.Process("character/status-train", user, user.UserId)
-			user.SendText(tplTxt)
+			user.SendText(buildStatusTrainPanel(user, ``))
 		}
 
 		question := cmdPrompt.Ask(`Increase which?`, []string{`strength`, `speed`, `smarts`, `vitality`, `mysticism`, `perception`, `quit`}, `quit`)
@@ -100,13 +97,7 @@ func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			events.AddToQueue(events.CharacterTrained{UserId: user.UserId})
 		}
 
-		tplTxt, _ := templates.Process("character/status-train", user, user.UserId)
-
-		if spent > 0 {
-			tplTxt = strings.Replace(tplTxt, `fakeprop="`+selection+`"`, `bg="highlight"`, 1)
-		}
-
-		user.SendText(tplTxt)
+		user.SendText(buildStatusTrainPanel(user, selection))
 
 		return true, nil
 	}
