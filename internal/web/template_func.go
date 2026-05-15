@@ -5,6 +5,8 @@ import (
 	"html"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
@@ -113,6 +115,14 @@ var (
 			return strings.ToLower(str)
 		},
 		"now": func() int64 { return time.Now().UnixMilli() },
+		"fileMtime": func(relPath string) int64 {
+			adminRoot := configs.GetFilePathsConfig().AdminHtml.String()
+			info, err := os.Stat(filepath.Join(adminRoot, relPath))
+			if err != nil {
+				return 0
+			}
+			return info.ModTime().Unix()
+		},
 		"sshEnabled": func(c configs.Config) bool {
 			return int(c.Network.SSHPort) > 0 && c.FilePaths.SSHHostKeyFile != ``
 		},

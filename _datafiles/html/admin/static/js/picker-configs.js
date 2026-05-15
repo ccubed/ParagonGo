@@ -429,3 +429,178 @@ const UserPicker = (() => {
 
     return { open, close };
 })();
+
+// CharacterPicker - search-driven character picker backed by
+// /admin/api/v1/characters/search.
+//
+// Unlike Picker, this modal does not pre-load all characters. It fires a
+// debounced search request as the user types and renders live results.
+//
+// Usage:
+//   CharacterPicker.open({
+//     onSelect: (result) => {
+//       // result: { user_id, username, character_name }
+//     },
+//   });
+
+const CharacterPicker = (() => {
+    'use strict';
+
+    let overlay = null;
+    let _triggerEl = null;
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function close() {
+        if (overlay) { overlay.remove(); overlay = null; }
+        if (_triggerEl) { _triggerEl.focus(); _triggerEl = null; }
+    }
+
+    function open({ onSelect }) {
+        // Ensure the up-* styles from UserPicker are present.
+        if (typeof UserPicker !== 'undefined') {
+            UserPicker.open({ onSelect: () => {} });
+            UserPicker.close();
+        }
+        close();
+
+        _triggerEl = document.activeElement || null;
+
+        overlay = document.createElement('div');
+        overlay.className = 'up-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', 'Select Character');
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+        const modal = document.createElement('div');
+        modal.className = 'up-modal';
+
+        const header = document.createElement('div');
+        header.className = 'up-header';
+        const titleEl = document.createElement('span');
+        titleEl.className = 'up-title';
+        titleEl.textContent = 'Select Character';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'up-close';
+        closeBtn.textContent = '\u00d7';
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.addEventListener('click', close);
+        header.appendChild(titleEl);
+        header.appendChild(closeBtn);
+
+        const searchWrap = document.createElement('div');
+        searchWrap.className = 'up-search-wrap';
+        const searchInput = document.createElement('input');
+        searchInput.type = 'search';
+        searchInput.className = 'up-search';
+        searchInput.placeholder = 'Type a character name to search\u2026';
+        searchInput.setAttribute('aria-label', 'Search characters');
+        const hint = document.createElement('div');
+        hint.className = 'up-hint';
+        hint.textContent = 'Type a character name (min 2 chars) to search.';
+        searchWrap.appendChild(searchInput);
+        searchWrap.appendChild(hint);
+
+        const tableWrap = document.createElement('div');
+        tableWrap.className = 'up-table-wrap';
+        tableWrap.innerHTML = '<div class="up-empty">Start typing to search for a character.</div>';
+
+        const footer = document.createElement('div');
+        footer.className = 'up-footer';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'up-btn-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', close);
+        footer.appendChild(cancelBtn);
+
+        modal.append(header, searchWrap, tableWrap, footer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        searchInput.focus();
+
+        let highlightIdx = -1;
+        let visibleResults = [];
+        let debounceTimer = null;
+
+        function renderResults(results) {
+            visibleResults = results;
+            highlightIdx = -1;
+
+            if (!results.length) {
+                tableWrap.innerHTML = '<div class="up-empty">No characters found.</div>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'up-table';
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th style="width:4rem">User ID</th><th>Character</th><th>Username</th></tr>';
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            results.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                tr.dataset.idx = i;
+                tr.innerHTML =
+                    '<td style="font-family:monospace">' + escHtml(String(r.user_id)) + '</td>' +
+                    '<td><strong>' + escHtml(r.character_name || '') + '</strong></td>' +
+                    '<td style="color:var(--color-text-faint)">' + escHtml(r.username || '') + '</td>';
+                tr.addEventListener('click', () => { close(); onSelect(r); });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            tableWrap.innerHTML = '';
+            tableWrap.appendChild(table);
+        }
+
+        function setHighlight(idx) {
+            const rows = tableWrap.querySelectorAll('tbody tr');
+            if (highlightIdx >= 0 && rows[highlightIdx]) rows[highlightIdx].classList.remove('up-highlighted');
+            highlightIdx = Math.max(0, Math.min(idx, visibleResults.length - 1));
+            if (rows[highlightIdx]) {
+                rows[highlightIdx].classList.add('up-highlighted');
+                rows[highlightIdx].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        async function doSearch(q) {
+            const trimmed = q.trim();
+            if (trimmed.length < 2) {
+                tableWrap.innerHTML = '<div class="up-empty">Start typing to search for a character.</div>';
+                visibleResults = [];
+                return;
+            }
+            tableWrap.innerHTML = '<div class="up-loading">Searching\u2026</div>';
+            const res = await AdminAPI.get('/admin/api/v1/characters/search?name=' + encodeURIComponent(trimmed), true);
+            if (!res.ok) {
+                tableWrap.innerHTML = '<div class="up-empty">Search failed: ' + escHtml(res.error || 'unknown error') + '</div>';
+                return;
+            }
+            renderResults((res.data && res.data.data) || []);
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => doSearch(searchInput.value), 200);
+        });
+
+        overlay.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+            if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight(highlightIdx < 0 ? 0 : highlightIdx + 1); return; }
+            if (e.key === 'ArrowUp')   { e.preventDefault(); setHighlight(highlightIdx <= 0 ? 0 : highlightIdx - 1); return; }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightIdx >= 0 && visibleResults[highlightIdx]) {
+                    close();
+                    onSelect(visibleResults[highlightIdx]);
+                }
+            }
+        });
+    }
+
+    return { open, close };
+})();

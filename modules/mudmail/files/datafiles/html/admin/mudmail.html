@@ -157,11 +157,11 @@
 
     // ── Recipient picker ─────────────────────────────────────────────
     window.pickRecipient = function () {
-        UserPicker.open({
+        CharacterPicker.open({
             onSelect: (user) => {
                 document.getElementById('recipient-id').value = user.user_id;
                 const display = document.getElementById('recipient-display');
-                display.textContent = '#' + user.user_id + ' ' + user.username;
+                display.textContent = '#' + user.user_id + ' ' + user.username + ' (' + user.character_name + ')';
                 display.className = 'picker-display has-value';
             },
         });
@@ -196,11 +196,11 @@
 
     // ── Lookup user picker ───────────────────────────────────────────
     window.pickLookupUser = function () {
-        UserPicker.open({
+        CharacterPicker.open({
             onSelect: (user) => {
                 currentUserId = user.user_id;
                 const display = document.getElementById('lookup-display');
-                display.textContent = '#' + user.user_id + ' ' + user.username;
+                display.textContent = '#' + user.user_id + ' ' + user.username + ' (' + user.character_name + ')';
                 display.className = 'picker-display has-value';
                 loadMessages();
             },

@@ -254,6 +254,7 @@
 <div class="picker-bar">
     <div class="user-display empty" id="user-display">No user selected</div>
     <button class="btn btn-primary" onclick="openUserPicker()">Find User&hellip;</button>
+    <button class="btn btn-secondary" onclick="openCharacterPicker()">Find by Character&hellip;</button>
 </div>
 
 <div class="editor-panel" id="editor-panel">
@@ -606,6 +607,12 @@
     window.openUserPicker = function () {
         UserPicker.open({
             onSelect: (u) => loadUser(u.user_id),
+        });
+    };
+
+    window.openCharacterPicker = function () {
+        CharacterPicker.open({
+            onSelect: (r) => loadUser(r.user_id),
         });
     };
 

@@ -65,6 +65,11 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/users/{userid}", doBasicAuth(RunWithMUDLocked(apiV1GetUser)))
 	mux.HandleFunc("PATCH /admin/api/v1/users/{userid}", doBasicAuth(RunWithMUDLocked(apiV1PatchUser)))
 
+	// Characters - static sub-routes must be registered before the wildcard
+	// {characterName} pattern.
+	mux.HandleFunc("GET /admin/api/v1/characters/search", doBasicAuth(RunWithMUDLocked(apiV1SearchCharacters)))
+	mux.HandleFunc("GET /admin/api/v1/characters/{characterName}", doBasicAuth(RunWithMUDLocked(apiV1GetCharacter)))
+
 	// Color Aliases
 	mux.HandleFunc("GET /admin/api/v1/color-aliases", doBasicAuth(RunWithMUDLocked(apiV1GetColorAliases)))
 	mux.HandleFunc("PATCH /admin/api/v1/color-aliases", doBasicAuth(RunWithMUDLocked(apiV1PatchColorAlias)))

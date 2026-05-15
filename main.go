@@ -254,8 +254,11 @@ func main() {
 		}
 		idx.Create()
 		idx.Rebuild()
-		mudlog.Info("UserIndex", "info", "User index recreated.")
+		mudlog.Info("UserIndex", "info", "User index recreated.", "users", idx.GetMetaData().RecordCount)
 	}
+
+	users.GetCharacterIndex().Rebuild()
+	mudlog.Info("CharacterIndex", "info", "Active character names indexed.", "characters", users.GetCharacterIndex().Len())
 
 	// Load the round count from the file
 	if !isCopyover {
@@ -286,6 +289,8 @@ func main() {
 	plugins.Load(
 		configs.GetFilePathsConfig().DataFiles.String(),
 	)
+
+	mudlog.Info("CharacterIndex", "info", "Character name index complete.", "characters", users.GetCharacterIndex().Len())
 
 	web.SetWebPlugin(plugins.GetPluginRegistry())
 

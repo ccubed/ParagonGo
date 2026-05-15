@@ -563,6 +563,7 @@ func (u *UserRecord) SetCharacterName(cn string) error {
 		return err
 	}
 
+	GetCharacterIndex().Add(cn, u.UserId)
 	u.Character.Name = cn
 
 	return nil

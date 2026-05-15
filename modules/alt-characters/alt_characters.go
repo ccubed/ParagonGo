@@ -66,31 +66,28 @@ func init() {
 		return maxAltCharacters(m)
 	})
 
-	// GetAltNames: returns the alt character names for a userId.
-	// Consumed by internal/usercommands/start.go via usercommands.GetExportedFunction.
-	m.plug.ExportFunction(`GetAltNames`, func(userId int) []string {
-		var names []string
-		for _, c := range loadAlts(userId) {
-			names = append(names, c.Name)
-		}
-		return names
-	})
-
 	// SwapToAlt: performs the alt-character swap on behalf of users.UserRecord.
 	// Consumed by internal/users/userrecord.go via users.GetExportedFunction.
 	m.plug.ExportFunction(`SwapToAlt`, func(u *users.UserRecord, targetAltName string) bool {
 		return swapToAlt(u, targetAltName)
 	})
 
-	// AltNameSearch: searches a user's alts for a character name match.
-	// Consumed by internal/users/users.go via users.GetExportedFunction.
-	m.plug.ExportFunction(`AltNameSearch`, func(userId int, username, nameToFind string) (int, string) {
-		for _, char := range loadAlts(userId) {
-			if strings.EqualFold(char.Name, nameToFind) {
-				return userId, username
+	// AltNameSearch is no longer needed; the CharacterIndex is populated
+	// directly by the onLoad callback below.
+
+	// Populate the character name index with all stored alt names at startup.
+	m.plug.Callbacks.SetOnLoad(func() {
+		users.SearchOfflineUsers(func(u *users.UserRecord) bool {
+			for _, char := range loadAlts(u.UserId) {
+				users.GetCharacterIndex().Add(char.Name, u.UserId)
+			}
+			return true
+		})
+		for _, u := range users.GetAllActiveUsers() {
+			for _, char := range loadAlts(u.UserId) {
+				users.GetCharacterIndex().Add(char.Name, u.UserId)
 			}
 		}
-		return 0, ``
 	})
 }
 
@@ -228,6 +225,9 @@ func swapToAlt(u *users.UserRecord, targetAltName string) bool {
 	newAlts = append(newAlts, *u.Character)
 	saveAlts(u.UserId, newAlts)
 
+	// The retired character name is now an alt; register it in the index.
+	users.GetCharacterIndex().Add(retiredCharName, u.UserId)
+
 	selectedChar.Validate()
 	selectedChar.SetUserId(u.UserId)
 	u.Character = &selectedChar
@@ -362,6 +362,9 @@ func (m *AltCharactersModule) characterCommand(rest string, user *users.UserReco
 		newAlts = append(newAlts, *user.Character)
 		saveAlts(user.UserId, newAlts)
 
+		// The current character is now stored as an alt; register its name.
+		users.GetCharacterIndex().Add(user.Character.Name, user.UserId)
+
 		user.Character = characters.New()
 		user.Character.Name = user.TempName()
 
@@ -419,6 +422,9 @@ func (m *AltCharactersModule) characterCommand(rest string, user *users.UserReco
 				}
 			}
 			saveAlts(user.UserId, newAlts)
+
+			// The deleted alt name is no longer owned by anyone.
+			users.GetCharacterIndex().Remove(match)
 
 			user.EventLog.Add(`char`, `Deleted alt character: <ansi fg="username">`+match+`</ansi>`)
 			user.SendText(`<ansi fg="username">` + match + `</ansi> <ansi fg="red">is deleted.</ansi>`)

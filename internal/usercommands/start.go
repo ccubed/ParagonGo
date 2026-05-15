@@ -126,18 +126,6 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			return true, nil
 		}
 
-		if fn, ok := GetExportedFunction(`GetAltNames`); ok {
-			if getAltNamesFn, ok := fn.(func(int) []string); ok {
-				for _, name := range getAltNamesFn(user.UserId) {
-					if strings.EqualFold(question.Response, name) {
-						user.SendText(`Your already have a character named that!`)
-						question.RejectResponse()
-						return true, nil
-					}
-				}
-			}
-		}
-
 		if err := users.ValidateName(question.Response); err != nil {
 			user.SendText(`that name is not allowed: ` + err.Error())
 			question.RejectResponse()

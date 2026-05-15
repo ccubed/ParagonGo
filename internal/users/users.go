@@ -506,37 +506,17 @@ func ValidatePassword(pw string) error {
 	return nil
 }
 
-// searches for a character name and returns the user that owns it
-// Slow and possibly memory intensive - use strategically
+// CharacterNameSearch returns the userId and username for the given character
+// name. It consults the in-memory CharacterIndex, which is populated at startup
+// with every active character name and, when the alt-characters module is
+// loaded, with all stored alt names as well.
 func CharacterNameSearch(nameToFind string) (foundUserId int, foundUserName string) {
-
-	foundUserId = 0
-	foundUserName = ``
-
-	SearchOfflineUsers(func(u *UserRecord) bool {
-
-		if strings.EqualFold(u.Character.Name, nameToFind) {
-			foundUserId = u.UserId
-			foundUserName = u.Username
-			return false
-		}
-
-		// Not found? Search alts via exported function...
-
-		if fn, ok := GetExportedFunction(`AltNameSearch`); ok {
-			if altSearchFn, ok := fn.(func(int, string, string) (int, string)); ok {
-				if uid, uname := altSearchFn(u.UserId, u.Username, nameToFind); uid != 0 {
-					foundUserId = uid
-					foundUserName = uname
-					return false
-				}
-			}
-		}
-
-		return true
-	})
-
-	return foundUserId, foundUserName
+	userId, found := GetCharacterIndex().Find(nameToFind)
+	if !found {
+		return 0, ``
+	}
+	foundUserName, _ = GetUserIndex().FindByUserId(userId)
+	return userId, foundUserName
 }
 
 // UpdateOnlineUser applies updated exported fields to the in-memory user
