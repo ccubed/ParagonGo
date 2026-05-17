@@ -226,37 +226,12 @@ func getPetVM(sPet *ScriptPet) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vm := goja.New()
-	setAllScriptingFunctions(vm)
-
-	prg, err := goja.Compile(fmt.Sprintf(`pet-%s`, scriptId), script, false)
+	vmw, err := loadVM(fmt.Sprintf(`pet-%s`, scriptId), script, nil)
 	if err != nil {
-		finalErr := fmt.Errorf("Compile: %w", err)
-		return nil, finalErr
+		return nil, err
 	}
-
-	tmr := time.AfterFunc(scriptLoadTimeout, func() {
-		vm.Interrupt(errTimeout)
-	})
-	if _, err = vm.RunProgram(prg); err != nil {
-		finalErr := fmt.Errorf("RunProgram: %w", err)
-		if _, ok := finalErr.(*goja.Exception); ok {
-			mudlog.Error("JSVM", "exception", finalErr)
-			return nil, finalErr
-		} else if errors.Is(finalErr, errTimeout) {
-			mudlog.Error("JSVM", "interrupted", finalErr)
-			return nil, finalErr
-		}
-		mudlog.Error("JSVM", "error", finalErr)
-		return nil, finalErr
-	}
-	vm.ClearInterrupt()
-	tmr.Stop()
-
-	vmw := newVMWrapper(vm, 0)
 
 	petVMCache[scriptId] = vmw
-
 	return vmw, nil
 }
 

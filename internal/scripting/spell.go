@@ -157,7 +157,7 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 
 func getSpellVM(scriptId string) (*VMWrapper, error) {
 
-	if vm, ok := itemVMCache[scriptId]; ok {
+	if vm, ok := spellVMCache[scriptId]; ok {
 		if vm == nil {
 			return nil, errNoScript
 		}
@@ -171,47 +171,15 @@ func getSpellVM(scriptId string) (*VMWrapper, error) {
 
 	script := spellData.GetScript()
 	if len(script) == 0 {
-		itemVMCache[scriptId] = nil
+		spellVMCache[scriptId] = nil
 		return nil, errNoScript
 	}
 
-	vm := goja.New()
-	setAllScriptingFunctions(vm)
-
-	prg, err := goja.Compile(fmt.Sprintf(`spell-%s`, scriptId), script, false)
+	vmw, err := loadVM(fmt.Sprintf(`spell-%s`, scriptId), script, nil)
 	if err != nil {
-		finalErr := fmt.Errorf("Compile: %w", err)
-		return nil, finalErr
+		return nil, err
 	}
 
-	//
-	// Run the program
-	//
-	tmr := time.AfterFunc(scriptLoadTimeout, func() {
-		vm.Interrupt(errTimeout)
-	})
-	if _, err = vm.RunProgram(prg); err != nil {
-
-		// Wrap the error
-		finalErr := fmt.Errorf("RunProgram: %w", err)
-
-		if _, ok := finalErr.(*goja.Exception); ok {
-			mudlog.Error("JSVM", "exception", finalErr)
-			return nil, finalErr
-		} else if errors.Is(finalErr, errTimeout) {
-			mudlog.Error("JSVM", "interrupted", finalErr)
-			return nil, finalErr
-		}
-
-		mudlog.Error("JSVM", "error", finalErr)
-		return nil, finalErr
-	}
-	vm.ClearInterrupt()
-	tmr.Stop()
-
-	vmw := newVMWrapper(vm, 0)
-
-	itemVMCache[scriptId] = vmw
-
+	spellVMCache[scriptId] = vmw
 	return vmw, nil
 }

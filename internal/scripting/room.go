@@ -320,72 +320,18 @@ func getRoomVM(roomId int) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vm := goja.New()
-	setAllScriptingFunctions(vm)
-
-	prg, err := goja.Compile(fmt.Sprintf(`room-%d`, roomId), script, false)
+	vmw, err := loadVM(fmt.Sprintf(`room-%d`, roomId), script, func(vm *goja.Runtime) error {
+		if fn, ok := goja.AssertFunction(vm.Get(`onLoad`)); ok {
+			sRoom := GetRoom(roomId)
+			_, err := fn(goja.Undefined(), vm.ToValue(sRoom))
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		finalErr := fmt.Errorf("Compile: %w", err)
-		return nil, finalErr
+		return nil, err
 	}
-
-	//
-	// Run the program
-	//
-	tmr := time.AfterFunc(scriptLoadTimeout, func() {
-		vm.Interrupt(errTimeout)
-	})
-	if _, err = vm.RunProgram(prg); err != nil {
-
-		// Wrap the error
-		finalErr := fmt.Errorf("RunProgram: %w", err)
-
-		if _, ok := finalErr.(*goja.Exception); ok {
-			mudlog.Error("JSVM", "exception", finalErr)
-			return nil, finalErr
-		} else if errors.Is(finalErr, errTimeout) {
-			mudlog.Error("JSVM", "interrupted", finalErr)
-			return nil, finalErr
-		}
-
-		mudlog.Error("JSVM", "error", finalErr)
-		return nil, finalErr
-	}
-	vm.ClearInterrupt()
-	tmr.Stop()
-
-	//
-	// Run onLoad() function
-	//
-	tmr = time.AfterFunc(scriptLoadTimeout, func() {
-		vm.Interrupt(errTimeout)
-	})
-	if fn, ok := goja.AssertFunction(vm.Get(`onLoad`)); ok {
-
-		sRoom := GetRoom(roomId)
-
-		if _, err := fn(goja.Undefined(), vm.ToValue(sRoom)); err != nil {
-			// Wrap the error
-			finalErr := fmt.Errorf("onLoad: %w", err)
-
-			if _, ok := finalErr.(*goja.Exception); ok {
-				mudlog.Error("JSVM", "exception", finalErr)
-				return nil, finalErr
-			} else if errors.Is(finalErr, errTimeout) {
-				mudlog.Error("JSVM", "interrupted", finalErr)
-				return nil, finalErr
-			}
-
-			mudlog.Error("JSVM", "error", finalErr)
-			return nil, finalErr
-		}
-	}
-	vm.ClearInterrupt()
-	tmr.Stop()
-
-	vmw := newVMWrapper(vm, 0)
 
 	roomVMCache[roomId] = vmw
-
 	return vmw, nil
 }
