@@ -8,6 +8,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -508,6 +510,156 @@ func GetAllMapperRooms() []MapperRoomData {
 	}
 
 	return result
+}
+
+// RenameZoneForAdmin renames a zone: it updates all on-disk files (rooms,
+// mobs, conversations, zone-config) and all in-memory state (room manager,
+// live mob instances, online user records). No players may be present in the
+// zone when this is called.
+func RenameZoneForAdmin(oldName, newName string) error {
+	zoneInfo, ok := roomManager.zones[oldName]
+	if !ok {
+		return fmt.Errorf("zone does not exist: %s", oldName)
+	}
+
+	newName = strings.TrimSpace(newName)
+	if err := ValidateZoneName(newName); err != nil {
+		return err
+	}
+
+	if _, exists := roomManager.zones[newName]; exists {
+		return fmt.Errorf("zone already exists: %s", newName)
+	}
+
+	basePath := configs.GetFilePathsConfig().DataFiles.String()
+	oldFolder := ZoneToFolder(oldName)
+	newFolder := ZoneToFolder(newName)
+
+	oldRoomsDir := util.FilePath(basePath, `/rooms/`, oldFolder)
+	newRoomsDir := util.FilePath(basePath, `/rooms/`, newFolder)
+	oldInstancesDir := util.FilePath(basePath, `/rooms.instances/`, oldFolder)
+	newInstancesDir := util.FilePath(basePath, `/rooms.instances/`, newFolder)
+	oldMobsDir := util.FilePath(basePath, `/mobs/`, oldFolder)
+	newMobsDir := util.FilePath(basePath, `/mobs/`, newFolder)
+	oldConvsDir := util.FilePath(basePath, `/conversations/`, ZoneNameSanitize(oldName))
+	newConvsDir := util.FilePath(basePath, `/conversations/`, ZoneNameSanitize(newName))
+
+	// Rename rooms template folder.
+	if err := os.Rename(oldRoomsDir, newRoomsDir); err != nil {
+		return fmt.Errorf("renaming rooms folder: %w", err)
+	}
+
+	// Rename rooms instances folder (may not exist).
+	if err := os.Rename(oldInstancesDir, newInstancesDir); err != nil && !os.IsNotExist(err) {
+		// Roll back rooms folder rename.
+		os.Rename(newRoomsDir, oldRoomsDir)
+		return fmt.Errorf("renaming rooms.instances folder: %w", err)
+	}
+
+	// Rename mobs folder (may not exist).
+	if err := os.Rename(oldMobsDir, newMobsDir); err != nil && !os.IsNotExist(err) {
+		os.Rename(newRoomsDir, oldRoomsDir)
+		os.Rename(newInstancesDir, oldInstancesDir)
+		return fmt.Errorf("renaming mobs folder: %w", err)
+	}
+
+	// Rename conversations folder (may not exist).
+	if err := os.Rename(oldConvsDir, newConvsDir); err != nil && !os.IsNotExist(err) {
+		os.Rename(newRoomsDir, oldRoomsDir)
+		os.Rename(newInstancesDir, oldInstancesDir)
+		os.Rename(newMobsDir, oldMobsDir)
+		return fmt.Errorf("renaming conversations folder: %w", err)
+	}
+
+	// Update zone-config.yaml: name field.
+	zoneInfo.Name = newName
+	roomsBasePath := util.FilePath(basePath + `/rooms`)
+	saveModes := []fileloader.SaveOption{}
+	if configs.GetFilePathsConfig().CarefulSaveFiles {
+		saveModes = append(saveModes, fileloader.SaveCareful)
+	}
+	if err := fileloader.SaveFlatFile[*ZoneConfig](roomsBasePath, zoneInfo, saveModes...); err != nil {
+		return fmt.Errorf("saving zone config: %w", err)
+	}
+
+	// Rewrite the file cache and in-memory Zone fields for every room in the
+	// zone before touching disk.
+	oldFolderPrefix := ZoneToFolder(oldName)
+	newFolderPrefix := ZoneToFolder(newName)
+	for roomId := range zoneInfo.RoomIds {
+		if cached, ok := roomManager.roomIdToFileCache[roomId]; ok {
+			roomManager.roomIdToFileCache[roomId] = strings.Replace(cached, oldFolderPrefix, newFolderPrefix, 1)
+		}
+		if r, ok := roomManager.rooms[roomId]; ok {
+			r.Zone = newName
+		}
+		if summary, ok := roomManager.roomSummaries[roomId]; ok {
+			summary.Zone = newName
+			roomManager.roomSummaries[roomId] = summary
+		}
+	}
+
+	// Patch the zone: field in every room YAML on disk by rewriting the raw
+	// bytes. We cannot use LoadRoomTemplate here because LoadFlatFile validates
+	// that the file path ends in Filepath(), which is derived from the zone
+	// field stored inside the YAML — but those YAMLs still contain the old
+	// zone name until we overwrite them.
+	oldZoneYAML := fmt.Sprintf("zone: %s", oldName)
+	newZoneYAML := fmt.Sprintf("zone: %s", newName)
+	for roomId := range zoneInfo.RoomIds {
+		filePath, ok := roomManager.roomIdToFileCache[roomId]
+		if !ok {
+			continue
+		}
+		fullPath := util.FilePath(basePath, `/rooms/`, filePath)
+		data, err := os.ReadFile(fullPath)
+		if err != nil {
+			continue
+		}
+		patched := strings.Replace(string(data), oldZoneYAML, newZoneYAML, 1)
+		os.WriteFile(fullPath, []byte(patched), 0644)
+	}
+
+	// Update every mob spec on disk and in memory.
+	for _, spec := range mobs.GetAllMobSpecs() {
+		if spec.Zone != oldName {
+			continue
+		}
+		spec.Zone = newName
+		mobs.SaveMobSpec(&spec)
+	}
+
+	// Update in-memory room manager zone index.
+	delete(roomManager.zones, oldName)
+	roomManager.zones[newName] = zoneInfo
+
+	// Move coordinate index.
+	if coordIdx, ok := roomManager.coordinateIndex[oldName]; ok {
+		roomManager.coordinateIndex[newName] = coordIdx
+		delete(roomManager.coordinateIndex, oldName)
+	}
+
+	// Update live mob instances.
+	for _, m := range mobs.GetAllMobInstances() {
+		if m.Character.Zone == oldName {
+			m.Character.Zone = newName
+		}
+	}
+
+	// Update online users.
+	for _, u := range users.GetAllActiveUsers() {
+		if u.Character.Zone == oldName {
+			u.Character.Zone = newName
+		}
+		if u.Character.ZonesVisited != nil {
+			if bs, ok := u.Character.ZonesVisited[oldName]; ok {
+				u.Character.ZonesVisited[newName] = bs
+				delete(u.Character.ZonesVisited, oldName)
+			}
+		}
+	}
+
+	return nil
 }
 
 func DeleteZoneForAdmin(zoneName string) error {

@@ -94,6 +94,42 @@ func apiV1DeleteZone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, APIResponse[struct{}]{Success: true})
 }
 
+// POST /admin/api/v1/zones/{zonename}/rename
+func apiV1RenameZone(w http.ResponseWriter, r *http.Request) {
+	oldName := r.PathValue("zonename")
+
+	var body struct {
+		NewName string `json:"NewName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
+		return
+	}
+
+	if body.NewName == "" {
+		writeAPIError(w, http.StatusBadRequest, "NewName is required")
+		return
+	}
+
+	if err := rooms.ValidateZoneName(body.NewName); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := rooms.RenameZoneForAdmin(oldName, body.NewName); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse[map[string]any]{
+		Success: true,
+		Data: map[string]any{
+			"OldName": oldName,
+			"NewName": body.NewName,
+		},
+	})
+}
+
 // ---------------------------------------------------------------------------
 // Rooms
 // ---------------------------------------------------------------------------

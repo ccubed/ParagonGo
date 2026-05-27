@@ -103,6 +103,24 @@ func Zone(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
+	if zoneCmd == `rename` {
+
+		newName := strings.TrimSpace(strings.Join(args, ` `))
+		if newName == `` {
+			user.SendText(`Usage: <ansi fg="command">zone rename <new zone name></ansi>`)
+			return true, nil
+		}
+
+		if err := rooms.RenameZoneForAdmin(room.Zone, newName); err != nil {
+			user.SendText(fmt.Sprintf(`<ansi fg="red">Error:</ansi> %s`, err.Error()))
+			return true, nil
+		}
+
+		user.SendText(fmt.Sprintf(`Zone renamed from <ansi fg="yellow">%s</ansi> to <ansi fg="yellow">%s</ansi>.`, room.Zone, newName))
+		return true, nil
+
+	}
+
 	return true, nil
 }
 

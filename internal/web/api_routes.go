@@ -94,6 +94,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	// Zones
 	mux.HandleFunc("GET /admin/api/v1/zones", doBasicAuth(RunWithMUDLocked(apiV1GetZones)))
 	mux.HandleFunc("POST /admin/api/v1/zones", doBasicAuth(RunWithMUDLocked(apiV1CreateZone)))
+	mux.HandleFunc("POST /admin/api/v1/zones/{zonename}/rename", doBasicAuth(RunWithMUDLocked(apiV1RenameZone)))
 	mux.HandleFunc("PATCH /admin/api/v1/zones/{zonename}", doBasicAuth(RunWithMUDLocked(apiV1PatchZone)))
 	mux.HandleFunc("DELETE /admin/api/v1/zones/{zonename}", doBasicAuth(RunWithMUDLocked(apiV1DeleteZone)))
 

@@ -743,6 +743,14 @@ func MakeHostile(groupName string, userId int, rounds int) {
 	}
 }
 
+func GetAllMobInstances() []*Mob {
+	result := make([]*Mob, 0, len(mobInstances))
+	for _, m := range mobInstances {
+		result = append(result, m)
+	}
+	return result
+}
+
 func ZoneNameSanitize(zone string) string {
 	if zone == "" {
 		return ""

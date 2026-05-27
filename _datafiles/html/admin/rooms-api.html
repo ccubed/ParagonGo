@@ -125,6 +125,21 @@
         </div>
     </details>
 
+    <details class="api-entry">
+        <summary>
+            <span class="method method-post">POST</span>
+            <span class="api-path">/admin/api/v1/zones/{zonename}/rename</span>
+            <span class="api-desc">Rename a zone</span>
+        </summary>
+        <div class="api-body">
+            <p>Renames a zone. Updates all room and mob YAML files on disk, renames the zone folders, and applies the new name to all in-memory state immediately. Fails if any room in the zone has players present or if <code>NewName</code> already exists.</p>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
+     <span class="flag">-X</span> POST <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> \
+     <span class="flag">-d</span> <span class="str">'{"NewName":"The New Arctic"}'</span> \
+     <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/zones/The%20Arctic/rename</span></div>
+        </div>
+    </details>
+
 </div>
 
 <div class="api-group-title">Rooms</div>

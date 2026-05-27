@@ -455,6 +455,14 @@
                     <button class="btn btn-secondary" onclick="closeZoneEditor()">Close</button>
                     <button class="btn btn-danger" onclick="deleteZone()" style="margin-left:auto;">Delete Zone</button>
                 </div>
+                <hr style="margin:1rem 0 0.75rem; border:none; border-top:1px solid var(--color-border);">
+                <div class="field" style="margin-bottom:0.5rem;">
+                    <label>Rename Zone</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input type="text" id="zf-rename" placeholder="New zone name..." style="flex:1;">
+                        <button class="btn btn-secondary" onclick="renameZone()">Rename</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2345,6 +2353,7 @@
         setVal('zf-scalemin', zone.AutoScaleMin || 0);
         setVal('zf-scalemax', zone.AutoScaleMax || 0);
         renderIdleMsgs('zf-idle-list', zone.IdleMessages || []);
+        document.getElementById('zf-rename').value = '';
     };
 
     window.closeZoneEditor = function () {
@@ -2381,6 +2390,22 @@
         closeZoneEditor();
         const zr = await AdminAPI.get('/admin/api/v1/zones', true);
         if (zr.ok) { allZones = zr.data.data || []; populateZoneFilter(); }
+        loadRoomList();
+    };
+
+    window.renameZone = async function () {
+        const oldName = document.getElementById('zone-filter').value;
+        if (!oldName) return;
+        const newName = document.getElementById('zf-rename').value.trim();
+        if (!newName) { showStatus('Enter a new zone name.', false); return; }
+        if (!confirm('Rename zone "' + oldName + '" to "' + newName + '"? This will update all room and mob files on disk.')) return;
+        const res = await AdminAPI.post('/admin/api/v1/zones/' + encodeURIComponent(oldName) + '/rename', { NewName: newName });
+        if (!res.ok) { showStatus('Rename failed: ' + res.error, false); return; }
+        showStatus('Zone renamed to "' + newName + '".', true);
+        document.getElementById('zf-rename').value = '';
+        closeZoneEditor();
+        const zr = await AdminAPI.get('/admin/api/v1/zones', true);
+        if (zr.ok) { allZones = zr.data.data || []; populateZoneFilter(); document.getElementById('zone-filter').value = newName; }
         loadRoomList();
     };
 

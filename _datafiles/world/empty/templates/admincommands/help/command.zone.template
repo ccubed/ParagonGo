@@ -1,9 +1,17 @@
 The <ansi fg="command">zone</ansi> command can be used in the following ways:
 
-<ansi fg="command">room info</ansi> 
-Get the zone config info
-<ansi fg="command">zone set autoscale [lowend] [highend]</ansi> - e.g. <ansi fg="command">zone set autoscale 5 10</ansi>
-Set the mob auto-scaling to a min/max range. Set to zeroes or empty to clear.
+<ansi fg="command">zone info</ansi>
+Get the zone config info for the current zone.
 
-You can interactively modify zone properties to the room using the command:
+<ansi fg="command">zone set autoscale [lowend] [highend]</ansi> - e.g. <ansi fg="command">zone set autoscale 5 10</ansi>
+Set the mob auto-scaling to a min/max level range for the zone.
+Set both values to zero to disable auto-scaling.
+
+<ansi fg="command">zone rename [new zone name]</ansi> - e.g. <ansi fg="command">zone rename "The Frozen North"</ansi>
+Rename the current zone. Updates all room and mob files on disk and takes
+effect immediately in-game. Allowed characters: letters, numbers, spaces,
+and underscores.
+
+You can interactively modify zone properties using the command:
 <ansi fg="command">zone edit</ansi>
+This allows you to configure mutators, auto-scaling, and background music.
