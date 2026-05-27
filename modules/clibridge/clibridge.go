@@ -37,7 +37,16 @@ func init() {
 		panic(err)
 	}
 
+	m.plug.Web.AdminPage("Config", "clibridge-config", "html/admin/clibridge-config.html", true, "Modules", "CLI Bridge", nil)
 	m.plug.Web.AdminPage("About", "clibridge-about", "html/admin/clibridge-about.html", true, "Modules", "CLI Bridge", nil)
+
+	m.plug.Web.AdminAPIEndpoint("GET", "clibridge-config", m.apiGetConfig)
+	m.plug.Web.AdminAPIEndpoint("PATCH", "clibridge-config", m.apiPatchConfig, "clibridge.write")
+	m.plug.Web.RegisterPermissions(plugins.ModulePermission{
+		Key:         "clibridge.write",
+		Description: "Edit CLI bridge configuration",
+		Category:    "Modules",
+	})
 
 	m.plug.AddUserCommand(`cli`, m.cliCommand, false, true)
 
@@ -91,6 +100,10 @@ func (m *CLIBridgeModule) isEnabled() bool {
 }
 
 func (m *CLIBridgeModule) getAllowedTools() []string {
+	lc := m.loadListConfig()
+	if len(lc.AllowedTools) > 0 {
+		return lc.AllowedTools
+	}
 	v := m.plug.Config.Get(`AllowedTools`)
 	if tools, ok := v.([]any); ok {
 		result := make([]string, 0, len(tools))
@@ -105,6 +118,10 @@ func (m *CLIBridgeModule) getAllowedTools() []string {
 }
 
 func (m *CLIBridgeModule) getAllowedPaths() []string {
+	lc := m.loadListConfig()
+	if len(lc.AllowedPaths) > 0 {
+		return lc.AllowedPaths
+	}
 	v := m.plug.Config.Get(`AllowedPaths`)
 	if paths, ok := v.([]any); ok {
 		result := make([]string, 0, len(paths))

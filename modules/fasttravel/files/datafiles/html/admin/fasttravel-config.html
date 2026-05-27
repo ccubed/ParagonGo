@@ -51,6 +51,15 @@
     .no-keys { padding: 2rem; text-align: center; color: var(--color-text-faint); font-size: 0.9rem; }
     tr.desc-row td { padding: 0.1rem 0.9rem 0.5rem; font-size: 0.78rem; color: var(--color-text-faint); font-style: italic; border-bottom: 1px solid var(--color-border-light); }
 
+    /* ── item-picker ─────────────────────────────────────────────────────── */
+    .item-picker-cell { display: flex; align-items: center; gap: 0.5rem; }
+    .item-picker-display { flex: 1; font-size: 0.875rem; color: var(--color-text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-picker-display.empty { color: var(--color-text-faint); font-style: italic; }
+    .btn-pick { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: 1px solid var(--color-border); cursor: pointer; background: var(--color-surface-alt); color: var(--color-text-strong); white-space: nowrap; }
+    .btn-pick:hover { background: var(--color-border-faint); }
+    .btn-clear-item { padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: none; color: var(--color-text-faint); }
+    .btn-clear-item:hover { color: var(--color-danger); }
+
     /* ── type-picker ─────────────────────────────────────────────────────── */
     .type-picker-cell { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0; }
 
@@ -124,14 +133,12 @@
     const PREFIX = 'Modules.' + MODULE + '.';
     const DESCRIPTIONS = {
         'GoldCost':               'Gold required each time a player uses fast travel. Set to 0 to disable.',
-        'RequiredItemId':         'Item ID that is consumed each time a player uses fast travel. Set to 0 to disable.',
+        'RequiredItemId':         'Item that is consumed each time a player uses fast travel. Set to none to disable.',
         'DisallowedItemTypes':    'Item types that block fast travel when the player carries, wears, or stores them on a pet. Select from the list or enter a comma-separated value manually.',
         'DisallowedItemSubtypes': 'Item subtypes that block fast travel when the player carries, wears, or stores them on a pet. Select from the list or enter a comma-separated value manually.',
     };
 
     // Keys that must always appear in the table, with their default values.
-    // This ensures zero-value integer keys (GoldCost: 0, RequiredItemId: 0)
-    // are shown even if the config API omits them.
     const KEY_DEFAULTS = {
         'GoldCost':               '0',
         'RequiredItemId':         '0',
@@ -139,22 +146,30 @@
         'DisallowedItemSubtypes': '',
     };
 
-    // Keys that use the type-picker widget instead of the plain text editor.
+    // Keys that use the item-picker widget.
+    const ITEM_PICKER_KEYS = new Set(['RequiredItemId']);
+
+    // Keys that use the type-picker widget.
     const TYPE_PICKER_KEYS = new Set(['DisallowedItemTypes', 'DisallowedItemSubtypes']);
 
-    const pending     = {};
-    let   configData  = {};
+    const pending    = {};
+    let   configData = {};
+
+    // Cache of itemId -> name populated from the items API or when an item is picked.
+    const itemNameCache = {};
+
     // Populated from /admin/api/v1/items/types
-    let   knownTypes    = []; // [{Type, Description}, ...]
-    let   knownSubtypes = []; // [{Type, Description}, ...]
+    let knownTypes    = [];
+    let knownSubtypes = [];
 
     // -------------------------------------------------------------------------
     // Init
     // -------------------------------------------------------------------------
     async function init() {
-        const [cfgRes, typesRes] = await AdminAPI.all([
+        const [cfgRes, typesRes, itemsRes] = await AdminAPI.all([
             AdminAPI.get('/admin/api/v1/config'),
             AdminAPI.get('/admin/api/v1/items/types'),
+            AdminAPI.get('/admin/api/v1/items'),
         ]);
 
         if (!cfgRes.ok) { showStatus('Failed to load configuration: ' + cfgRes.error, false); return; }
@@ -164,8 +179,13 @@
             knownSubtypes = typesRes.data.data.subtypes || [];
         }
 
+        if (itemsRes.ok) {
+            for (const item of (itemsRes.data && itemsRes.data.data) || []) {
+                itemNameCache[String(item.ItemId)] = item.Name || '';
+            }
+        }
+
         const all = cfgRes.data.data || {};
-        // Seed with known defaults so zero-value keys always appear.
         for (const [key, def] of Object.entries(KEY_DEFAULTS)) {
             configData[key] = def;
         }
@@ -193,7 +213,15 @@
             const tr = document.createElement('tr');
             tr.dataset.key = key;
 
-            if (TYPE_PICKER_KEYS.has(key)) {
+            if (ITEM_PICKER_KEYS.has(key)) {
+                tr.innerHTML =
+                    '<td class="key-cell" title="' + escAttr(PREFIX + key) + '">' + escHtml(key) + '</td>' +
+                    '<td class="value-cell"><div class="item-picker-cell" id="itempicker-' + cssId(key) + '">' +
+                        '<span class="item-picker-display empty" id="itemdisplay-' + cssId(key) + '">none</span>' +
+                        '<button class="btn-pick" onclick="openItemPicker(\'' + escAttr(key) + '\')">Pick\u2026</button>' +
+                        '<button class="btn-clear-item" title="Clear (set to 0)" onclick="clearItemPicker(\'' + escAttr(key) + '\')">\u00d7</button>' +
+                    '</div></td>';
+            } else if (TYPE_PICKER_KEYS.has(key)) {
                 const td1 = document.createElement('td');
                 td1.className = 'key-cell';
                 td1.title = PREFIX + key;
@@ -228,6 +256,67 @@
                 tbody.appendChild(dr);
             }
         }
+
+        // Populate item display labels after table is built.
+        for (const key of ITEM_PICKER_KEYS) {
+            if (configData[key] !== undefined) {
+                const effectiveVal = pending[key] !== undefined ? pending[key] : configData[key];
+                setItemDisplay(key, effectiveVal);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Item-picker helpers
+    // -------------------------------------------------------------------------
+    window.openItemPicker = function (key) {
+        Picker.open({
+            ...PickerConfigs.items,
+            title: 'Select Required Item',
+            onSelect: (item) => {
+                const id = String(item.ItemId);
+                itemNameCache[id] = item.Name || '';
+                stageItemPicker(key, id);
+            },
+        });
+    };
+
+    window.clearItemPicker = function (key) {
+        stageItemPicker(key, '0');
+    };
+
+    function stageItemPicker(key, idStr) {
+        setItemDisplay(key, idStr);
+        const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
+        if (idStr === configData[key]) {
+            delete pending[key];
+            if (tr) tr.style.background = '';
+        } else {
+            pending[key] = idStr;
+            if (tr) tr.style.background = '#fffbe6';
+        }
+        renderPendingPanel();
+    }
+
+    function setItemDisplay(key, idStr) {
+        const display = document.getElementById('itemdisplay-' + cssId(key));
+        if (!display) return;
+        const id = parseInt(idStr, 10);
+        if (!id || id === 0) {
+            display.textContent = 'none (disabled)';
+            display.className = 'item-picker-display empty';
+        } else {
+            const name = itemNameCache[String(id)];
+            display.textContent = name ? '#' + id + ' ' + name : '#' + id;
+            display.className = 'item-picker-display';
+        }
+    }
+
+    function itemDisplayLabel(idStr) {
+        const id = parseInt(idStr, 10);
+        if (!id || id === 0) return '0 (disabled)';
+        const name = itemNameCache[String(id)];
+        return name ? '#' + id + ' ' + name : '#' + id;
     }
 
     // -------------------------------------------------------------------------
@@ -237,15 +326,12 @@
         return key === 'DisallowedItemSubtypes' ? knownSubtypes : knownTypes;
     }
 
-    // Parse a comma-separated value string into a trimmed lowercase array,
-    // filtering out empty strings.
     function parseCSV(val) {
         return String(val || '').split(',')
             .map(s => s.trim().toLowerCase())
             .filter(s => s !== '');
     }
 
-    // Serialize an array of strings back to a comma-separated value.
     function serializeCSV(arr) {
         return arr.join(',');
     }
@@ -258,14 +344,12 @@
         wrap.className = 'type-picker-cell';
         wrap.id = 'tpw-' + cssId(key);
 
-        // --- chip strip ---
         const chipStrip = document.createElement('div');
         chipStrip.className = 'type-chips';
         chipStrip.id = 'chips-' + cssId(key);
         renderChips(chipStrip, key, selected, options);
         wrap.appendChild(chipStrip);
 
-        // --- dropdown + add button ---
         const controls = document.createElement('div');
         controls.className = 'type-picker-controls';
 
@@ -296,7 +380,6 @@
         });
         controls.appendChild(addBtn);
 
-        // raw toggle link
         const toggle = document.createElement('span');
         toggle.className = 'type-raw-toggle';
         toggle.textContent = 'edit as text';
@@ -314,7 +397,6 @@
 
         wrap.appendChild(controls);
 
-        // --- raw text fallback ---
         const rawRow = document.createElement('div');
         rawRow.className = 'type-raw-row';
         rawRow.id = 'raw-' + cssId(key);
@@ -345,7 +427,6 @@
         return wrap;
     }
 
-    // Re-render the chip strip for a key given a current array of selected values.
     function renderChips(stripEl, key, selected, options) {
         stripEl.innerHTML = '';
         if (selected.length === 0) {
@@ -355,7 +436,6 @@
             stripEl.appendChild(empty);
             return;
         }
-        // Build a label map from the known options so we can show the canonical casing.
         const labelMap = {};
         for (const opt of options) { labelMap[opt.Type.toLowerCase()] = opt.Type; }
 
@@ -378,14 +458,13 @@
         }
     }
 
-    // Returns the current effective value for a key (pending overrides saved).
     function getCurrentValue(key) {
         return pending[key] !== undefined ? pending[key] : (configData[key] || '');
     }
 
     function addType(key, val) {
         const current = parseCSV(getCurrentValue(key));
-        if (current.includes(val)) return; // already present
+        if (current.includes(val)) return;
         current.push(val);
         setTypeValue(key, serializeCSV(current));
     }
@@ -398,21 +477,18 @@
     function applyRawInput(key) {
         const inp = document.getElementById('rawinput-' + cssId(key));
         if (!inp) return;
-        // Normalise: lowercase, trim each entry, remove duplicates, remove empties.
         const cleaned = [...new Set(parseCSV(inp.value))];
         const newVal  = serializeCSV(cleaned);
         inp.value = newVal;
         setTypeValue(key, newVal);
     }
 
-    // Central setter: updates chips, syncs raw input if visible, stages the change.
     function setTypeValue(key, newVal) {
-        const options   = optionsForKey(key);
-        const selected  = parseCSV(newVal);
-        const stripEl   = document.getElementById('chips-' + cssId(key));
+        const options  = optionsForKey(key);
+        const selected = parseCSV(newVal);
+        const stripEl  = document.getElementById('chips-' + cssId(key));
         if (stripEl) renderChips(stripEl, key, selected, options);
 
-        // Keep raw input in sync if it's visible.
         const rawInput = document.getElementById('rawinput-' + cssId(key));
         if (rawInput) rawInput.value = newVal;
 
@@ -480,9 +556,12 @@
         panel.style.display = 'block';
         list.innerHTML = '';
         for (const key of keys.sort()) {
+            const displayVal = ITEM_PICKER_KEYS.has(key)
+                ? itemDisplayLabel(pending[key])
+                : (pending[key] || '(empty)');
             const item = document.createElement('div');
             item.className = 'pending-item';
-            item.innerHTML = '<span class="pending-key">' + escHtml(key) + '</span><span class="pending-arrow">&rarr;</span><span class="pending-val">' + escHtml(pending[key] || '(empty)') + '</span><button class="pending-remove" onclick="removePending(\'' + escAttr(key) + '\')">\u00d7</button>';
+            item.innerHTML = '<span class="pending-key">' + escHtml(key) + '</span><span class="pending-arrow">&rarr;</span><span class="pending-val">' + escHtml(displayVal) + '</span><button class="pending-remove" onclick="removePending(\'' + escAttr(key) + '\')">\u00d7</button>';
             list.appendChild(item);
         }
     }
@@ -492,7 +571,9 @@
         const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
         if (tr) tr.style.background = '';
 
-        if (TYPE_PICKER_KEYS.has(key)) {
+        if (ITEM_PICKER_KEYS.has(key)) {
+            setItemDisplay(key, configData[key] || '0');
+        } else if (TYPE_PICKER_KEYS.has(key)) {
             setTypeValue(key, configData[key] || '');
         } else {
             if (tr) tr.querySelector('.value-display').textContent = configData[key];
@@ -504,7 +585,9 @@
         for (const key of Object.keys(pending)) {
             const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
             if (tr) tr.style.background = '';
-            if (TYPE_PICKER_KEYS.has(key)) {
+            if (ITEM_PICKER_KEYS.has(key)) {
+                setItemDisplay(key, configData[key] || '0');
+            } else if (TYPE_PICKER_KEYS.has(key)) {
                 setTypeValue(key, configData[key] || '');
             } else {
                 if (tr) tr.querySelector('.value-display').textContent = configData[key];

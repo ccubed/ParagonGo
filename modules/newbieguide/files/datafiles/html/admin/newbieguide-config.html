@@ -50,6 +50,14 @@
 
     .no-keys { padding: 2rem; text-align: center; color: var(--color-text-faint); font-size: 0.9rem; }
     tr.desc-row td { padding: 0.1rem 0.9rem 0.5rem; font-size: 0.78rem; color: var(--color-text-faint); font-style: italic; border-bottom: 1px solid var(--color-border-light); }
+
+    .mob-picker-cell { display: flex; align-items: center; gap: 0.5rem; }
+    .mob-picker-display { flex: 1; font-size: 0.875rem; color: var(--color-text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mob-picker-display.empty { color: var(--color-text-faint); font-style: italic; }
+    .btn-pick { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 3px; border: 1px solid var(--color-border); cursor: pointer; background: var(--color-surface-alt); color: var(--color-text-strong); white-space: nowrap; }
+    .btn-pick:hover { background: var(--color-border-faint); }
+    .btn-clear-mob { padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: 3px; border: none; cursor: pointer; background: none; color: var(--color-text-faint); }
+    .btn-clear-mob:hover { color: var(--color-danger); }
 </style>
 <h1>newbieguide - Module Config</h1>
 <p class="subtitle">Configuration keys for the <strong>newbieguide</strong> module. Click any value to edit it inline. Changes are staged until you apply them.</p>
@@ -84,18 +92,38 @@
         'GuideMobId': 'Mob ID used as the newbie guide companion for new players. 0 (zero) to disable.',
         'MaximumPlayerLevel': 'Player level at which the guide departs and will no longer spawn to assist.',
     };
+
+    // Keys that use a mob picker instead of a plain text input.
+    const MOB_PICKER_KEYS = new Set(['GuideMobId']);
+
+    // Cache of mobId -> name resolved from the mobs API.
+    const mobNameCache = {};
+
     const pending = {};
     let configData = {};
+    let allMobs = [];
 
     async function init() {
-        const res = await AdminAPI.get('/admin/api/v1/config');
-        if (!res.ok) { showStatus('Failed to load configuration: ' + res.error, false); return; }
-        const all = res.data.data || {};
+        const [cfgRes, mobsRes] = await AdminAPI.all([
+            AdminAPI.get('/admin/api/v1/config'),
+            AdminAPI.get('/admin/api/v1/mobs'),
+        ]);
+
+        if (!cfgRes.ok) { showStatus('Failed to load configuration: ' + cfgRes.error, false); return; }
+        const all = cfgRes.data.data || {};
         for (const [fullKey, val] of Object.entries(all)) {
             if (fullKey.startsWith(PREFIX)) {
                 configData[fullKey.slice(PREFIX.length)] = String(val);
             }
         }
+
+        if (mobsRes.ok) {
+            allMobs = (mobsRes.data && mobsRes.data.data) || [];
+            for (const m of allMobs) {
+                mobNameCache[String(m.MobId)] = (m.Character && m.Character.Name) || '';
+            }
+        }
+
         buildTable();
     }
 
@@ -111,16 +139,26 @@
             const value = configData[key];
             const tr = document.createElement('tr');
             tr.dataset.key = key;
-            tr.innerHTML =
-                '<td class="key-cell" title="' + escAttr(PREFIX + key) + '">' + escHtml(key) + '</td>' +
-                '<td class="value-cell">' +
-                    '<span class="value-display" title="' + escAttr(value) + '" onclick="startEdit(\'' + escAttr(key) + '\')">' + escHtml(value) + '</span>' +
-                    '<span class="edit-form" id="edit-' + cssId(key) + '">' +
-                        '<input type="text" id="input-' + cssId(key) + '" value="' + escAttr(value) + '" onkeydown="editKeydown(event, \'' + escAttr(key) + '\')" />' +
-                        '<button class="btn-save" onclick="stageEdit(\'' + escAttr(key) + '\')">Stage</button>' +
-                        '<button class="btn-cancel" onclick="cancelEdit(\'' + escAttr(key) + '\')">Cancel</button>' +
-                    '</span>' +
-                '</td>';
+            if (MOB_PICKER_KEYS.has(key)) {
+                tr.innerHTML =
+                    '<td class="key-cell" title="' + escAttr(PREFIX + key) + '">' + escHtml(key) + '</td>' +
+                    '<td class="value-cell"><div class="mob-picker-cell" id="mobpicker-' + cssId(key) + '">' +
+                        '<span class="mob-picker-display empty" id="mobdisplay-' + cssId(key) + '">none</span>' +
+                        '<button class="btn-pick" onclick="openMobPicker(\'' + escAttr(key) + '\')">Pick\u2026</button>' +
+                        '<button class="btn-clear-mob" title="Clear (set to 0)" onclick="clearMobPicker(\'' + escAttr(key) + '\')">\u00d7</button>' +
+                    '</div></td>';
+            } else {
+                tr.innerHTML =
+                    '<td class="key-cell" title="' + escAttr(PREFIX + key) + '">' + escHtml(key) + '</td>' +
+                    '<td class="value-cell">' +
+                        '<span class="value-display" title="' + escAttr(value) + '" onclick="startEdit(\'' + escAttr(key) + '\')">' + escHtml(value) + '</span>' +
+                        '<span class="edit-form" id="edit-' + cssId(key) + '">' +
+                            '<input type="text" id="input-' + cssId(key) + '" value="' + escAttr(value) + '" onkeydown="editKeydown(event, \'' + escAttr(key) + '\')" />' +
+                            '<button class="btn-save" onclick="stageEdit(\'' + escAttr(key) + '\')">Stage</button>' +
+                            '<button class="btn-cancel" onclick="cancelEdit(\'' + escAttr(key) + '\')">Cancel</button>' +
+                        '</span>' +
+                    '</td>';
+            }
             tbody.appendChild(tr);
             if (DESCRIPTIONS[key]) {
                 const dr = document.createElement('tr');
@@ -130,7 +168,66 @@
                 tbody.appendChild(dr);
             }
         }
+        // Populate mob display labels after table is built.
+        for (const key of MOB_PICKER_KEYS) {
+            if (configData[key] !== undefined) {
+                const effectiveVal = pending[key] !== undefined ? pending[key] : configData[key];
+                setMobDisplay(key, effectiveVal);
+            }
+        }
     }
+
+    // -------------------------------------------------------------------------
+    // Mob picker helpers
+    // -------------------------------------------------------------------------
+
+    window.openMobPicker = function (key) {
+        Picker.open({
+            ...PickerConfigs.mobs,
+            title: 'Select Guide Mob',
+            onSelect: (mob) => {
+                const id = String(mob.MobId);
+                const name = (mob.Character && mob.Character.Name) || '';
+                mobNameCache[id] = name;
+                stageMobPicker(key, id);
+            },
+        });
+    };
+
+    window.clearMobPicker = function (key) {
+        stageMobPicker(key, '0');
+    };
+
+    function stageMobPicker(key, idStr) {
+        setMobDisplay(key, idStr);
+        const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
+        if (idStr === configData[key]) {
+            delete pending[key];
+            if (tr) tr.style.background = '';
+        } else {
+            pending[key] = idStr;
+            if (tr) tr.style.background = '#fffbe6';
+        }
+        renderPendingPanel();
+    }
+
+    function setMobDisplay(key, idStr) {
+        const display = document.getElementById('mobdisplay-' + cssId(key));
+        if (!display) return;
+        const id = parseInt(idStr, 10);
+        if (!id || id === 0) {
+            display.textContent = 'none (disabled)';
+            display.className = 'mob-picker-display empty';
+        } else {
+            const name = mobNameCache[String(id)];
+            display.textContent = name ? '#' + id + ' ' + name : '#' + id;
+            display.className = 'mob-picker-display';
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Inline edit helpers (for non-picker keys)
+    // -------------------------------------------------------------------------
 
     window.startEdit = function (key) {
         cancelAllEdits();
@@ -171,6 +268,10 @@
         document.querySelectorAll('.edit-form.active').forEach(f => { f.classList.remove('active'); f.previousElementSibling.style.display = ''; });
     }
 
+    // -------------------------------------------------------------------------
+    // Pending panel
+    // -------------------------------------------------------------------------
+
     function renderPendingPanel() {
         const panel = document.getElementById('pending-panel');
         const list  = document.getElementById('pending-list');
@@ -179,24 +280,46 @@
         panel.style.display = 'block';
         list.innerHTML = '';
         for (const key of keys.sort()) {
+            const displayVal = MOB_PICKER_KEYS.has(key)
+                ? mobDisplayLabel(key, pending[key])
+                : pending[key];
             const item = document.createElement('div');
             item.className = 'pending-item';
-            item.innerHTML = '<span class="pending-key">' + escHtml(key) + '</span><span class="pending-arrow">&rarr;</span><span class="pending-val">' + escHtml(pending[key]) + '</span><button class="pending-remove" onclick="removePending(\'' + escAttr(key) + '\')">\u00d7</button>';
+            item.innerHTML = '<span class="pending-key">' + escHtml(key) + '</span><span class="pending-arrow">&rarr;</span><span class="pending-val">' + escHtml(displayVal) + '</span><button class="pending-remove" onclick="removePending(\'' + escAttr(key) + '\')">\u00d7</button>';
             list.appendChild(item);
         }
     }
 
+    function mobDisplayLabel(key, idStr) {
+        const id = parseInt(idStr, 10);
+        if (!id || id === 0) return '0 (disabled)';
+        const name = mobNameCache[String(id)];
+        return name ? '#' + id + ' ' + name : '#' + id;
+    }
+
     window.removePending = function (key) {
         delete pending[key];
+        if (MOB_PICKER_KEYS.has(key)) {
+            setMobDisplay(key, configData[key]);
+        } else {
+            const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
+            if (tr) { tr.querySelector('.value-display').textContent = configData[key]; tr.style.background = ''; }
+        }
         const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
-        if (tr) { tr.querySelector('.value-display').textContent = configData[key]; tr.style.background = ''; }
+        if (tr) tr.style.background = '';
         renderPendingPanel();
     };
 
     window.discardAll = function () {
         for (const key of Object.keys(pending)) {
+            if (MOB_PICKER_KEYS.has(key)) {
+                setMobDisplay(key, configData[key]);
+            } else {
+                const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
+                if (tr) { tr.querySelector('.value-display').textContent = configData[key]; tr.style.background = ''; }
+            }
             const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
-            if (tr) { tr.querySelector('.value-display').textContent = configData[key]; tr.style.background = ''; }
+            if (tr) tr.style.background = '';
             delete pending[key];
         }
         renderPendingPanel();
@@ -214,7 +337,12 @@
         const result = res.data.data || {};
         const applied  = (result.applied  || []).map(k => k.startsWith(PREFIX) ? k.slice(PREFIX.length) : k);
         const rejected = (result.rejected || []).map(k => k.startsWith(PREFIX) ? k.slice(PREFIX.length) : k);
-        for (const key of applied) { configData[key] = pending[key]; delete pending[key]; const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]'); if (tr) tr.style.background = ''; }
+        for (const key of applied) {
+            configData[key] = pending[key];
+            delete pending[key];
+            const tr = document.querySelector('tr[data-key="' + escAttr(key) + '"]');
+            if (tr) tr.style.background = '';
+        }
         let msg = '';
         if (applied.length)  msg += 'Applied: ' + applied.join(', ') + '. ';
         if (rejected.length) msg += 'Rejected (locked): ' + rejected.join(', ') + '.';
