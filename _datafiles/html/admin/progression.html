@@ -532,7 +532,7 @@
         <div class="chart-card">
             <div class="chart-head">
                 <span class="ch-title">Stat Cap Compression Curve</span>
-                <span class="ch-sub">Raw stat value (x) vs. effective ValueAdj (y). Below the threshold the line is straight (1:1). Above it, gains are compressed by the cap formula. The kink shows exactly where compression begins and how aggressively it flattens.</span>
+                <span class="ch-sub">Shows how raw stat value (x) maps to the effective ValueAdj (y) that the game actually uses. Below the threshold the curve is 1:1 &mdash; every point gained is a point earned. Above it, gains are compressed so stats can keep growing through training and racial scaling without becoming uncontrollably large. This lets high-level characters still feel progression while keeping combat math predictable: a character who invests heavily in a stat will always improve, but the returns diminish rather than exploding. The kink marks where compression begins; the exponent and scale sliders control how steeply the curve flattens after that point.</span>
             </div>
             <div class="chart-body">
                 <canvas id="chart-cap"></canvas>
@@ -777,6 +777,29 @@ async function saveConfig() {
 
 // ─── chart registry: stores last-drawn data per canvas id ───────────────────
 const chartRegistry = {};
+// Offscreen cache: canvasId -> { canvas: OffscreenCanvas|HTMLCanvasElement, valid: bool }
+const bgCache = {};
+
+function getBgCanvas(canvasId, W, H) {
+    const dpr = window.devicePixelRatio || 1;
+    const pw = Math.floor(W * dpr);
+    const ph = Math.floor(H * dpr);
+    let entry = bgCache[canvasId];
+    if (!entry || entry.canvas.width !== pw || entry.canvas.height !== ph) {
+        let bg;
+        try { bg = new OffscreenCanvas(pw, ph); } catch(_) {
+            bg = document.createElement('canvas');
+            bg.width = pw; bg.height = ph;
+        }
+        entry = { canvas: bg, valid: false };
+        bgCache[canvasId] = entry;
+    }
+    return entry;
+}
+
+function invalidateBg(canvasId) {
+    if (bgCache[canvasId]) bgCache[canvasId].valid = false;
+}
 
 // ─── chart rendering ──────────────────────────────────────────────────────────
 const COLORS = {
@@ -824,9 +847,11 @@ function drawLineChart(canvasId, datasets, labels) {
     function yPos(v) { return pad.top + ch - ((v - yMin) / (yMax - yMin)) * ch; }
 
     // Store in registry for hover lookups.
-    chartRegistry[canvasId] = { datasets, labels, pad, W, H, cw, ch, n, yMin, yMax, xPos, yPos };
+    invalidateBg(canvasId);
+    const reg = { canvasId, datasets, labels, pad, W, H, cw, ch, n, yMin, yMax, xPos, yPos };
+    chartRegistry[canvasId] = reg;
 
-    renderChartContent(ctx, { datasets, labels, pad, W, H, cw, ch, n, yMin, yMax, xPos, yPos });
+    renderChartContent(ctx, reg);
 
     // Wire mouse events once.
     if (!canvas._hoverBound) {
@@ -873,45 +898,51 @@ function drawDualAxisChart(canvasId, leftDs, rightDs, labels) {
     function redrawDual(crosshairIdx) {
         const canvas2 = document.getElementById(canvasId);
         if (!canvas2) return;
-        const ctx2 = canvas2.getContext('2d');
         const dpr2 = window.devicePixelRatio || 1;
+        const ctx2 = canvas2.getContext('2d');
         ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
-        ctx2.clearRect(0, 0, W, H);
 
-        // Gridlines.
-        ctx2.strokeStyle = COLORS.grid;
-        ctx2.lineWidth = 0.5;
-        ctx2.font = '10px system-ui, sans-serif';
-        for (let t = 0; t <= yTicks; t++) {
-            const vL2 = L.mn + (L.mx - L.mn) * (t / yTicks);
-            const vR2 = R.mn + (R.mx - R.mn) * (t / yTicks);
-            const y2  = yPosL(vL2);
-            ctx2.beginPath(); ctx2.moveTo(pad.left, y2); ctx2.lineTo(pad.left + cw, y2); ctx2.stroke();
-            ctx2.textAlign = 'right'; ctx2.fillStyle = leftDs.color;
-            ctx2.fillText(formatNum(vL2), pad.left - 4, y2 + 3.5);
-            ctx2.textAlign = 'left'; ctx2.fillStyle = rightDs.color;
-            ctx2.fillText(formatNum(vR2), pad.left + cw + 4, y2 + 3.5);
+        // ─ background layer ───────────────────────────────────────
+        const bgEntry2 = getBgCanvas(canvasId, W, H);
+        if (!bgEntry2.valid) {
+            const bgCtx2 = bgEntry2.canvas.getContext('2d');
+            bgCtx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+            bgCtx2.clearRect(0, 0, W, H);
+            bgCtx2.strokeStyle = COLORS.grid; bgCtx2.lineWidth = 0.5;
+            bgCtx2.font = '10px system-ui, sans-serif';
+            for (let t = 0; t <= yTicks; t++) {
+                const vL2 = L.mn + (L.mx - L.mn) * (t / yTicks);
+                const vR2 = R.mn + (R.mx - R.mn) * (t / yTicks);
+                const y2  = yPosL(vL2);
+                bgCtx2.beginPath(); bgCtx2.moveTo(pad.left, y2); bgCtx2.lineTo(pad.left + cw, y2); bgCtx2.stroke();
+                bgCtx2.textAlign = 'right'; bgCtx2.fillStyle = leftDs.color;
+                bgCtx2.fillText(formatNum(vL2), pad.left - 4, y2 + 3.5);
+                bgCtx2.textAlign = 'left'; bgCtx2.fillStyle = rightDs.color;
+                bgCtx2.fillText(formatNum(vR2), pad.left + cw + 4, y2 + 3.5);
+            }
+            bgCtx2.fillStyle = COLORS.text; bgCtx2.textAlign = 'center';
+            const xStep2 = Math.max(1, Math.floor(n / 10));
+            for (let i = 0; i < n; i += xStep2) bgCtx2.fillText(labels[i], xPos(i), H - pad.bottom + 14);
+            bgCtx2.strokeStyle = COLORS.axis; bgCtx2.lineWidth = 1; bgCtx2.setLineDash([]);
+            bgCtx2.beginPath();
+            bgCtx2.moveTo(pad.left, pad.top); bgCtx2.lineTo(pad.left, pad.top + ch);
+            bgCtx2.lineTo(pad.left + cw, pad.top + ch); bgCtx2.lineTo(pad.left + cw, pad.top);
+            bgCtx2.stroke();
+            bgCtx2.strokeStyle = leftDs.color; bgCtx2.lineWidth = 2; bgCtx2.lineJoin = 'round'; bgCtx2.setLineDash([]);
+            bgCtx2.beginPath();
+            leftDs.data.forEach((v, i) => { i === 0 ? bgCtx2.moveTo(xPos(i), yPosL(v)) : bgCtx2.lineTo(xPos(i), yPosL(v)); });
+            bgCtx2.stroke();
+            bgCtx2.strokeStyle = rightDs.color; bgCtx2.lineWidth = 2; bgCtx2.setLineDash([5, 3]);
+            bgCtx2.beginPath();
+            rightDs.data.forEach((v, i) => { i === 0 ? bgCtx2.moveTo(xPos(i), yPosR(v)) : bgCtx2.lineTo(xPos(i), yPosR(v)); });
+            bgCtx2.stroke();
+            bgCtx2.setLineDash([]);
+            bgEntry2.valid = true;
         }
-        ctx2.fillStyle = COLORS.text;
-        ctx2.textAlign = 'center';
-        const xStep2 = Math.max(1, Math.floor(n / 10));
-        for (let i = 0; i < n; i += xStep2) {
-            ctx2.fillText(labels[i], xPos(i), H - pad.bottom + 14);
-        }
-        ctx2.strokeStyle = COLORS.axis; ctx2.lineWidth = 1; ctx2.setLineDash([]);
-        ctx2.beginPath();
-        ctx2.moveTo(pad.left, pad.top); ctx2.lineTo(pad.left, pad.top + ch);
-        ctx2.lineTo(pad.left + cw, pad.top + ch); ctx2.lineTo(pad.left + cw, pad.top);
-        ctx2.stroke();
-        ctx2.strokeStyle = leftDs.color; ctx2.lineWidth = 2; ctx2.lineJoin = 'round'; ctx2.setLineDash([]);
-        ctx2.beginPath();
-        leftDs.data.forEach((v, i) => { i === 0 ? ctx2.moveTo(xPos(i), yPosL(v)) : ctx2.lineTo(xPos(i), yPosL(v)); });
-        ctx2.stroke();
-        ctx2.strokeStyle = rightDs.color; ctx2.lineWidth = 2; ctx2.setLineDash([5, 3]);
-        ctx2.beginPath();
-        rightDs.data.forEach((v, i) => { i === 0 ? ctx2.moveTo(xPos(i), yPosR(v)) : ctx2.lineTo(xPos(i), yPosR(v)); });
-        ctx2.stroke();
-        ctx2.setLineDash([]);
+
+        // ─ composite + crosshair ──────────────────────────────────
+        ctx2.clearRect(0, 0, W, H);
+        ctx2.drawImage(bgEntry2.canvas, 0, 0, Math.floor(W * dpr2), Math.floor(H * dpr2), 0, 0, W, H);
 
         if (crosshairIdx !== undefined && crosshairIdx >= 0 && crosshairIdx < n) {
             const cx2 = xPos(crosshairIdx);
@@ -930,6 +961,7 @@ function drawDualAxisChart(canvasId, leftDs, rightDs, labels) {
 
     redrawDual();
 
+    invalidateBg(canvasId);
     chartRegistry[canvasId] = {
         dual: true, redraw: redrawDual, leftDs, rightDs,
         labels, pad, W, H, cw, ch, n,
@@ -949,84 +981,73 @@ function drawDualAxisChart(canvasId, leftDs, rightDs, labels) {
 }
 
 function renderChartContent(ctx, reg, crosshairIdx) {
-    const { datasets, labels, pad, W, H, cw, ch, n, yMin, yMax, xPos, yPos } = reg;
-    ctx.clearRect(0, 0, W, H);
+    const { canvasId, datasets, labels, pad, W, H, cw, ch, n, yMin, yMax, xPos, yPos } = reg;
+    const dpr = window.devicePixelRatio || 1;
 
-    // Gridlines + Y axis labels.
-    ctx.strokeStyle = COLORS.grid;
-    ctx.lineWidth = 0.5;
-    ctx.fillStyle = COLORS.text;
-    ctx.font = '10px system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    const yTicks = 5;
-    for (let t = 0; t <= yTicks; t++) {
-        const v = yMin + (yMax - yMin) * (t / yTicks);
-        const y = yPos(v);
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
-        ctx.fillText(formatNum(v), pad.left - 4, y + 3.5);
-    }
+    // ─ background layer ─────────────────────────────────────────────
+    const bgEntry = canvasId ? getBgCanvas(canvasId, W, H) : null;
+    if (bgEntry && !bgEntry.valid) {
+        const bgCtx = bgEntry.canvas.getContext('2d');
+        bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        bgCtx.clearRect(0, 0, W, H);
 
-    // X axis labels.
-    ctx.textAlign = 'center';
-    const xStep = Math.max(1, Math.floor(n / 10));
-    for (let i = 0; i < n; i += xStep) {
-        ctx.fillText(labels[i], xPos(i), H - pad.bottom + 14);
-    }
-
-    // Axis lines.
-    ctx.strokeStyle = COLORS.axis;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, pad.top);
-    ctx.lineTo(pad.left, pad.top + ch);
-    ctx.lineTo(pad.left + cw, pad.top + ch);
-    ctx.stroke();
-
-    // Series lines.
-    datasets.forEach(ds => {
-        ctx.strokeStyle = ds.color;
-        ctx.lineWidth = ds.dashed ? 1.5 : 2;
-        ctx.lineJoin = 'round';
-        ctx.setLineDash(ds.dashed ? [4, 3] : []);
-        ctx.beginPath();
-        ds.data.forEach((v, i) => {
-            const x = xPos(i), y = yPos(v);
-            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        // Gridlines + Y axis labels.
+        bgCtx.strokeStyle = COLORS.grid; bgCtx.lineWidth = 0.5;
+        bgCtx.fillStyle = COLORS.text; bgCtx.font = '10px system-ui, sans-serif';
+        bgCtx.textAlign = 'right';
+        const yTicks = 5;
+        for (let t = 0; t <= yTicks; t++) {
+            const v = yMin + (yMax - yMin) * (t / yTicks);
+            const y = yPos(v);
+            bgCtx.beginPath(); bgCtx.moveTo(pad.left, y); bgCtx.lineTo(pad.left + cw, y); bgCtx.stroke();
+            bgCtx.fillText(formatNum(v), pad.left - 4, y + 3.5);
+        }
+        // X axis labels.
+        bgCtx.textAlign = 'center';
+        const xStep = Math.max(1, Math.floor(n / 10));
+        for (let i = 0; i < n; i += xStep) bgCtx.fillText(labels[i], xPos(i), H - pad.bottom + 14);
+        // Axis lines.
+        bgCtx.strokeStyle = COLORS.axis; bgCtx.lineWidth = 1;
+        bgCtx.beginPath();
+        bgCtx.moveTo(pad.left, pad.top); bgCtx.lineTo(pad.left, pad.top + ch); bgCtx.lineTo(pad.left + cw, pad.top + ch);
+        bgCtx.stroke();
+        // Series lines.
+        datasets.forEach(ds => {
+            bgCtx.strokeStyle = ds.color;
+            bgCtx.lineWidth = ds.dashed ? 1.5 : 2;
+            bgCtx.lineJoin = 'round';
+            bgCtx.setLineDash(ds.dashed ? [4, 3] : []);
+            bgCtx.beginPath();
+            ds.data.forEach((v, i) => { i === 0 ? bgCtx.moveTo(xPos(i), yPos(v)) : bgCtx.lineTo(xPos(i), yPos(v)); });
+            bgCtx.stroke();
         });
-        ctx.stroke();
-    });
-    ctx.setLineDash([]);
+        bgCtx.setLineDash([]);
+        bgEntry.valid = true;
+    }
 
-    // Crosshair overlay.
+    // ─ composite onto visible canvas ──────────────────────────────
+    ctx.clearRect(0, 0, W, H);
+    if (bgEntry) ctx.drawImage(bgEntry.canvas, 0, 0, Math.floor(W * dpr), Math.floor(H * dpr), 0, 0, W, H);
+
+    // ─ crosshair overlay ────────────────────────────────────────
     if (crosshairIdx !== undefined && crosshairIdx >= 0 && crosshairIdx < n) {
         const cx = xPos(crosshairIdx);
-
-        // Vertical rule.
-        ctx.strokeStyle = 'rgba(100,120,160,0.35)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(cx, pad.top);
-        ctx.lineTo(cx, pad.top + ch);
-        ctx.stroke();
+        ctx.strokeStyle = 'rgba(100,120,160,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, pad.top + ch); ctx.stroke();
         ctx.setLineDash([]);
-
-        // Dots on each solid series at the crosshair position.
         datasets.forEach(ds => {
             if (ds.dashed) return;
             const v = ds.data[crosshairIdx];
             if (v === undefined) return;
-            const cy = yPos(v);
-            ctx.beginPath();
-            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = ds.color;
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, yPos(v), 4, 0, Math.PI * 2);
+            ctx.fillStyle = ds.color; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         });
     }
 }
+
+// ─── per-canvas rAF handles for throttled hover redraws ─────────────────────
+const hoverRaf = {};
 
 function onChartMouseMove(canvasId, e) {
     const reg = chartRegistry[canvasId];
@@ -1041,15 +1062,19 @@ function onChartMouseMove(canvasId, e) {
     let idx = Math.round(relX / cw * (n - 1));
     idx = Math.max(0, Math.min(n - 1, idx));
 
-    // Redraw with crosshair.
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (reg.dual) {
-        reg.redraw(idx);
-    } else {
-        renderChartContent(ctx, reg, idx);
-    }
+    // Throttle canvas redraw to one per animation frame.
+    if (hoverRaf[canvasId]) cancelAnimationFrame(hoverRaf[canvasId]);
+    hoverRaf[canvasId] = requestAnimationFrame(() => {
+        hoverRaf[canvasId] = null;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (reg.dual) {
+            reg.redraw(idx);
+        } else {
+            renderChartContent(ctx, reg, idx);
+        }
+    });
 
     // Build tooltip.
     const tt = document.getElementById('chart-tooltip');
@@ -1080,6 +1105,7 @@ function onChartMouseMove(canvasId, e) {
 }
 
 function onChartMouseLeave(canvasId) {
+    if (hoverRaf[canvasId]) { cancelAnimationFrame(hoverRaf[canvasId]); hoverRaf[canvasId] = null; }
     const reg = chartRegistry[canvasId];
     if (!reg) return;
     const canvas = document.getElementById(canvasId);
@@ -1148,61 +1174,58 @@ function drawCapCurve(canvasId) {
     function redrawCap(crosshairIdx) {
         const canvas2 = document.getElementById(canvasId);
         if (!canvas2) return;
-        const ctx2 = canvas2.getContext('2d');
         const dpr2 = window.devicePixelRatio || 1;
+        const ctx2 = canvas2.getContext('2d');
         ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+
+        // ─ background layer ───────────────────────────────────────
+        const bgEntryCap = getBgCanvas(canvasId, W, H);
+        if (!bgEntryCap.valid) {
+            const bgCtxCap = bgEntryCap.canvas.getContext('2d');
+            bgCtxCap.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+            bgCtxCap.clearRect(0, 0, W, H);
+            bgCtxCap.strokeStyle = COLORS.grid; bgCtxCap.lineWidth = 0.5;
+            bgCtxCap.fillStyle = COLORS.text; bgCtxCap.font = '10px system-ui, sans-serif';
+            for (let t = 0; t <= yTicks; t++) {
+                const v = yMax * t / yTicks;
+                const y = yPos(v);
+                bgCtxCap.textAlign = 'right';
+                bgCtxCap.beginPath(); bgCtxCap.moveTo(pad.left, y); bgCtxCap.lineTo(pad.left + cw, y); bgCtxCap.stroke();
+                bgCtxCap.fillText(formatNum(v), pad.left - 4, y + 3.5);
+            }
+            bgCtxCap.fillStyle = COLORS.text; bgCtxCap.textAlign = 'center';
+            const xStep2 = Math.max(1, Math.floor(n / 8));
+            for (let i = 0; i < n; i += xStep2) bgCtxCap.fillText(String(rawVals[i]), xPos(i), H - pad.bottom + 14);
+            bgCtxCap.strokeStyle = COLORS.axis; bgCtxCap.lineWidth = 1; bgCtxCap.setLineDash([]);
+            bgCtxCap.beginPath();
+            bgCtxCap.moveTo(pad.left, pad.top); bgCtxCap.lineTo(pad.left, pad.top + ch); bgCtxCap.lineTo(pad.left + cw, pad.top + ch);
+            bgCtxCap.stroke();
+            bgCtxCap.strokeStyle = '#bbb'; bgCtxCap.lineWidth = 1; bgCtxCap.setLineDash([4, 3]);
+            bgCtxCap.beginPath();
+            bgCtxCap.moveTo(xPos(0), yPos(rawVals[0]));
+            for (let i = 1; i < n; i++) bgCtxCap.lineTo(xPos(i), yPos(rawVals[i]));
+            bgCtxCap.stroke();
+            bgCtxCap.setLineDash([]);
+            const threshIdx2 = rawVals.findIndex(v => v >= threshold);
+            if (threshIdx2 >= 0) {
+                const tx2 = xPos(threshIdx2);
+                bgCtxCap.strokeStyle = 'rgba(180,100,100,0.4)'; bgCtxCap.lineWidth = 1; bgCtxCap.setLineDash([3, 3]);
+                bgCtxCap.beginPath(); bgCtxCap.moveTo(tx2, pad.top); bgCtxCap.lineTo(tx2, pad.top + ch); bgCtxCap.stroke();
+                bgCtxCap.setLineDash([]);
+                bgCtxCap.fillStyle = 'rgba(180,100,100,0.7)'; bgCtxCap.textAlign = 'left'; bgCtxCap.font = '9px system-ui, sans-serif';
+                bgCtxCap.fillText('threshold', tx2 + 3, pad.top + 10);
+            }
+            bgCtxCap.strokeStyle = COLORS.capCurve; bgCtxCap.lineWidth = 2; bgCtxCap.lineJoin = 'round'; bgCtxCap.setLineDash([]);
+            bgCtxCap.beginPath();
+            adjVals.forEach((v, i) => { i === 0 ? bgCtxCap.moveTo(xPos(i), yPos(v)) : bgCtxCap.lineTo(xPos(i), yPos(v)); });
+            bgCtxCap.stroke();
+            bgEntryCap.valid = true;
+        }
+
+        // ─ composite + crosshair ──────────────────────────────────
         ctx2.clearRect(0, 0, W, H);
+        ctx2.drawImage(bgEntryCap.canvas, 0, 0, Math.floor(W * dpr2), Math.floor(H * dpr2), 0, 0, W, H);
 
-        // Gridlines + Y labels.
-        ctx2.strokeStyle = COLORS.grid; ctx2.lineWidth = 0.5;
-        ctx2.fillStyle = COLORS.text; ctx2.font = '10px system-ui, sans-serif';
-        for (let t = 0; t <= yTicks; t++) {
-            const v = yMax * t / yTicks;
-            const y = yPos(v);
-            ctx2.textAlign = 'right';
-            ctx2.beginPath(); ctx2.moveTo(pad.left, y); ctx2.lineTo(pad.left + cw, y); ctx2.stroke();
-            ctx2.fillText(formatNum(v), pad.left - 4, y + 3.5);
-        }
-
-        // X labels.
-        ctx2.fillStyle = COLORS.text; ctx2.textAlign = 'center';
-        const xStep2 = Math.max(1, Math.floor(n / 8));
-        for (let i = 0; i < n; i += xStep2) {
-            ctx2.fillText(String(rawVals[i]), xPos(i), H - pad.bottom + 14);
-        }
-
-        // Axis lines.
-        ctx2.strokeStyle = COLORS.axis; ctx2.lineWidth = 1; ctx2.setLineDash([]);
-        ctx2.beginPath();
-        ctx2.moveTo(pad.left, pad.top); ctx2.lineTo(pad.left, pad.top + ch); ctx2.lineTo(pad.left + cw, pad.top + ch);
-        ctx2.stroke();
-
-        // 1:1 reference line.
-        ctx2.strokeStyle = '#bbb'; ctx2.lineWidth = 1; ctx2.setLineDash([4, 3]);
-        ctx2.beginPath();
-        ctx2.moveTo(xPos(0), yPos(rawVals[0]));
-        for (let i = 1; i < n; i++) ctx2.lineTo(xPos(i), yPos(rawVals[i]));
-        ctx2.stroke();
-        ctx2.setLineDash([]);
-
-        // Threshold marker.
-        const threshIdx2 = rawVals.findIndex(v => v >= threshold);
-        if (threshIdx2 >= 0) {
-            const tx2 = xPos(threshIdx2);
-            ctx2.strokeStyle = 'rgba(180,100,100,0.4)'; ctx2.lineWidth = 1; ctx2.setLineDash([3, 3]);
-            ctx2.beginPath(); ctx2.moveTo(tx2, pad.top); ctx2.lineTo(tx2, pad.top + ch); ctx2.stroke();
-            ctx2.setLineDash([]);
-            ctx2.fillStyle = 'rgba(180,100,100,0.7)'; ctx2.textAlign = 'left'; ctx2.font = '9px system-ui, sans-serif';
-            ctx2.fillText('threshold', tx2 + 3, pad.top + 10);
-        }
-
-        // Compressed curve.
-        ctx2.strokeStyle = COLORS.capCurve; ctx2.lineWidth = 2; ctx2.lineJoin = 'round'; ctx2.setLineDash([]);
-        ctx2.beginPath();
-        adjVals.forEach((v, i) => { i === 0 ? ctx2.moveTo(xPos(i), yPos(v)) : ctx2.lineTo(xPos(i), yPos(v)); });
-        ctx2.stroke();
-
-        // Crosshair.
         if (crosshairIdx !== undefined && crosshairIdx >= 0 && crosshairIdx < n) {
             const cx2 = xPos(crosshairIdx);
             ctx2.strokeStyle = 'rgba(100,120,160,0.35)'; ctx2.lineWidth = 1; ctx2.setLineDash([3, 3]);
@@ -1221,6 +1244,7 @@ function drawCapCurve(canvasId) {
 
     // Store for hover.
     const labels = rawVals.map(String);
+    invalidateBg(canvasId);
     chartRegistry[canvasId] = {
         dual: true, redraw: redrawCap,
         headerLabel: 'Raw',

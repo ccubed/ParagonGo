@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 )
@@ -48,7 +49,15 @@ func newSimMob(mobId mobs.MobId, forceLevel int) (*mobs.Mob, error) {
 	}
 
 	mob.Character.PlayerDamage = make(map[int]int)
-	mob.Character.StatPoints = mob.Character.Level
+	mob.Character.StatPoints = 0
+	{
+		cfgProg := configs.GetProgressionConfig()
+		for lvl := 1; lvl <= mob.Character.Level; lvl++ {
+			if int(cfgProg.StatPointsEveryNLevels) <= 1 || lvl%int(cfgProg.StatPointsEveryNLevels) == 0 {
+				mob.Character.StatPoints += int(cfgProg.StatPointsPerLevel)
+			}
+		}
+	}
 	mob.Character.Level--
 	mob.Character.Experience = mob.Character.XPTNL()
 	mob.Character.Level++

@@ -1554,23 +1554,17 @@ func (c *Character) AutoTrain() {
 		return
 	}
 
-	for c.StatPoints > 0 {
+	statPtrs := [...]*int{
+		&c.Stats.Strength.Training,
+		&c.Stats.Speed.Training,
+		&c.Stats.Smarts.Training,
+		&c.Stats.Vitality.Training,
+		&c.Stats.Mysticism.Training,
+		&c.Stats.Perception.Training,
+	}
 
-		switch util.Rand(6) {
-		case 0:
-			c.Stats.Strength.Training++
-		case 1:
-			c.Stats.Speed.Training++
-		case 2:
-			c.Stats.Smarts.Training++
-		case 3:
-			c.Stats.Vitality.Training++
-		case 4:
-			c.Stats.Mysticism.Training++
-		case 5:
-			c.Stats.Perception.Training++
-		}
-
+	for i := 0; c.StatPoints > 0; i++ {
+		*statPtrs[i%len(statPtrs)]++
 		c.StatPoints--
 	}
 

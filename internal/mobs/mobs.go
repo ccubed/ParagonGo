@@ -155,7 +155,15 @@ func NewMobById(mobId MobId, homeRoomId int, forceLevel ...int) *Mob {
 		if len(forceLevel) > 0 && forceLevel[0] > 0 {
 			mob.Character.Level = forceLevel[0]
 		}
-		mob.Character.StatPoints = mob.Character.Level
+		mob.Character.StatPoints = 0
+		{
+			cfgProg := configs.GetProgressionConfig()
+			for lvl := 1; lvl <= mob.Character.Level; lvl++ {
+				if int(cfgProg.StatPointsEveryNLevels) <= 1 || lvl%int(cfgProg.StatPointsEveryNLevels) == 0 {
+					mob.Character.StatPoints += int(cfgProg.StatPointsPerLevel)
+				}
+			}
+		}
 		mob.Character.Level--
 		mob.Character.Experience = mob.Character.XPTNL()
 		mob.Character.Level++
