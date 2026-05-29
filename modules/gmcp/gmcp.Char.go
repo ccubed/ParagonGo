@@ -971,9 +971,13 @@ type GMCPCharModule_Payload_Inventory_Backpack_Summary struct {
 type GMCPCharModule_Payload_Inventory_Worn map[string]GMCPCharModule_Payload_Inventory_Item
 
 func buildWornPayload(eq characters.Worn) GMCPCharModule_Payload_Inventory_Worn {
-	worn := make(GMCPCharModule_Payload_Inventory_Worn, len(items.AllEquipSlots()))
+	worn := make(GMCPCharModule_Payload_Inventory_Worn)
 	for _, slot := range items.AllEquipSlots() {
-		worn[string(slot)] = newInventory_Item(*eq.Get(slot))
+		itm := eq.Get(slot)
+		if itm.IsDisabled() {
+			continue
+		}
+		worn[string(slot)] = newInventory_Item(*itm)
 	}
 	return worn
 }

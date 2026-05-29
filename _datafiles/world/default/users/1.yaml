@@ -1,7 +1,7 @@
 userid: 1
 role: admin
 username: admin
-password: $2a$10$GDAPK3BlI8U5xGUeYI.fC.vVwv0gGH5Mh//wPguSwfTPWKy58.XU.
+password: password
 joined: 2024-10-31T13:28:45.395873-07:00
 macros:
   =1: e;e;e;e;e;e;e;e
