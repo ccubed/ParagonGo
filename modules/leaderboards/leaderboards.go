@@ -38,50 +38,61 @@ var (
 // program starts running.
 // ////////////////////////////////////////////////////////////////////
 func init() {
-	//
-	// We can use all functions only, but this demonstrates
-	// how to use a struct
-	//
 	t := LeaderboardModule{
 		plug: plugins.New(`leaderboards`, `1.0`),
 	}
 
-	//
-	// Add the embedded filesystem
-	//
 	if err := t.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
 
 	t.plug.Web.AdminPage("Config", "leaderboards-config", "html/admin/leaderboards-config.html", true, "Modules", "Leaderboards", "Configure leaderboard categories and scoring rules.", "Leaderboards module tracking and displaying top player rankings across categories.", nil)
-	t.plug.Web.AdminPage("About", "leaderboards-about", "html/admin/leaderboards-about.html", true, "Modules", "Leaderboards", "Information and version details for the Leaderboards module.", "", nil) //
-	// Register any user/mob commands
-	//
+	t.plug.Web.AdminPage("About", "leaderboards-about", "html/admin/leaderboards-about.html", true, "Modules", "Leaderboards", "Information and version details for the Leaderboards module.", "", nil)
+
 	t.plug.AddUserCommand(`leaderboard`, t.leaderboardCommand, true, false)
 
-	//
-	// Register callbacks for load/unload
-	//
 	t.plug.Callbacks.SetOnLoad(t.loadLBs)
 	t.plug.Callbacks.SetOnSave(t.saveLBs)
 
 	t.plug.Web.WebPage(`Leaderboards`, `/leaderboards`, `leaderboards.html`, true, t.webLeaderboardData)
 
 	events.RegisterListener(events.NewRound{}, t.newRoundHandler)
-
+	events.RegisterListener(events.PlayerSpawn{}, t.playerSpawnHandler)
+	events.RegisterListener(events.PlayerDespawn{}, t.playerDespawnHandler)
+	events.RegisterListener(events.LevelUp{}, t.userChangedHandler)
+	events.RegisterListener(events.GainExperience{}, t.userChangedHandler)
+	events.RegisterListener(events.MobDeath{}, t.mobDeathHandler)
+	events.RegisterListener(events.EquipmentChange{}, t.equipmentChangeHandler)
+	events.RegisterListener(events.CharacterChanged{}, t.characterChangedHandler)
+	events.RegisterListener(events.PlayerDeath{}, t.userChangedHandler)
 }
 
 //////////////////////////////////////////////////////////////////////
-// NOTE: What follows is all custom code. For this module.
+// NOTE: What follows is all custom code for this module.
 //////////////////////////////////////////////////////////////////////
 
-// Using a struct gives a way to store longer term data.
-type LeaderboardModule struct {
+// cachedUserData holds the leaderboard-relevant fields for a single character.
+// Alts are nested so one map entry covers an entire account. The struct is
+// persisted to a dedicated plugin data file so the full user-directory walk
+// only happens once (on first load after the module is installed).
+type cachedUserData struct {
+	UserId      int              `yaml:"UserId"`
+	CharName    string           `yaml:"CharName"`
+	CharClass   string           `yaml:"CharClass"`
+	Level       int              `yaml:"Level"`
+	Gold        int              `yaml:"Gold"`
+	Bank        int              `yaml:"Bank"`
+	Experience  int              `yaml:"Experience"`
+	TotalKills  int              `yaml:"TotalKills"`
+	Exploration int              `yaml:"Exploration"`
+	Alts        []cachedUserData `yaml:"Alts,omitempty"`
+}
 
-	// Keep a reference to the plugin when we create it so that we can call ReadBytes() and WriteBytes() on it.
+// LeaderboardModule holds all state for the leaderboards module.
+type LeaderboardModule struct {
 	plug *plugins.Plugin
 
-	lastCalculated time.Time // When the LB's were last generated
+	lastCalculated time.Time
 
 	GoldLBSize        int
 	ExperienceLBSize  int
@@ -92,30 +103,128 @@ type LeaderboardModule struct {
 	LB_Experience  leaderboardData `yaml:"LB_Experience,omitempty"`
 	LB_Kills       leaderboardData `yaml:"LB_Kills,omitempty"`
 	LB_Exploration leaderboardData `yaml:"LB_Exploration,omitempty"`
+
+	// userCache maps userId to the pre-computed leaderboard data for that
+	// account (primary character + alts). It is persisted separately under
+	// the "user-cache" plugin data identifier so the expensive full user-file
+	// disk walk only happens on the very first load.
+	userCache map[int]cachedUserData
 }
 
 func (l *LeaderboardModule) webLeaderboardData(r *http.Request) map[string]any {
-
-	data := map[string]any{}
-
-	data[`leaderboards`] = l.getCurrentLeaderboards()
-
-	return data
-
+	return map[string]any{
+		`leaderboards`: l.getCurrentLeaderboards(),
+	}
 }
 
 func (l *LeaderboardModule) loadLBs() {
-
 	l.plug.ReadIntoStruct(`latest-leaderboards`, &l)
 
 	l.LB_Gold = leaderboardData{Name: `Gold`, ValueColor: `experience`}
 	l.LB_Experience = leaderboardData{Name: `Experience`, ValueColor: `gold`}
 	l.LB_Kills = leaderboardData{Name: `Kills`, ValueColor: `red-bold`}
 	l.LB_Exploration = leaderboardData{Name: `Exploration`, ValueColor: `cyan-bold`}
+
+	l.userCache = make(map[int]cachedUserData)
+	l.plug.ReadIntoStruct(`user-cache`, &l.userCache)
+
+	// If the cache is empty this is the first run; do a one-time cold
+	// population from disk so subsequent updates never need to walk user files.
+	if len(l.userCache) == 0 {
+		l.coldPopulateCache()
+	}
 }
 
 func (l *LeaderboardModule) saveLBs() {
 	l.plug.WriteStruct(`latest-leaderboards`, l)
+	l.plug.WriteStruct(`user-cache`, l.userCache)
+}
+
+// coldPopulateCache performs a one-time full scan of all users (online and
+// offline) to seed the userCache. After this, the cache is kept current via
+// event listeners and no further disk walks are needed.
+func (l *LeaderboardModule) coldPopulateCache() {
+	start := time.Now()
+
+	loadAlts := resolveLoadAlts()
+
+	for _, u := range users.GetAllActiveUsers() {
+		l.userCache[u.UserId] = buildCacheEntry(u.UserId, u.Character, loadAlts)
+	}
+
+	users.SearchOfflineUsers(func(u *users.UserRecord) bool {
+		l.userCache[u.UserId] = buildCacheEntry(u.UserId, u.Character, loadAlts)
+		return true
+	})
+
+	mudlog.Info("leaderboard.coldPopulateCache()", "users-cached", len(l.userCache), "time-taken", time.Since(start))
+}
+
+// resolveLoadAlts looks up the LoadAlts exported function once and returns a
+// typed wrapper, or nil if the alt-characters module is not loaded.
+func resolveLoadAlts() func(int) []characters.Character {
+	fn, ok := usercommands.GetExportedFunction(`LoadAlts`)
+	if !ok {
+		return nil
+	}
+	loadAlts, ok := fn.(func(int) []characters.Character)
+	if !ok {
+		return nil
+	}
+	return loadAlts
+}
+
+// buildCacheEntry constructs a cachedUserData for a single account, including
+// all alt characters if the alt-characters module is loaded.
+func buildCacheEntry(userId int, char *characters.Character, loadAlts func(int) []characters.Character) cachedUserData {
+	entry := cachedUserData{
+		UserId:      userId,
+		CharName:    char.Name,
+		CharClass:   skills.GetProfession(char.GetAllSkillRanks()),
+		Level:       char.Level,
+		Gold:        char.Gold,
+		Bank:        char.Bank,
+		Experience:  char.Experience,
+		TotalKills:  char.KD.TotalKills,
+		Exploration: explorationScore(char),
+	}
+
+	if loadAlts != nil {
+		for _, alt := range loadAlts(userId) {
+			alt := alt
+			entry.Alts = append(entry.Alts, cachedUserData{
+				UserId:      userId,
+				CharName:    alt.Name,
+				CharClass:   skills.GetProfession(alt.GetAllSkillRanks()),
+				Level:       alt.Level,
+				Gold:        alt.Gold,
+				Bank:        alt.Bank,
+				Experience:  alt.Experience,
+				TotalKills:  alt.KD.TotalKills,
+				Exploration: explorationScore(&alt),
+			})
+		}
+	}
+
+	return entry
+}
+
+// refreshCacheEntry rebuilds the cache entry for userId from the live
+// in-memory UserRecord. Called by event handlers; no disk I/O.
+func (l *LeaderboardModule) refreshCacheEntry(userId int) {
+	u := users.GetByUserId(userId)
+	if u == nil {
+		return
+	}
+	l.userCache[userId] = buildCacheEntry(u.UserId, u.Character, resolveLoadAlts())
+}
+
+func explorationScore(char *characters.Character) int {
+	total := 0
+	for _, bs := range char.ZonesVisited {
+		total += bs.Count()
+	}
+	return total
 }
 
 func (l *LeaderboardModule) leaderboardCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -156,7 +265,6 @@ func (l *LeaderboardModule) leaderboardCommand(rest string, user *users.UserReco
 		tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
 		user.SendText("\n")
 		user.SendText(tplTxt)
-
 	}
 	return true, nil
 }
@@ -191,136 +299,92 @@ func (l *LeaderboardModule) RefreshConfig() {
 	}
 }
 
-func explorationScore(char characters.Character) int {
-	total := 0
-	for _, bs := range char.ZonesVisited {
-		total += bs.Count()
-	}
-	return total
-}
-
 func (l *LeaderboardModule) Update() {
 	start := time.Now()
 
 	l.Reset()
 
-	userCount := 0
-	characterCount := 0
-
-	for _, u := range users.GetAllActiveUsers() {
-
-		userCount++
-		characterCount++
-
-		if l.GoldLBSize > 0 {
-			l.LB_Gold.Consider(u.UserId, *u.Character, u.Character.Gold+u.Character.Bank)
+	for _, entry := range l.userCache {
+		l.considerEntry(entry)
+		for _, alt := range entry.Alts {
+			l.considerEntry(alt)
 		}
-
-		if l.ExperienceLBSize > 0 {
-			l.LB_Experience.Consider(u.UserId, *u.Character, u.Character.Experience)
-		}
-
-		if l.KillsLBSize > 0 {
-			l.LB_Kills.Consider(u.UserId, *u.Character, u.Character.KD.TotalKills)
-		}
-
-		if l.ExplorationLBSize > 0 {
-			l.LB_Exploration.Consider(u.UserId, *u.Character, explorationScore(*u.Character))
-		}
-
-		var altChars []characters.Character
-		if fn, ok := usercommands.GetExportedFunction(`LoadAlts`); ok {
-			if loadAlts, ok := fn.(func(int) []characters.Character); ok {
-				altChars = loadAlts(u.UserId)
-			}
-		}
-		for _, char := range altChars {
-
-			characterCount++
-
-			if l.GoldLBSize > 0 {
-				l.LB_Gold.Consider(u.UserId, char, char.Gold+char.Bank)
-			}
-
-			if l.ExperienceLBSize > 0 {
-				l.LB_Experience.Consider(u.UserId, char, char.Experience)
-			}
-
-			if l.KillsLBSize > 0 {
-				l.LB_Kills.Consider(u.UserId, char, char.KD.TotalKills)
-			}
-
-			if l.ExplorationLBSize > 0 {
-				l.LB_Exploration.Consider(u.UserId, char, explorationScore(char))
-			}
-
-		}
-
 	}
 
-	// Check offline users
-	users.SearchOfflineUsers(func(u *users.UserRecord) bool {
-
-		userCount++
-		characterCount++
-
-		if l.GoldLBSize > 0 {
-			l.LB_Gold.Consider(u.UserId, *u.Character, u.Character.Gold+u.Character.Bank)
-		}
-
-		if l.ExperienceLBSize > 0 {
-			l.LB_Experience.Consider(u.UserId, *u.Character, u.Character.Experience)
-		}
-
-		if l.KillsLBSize > 0 {
-			l.LB_Kills.Consider(u.UserId, *u.Character, u.Character.KD.TotalKills)
-		}
-
-		if l.ExplorationLBSize > 0 {
-			l.LB_Exploration.Consider(u.UserId, *u.Character, explorationScore(*u.Character))
-		}
-
-		var altChars []characters.Character
-		if fn, ok := usercommands.GetExportedFunction(`LoadAlts`); ok {
-			if loadAlts, ok := fn.(func(int) []characters.Character); ok {
-				altChars = loadAlts(u.UserId)
-			}
-		}
-		for _, char := range altChars {
-
-			characterCount++
-
-			if l.GoldLBSize > 0 {
-				l.LB_Gold.Consider(u.UserId, char, char.Gold+char.Bank)
-			}
-
-			if l.ExperienceLBSize > 0 {
-				l.LB_Experience.Consider(u.UserId, char, char.Experience)
-			}
-
-			if l.KillsLBSize > 0 {
-				l.LB_Kills.Consider(u.UserId, char, char.KD.TotalKills)
-			}
-
-			if l.ExplorationLBSize > 0 {
-				l.LB_Exploration.Consider(u.UserId, char, explorationScore(char))
-			}
-
-		}
-
-		return true
-	})
-
-	mudlog.Info("leaderboard.Update()", "user-processed", userCount, "characters-processed", characterCount, "Time Taken", time.Since(start))
+	mudlog.Info("leaderboard.Update()", "cached-users", len(l.userCache), "Time Taken", time.Since(start))
 
 	l.lastCalculated = time.Now()
 }
 
+func (l *LeaderboardModule) considerEntry(entry cachedUserData) {
+	if l.GoldLBSize > 0 {
+		l.LB_Gold.Consider(entry.UserId, entry.CharName, entry.CharClass, entry.Level, entry.Gold+entry.Bank)
+	}
+	if l.ExperienceLBSize > 0 {
+		l.LB_Experience.Consider(entry.UserId, entry.CharName, entry.CharClass, entry.Level, entry.Experience)
+	}
+	if l.KillsLBSize > 0 {
+		l.LB_Kills.Consider(entry.UserId, entry.CharName, entry.CharClass, entry.Level, entry.TotalKills)
+	}
+	if l.ExplorationLBSize > 0 {
+		l.LB_Exploration.Consider(entry.UserId, entry.CharName, entry.CharClass, entry.Level, entry.Exploration)
+	}
+}
+
 func (l *LeaderboardModule) newRoundHandler(e events.Event) events.ListenerReturn {
-	if time.Since(l.lastCalculated).Minutes() >= 1 {
+	if time.Since(l.lastCalculated).Minutes() >= 5 {
 		l.Update()
 	}
+	return events.Continue
+}
 
+func (l *LeaderboardModule) playerSpawnHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.PlayerSpawn)
+	l.refreshCacheEntry(evt.UserId)
+	return events.Continue
+}
+
+func (l *LeaderboardModule) playerDespawnHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.PlayerDespawn)
+	l.refreshCacheEntry(evt.UserId)
+	return events.Continue
+}
+
+func (l *LeaderboardModule) userChangedHandler(e events.Event) events.ListenerReturn {
+	var userId int
+	switch evt := e.(type) {
+	case events.LevelUp:
+		userId = evt.UserId
+	case events.GainExperience:
+		userId = evt.UserId
+	case events.PlayerDeath:
+		userId = evt.UserId
+	default:
+		return events.Continue
+	}
+	l.refreshCacheEntry(userId)
+	return events.Continue
+}
+
+func (l *LeaderboardModule) mobDeathHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.MobDeath)
+	for _, userId := range evt.KilledByUsers {
+		l.refreshCacheEntry(userId)
+	}
+	return events.Continue
+}
+
+func (l *LeaderboardModule) equipmentChangeHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.EquipmentChange)
+	if evt.UserId != 0 {
+		l.refreshCacheEntry(evt.UserId)
+	}
+	return events.Continue
+}
+
+func (l *LeaderboardModule) characterChangedHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.CharacterChanged)
+	l.refreshCacheEntry(evt.UserId)
 	return events.Continue
 }
 
@@ -363,7 +427,7 @@ type leaderboardEntry struct {
 
 type leaderboardData struct {
 	Name        string
-	ValueColor  string             // Numeric 256 color or ansitags alias
+	ValueColor  string
 	Top         []leaderboardEntry `yaml:"Top,omitempty"`
 	MaxSize     int
 	LowestValue int
@@ -379,7 +443,7 @@ func (l *leaderboardData) Reset(size int) {
 	l.LowestValue = 0
 }
 
-func (l *leaderboardData) Consider(userId int, char characters.Character, val int) {
+func (l *leaderboardData) Consider(userId int, charName, charClass string, level, val int) {
 	if val == 0 {
 		return
 	}
@@ -400,7 +464,6 @@ func (l *leaderboardData) Consider(userId int, char characters.Character, val in
 			addPosition = i
 			break
 		}
-
 	}
 
 	if addPosition > -1 {
@@ -409,18 +472,16 @@ func (l *leaderboardData) Consider(userId int, char characters.Character, val in
 			l.Top[i+1] = l.Top[i]
 		}
 
-		// just accept it
 		l.Top[addPosition] = leaderboardEntry{
 			UserId:         userId,
-			CharacterName:  char.Name,
-			CharacterClass: skills.GetProfession(char.GetAllSkillRanks()),
-			Level:          char.Level,
+			CharacterName:  charName,
+			CharacterClass: charClass,
+			Level:          level,
 			ScoreValue:     val,
 		}
 
 		if l.LowestValue == 0 || val < l.LowestValue {
 			l.LowestValue = val
 		}
-
 	}
 }

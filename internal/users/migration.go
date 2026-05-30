@@ -10,6 +10,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// Note: alt character file migration (renaming <username>-alts.yaml to
+// <userid>.alts.yaml) is handled by the alt-characters module, not here.
+
 var (
 	ErrBothFilesExist = errors.New("could not migrate due to both file formats existing")
 )
@@ -46,28 +49,6 @@ func DoFilenameMigrationV1() error {
 
 		if oldUserPathExists {
 			err := os.Rename(oldUserPath, newUserPath)
-			if err != nil {
-				errorResult = err
-				return false
-			}
-		}
-
-		oldAltsFilePath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/users/`, strings.ToLower(u.Username)+`-alts.yaml`)
-		newAltsFilePath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/users/`, strconv.Itoa(u.UserId)+`.alts.yaml`)
-
-		_, err = os.Stat(oldAltsFilePath)
-		oldAltsPathExists := err == nil
-
-		_, err = os.Stat(newAltsFilePath)
-		newAltsPathExists := err == nil
-
-		if oldAltsPathExists && newAltsPathExists {
-			errorResult = ErrBothFilesExist
-			return false
-		}
-
-		if oldAltsPathExists {
-			err := os.Rename(oldAltsFilePath, newAltsFilePath)
 			if err != nil {
 				errorResult = err
 				return false
