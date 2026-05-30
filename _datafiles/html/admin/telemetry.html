@@ -32,10 +32,6 @@
     .dash-card-stats { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.5rem; }
     .dash-card-stat { font-size: 0.72rem; color: var(--color-text-muted); }
     .dash-card-stat strong { color: var(--color-text-strong); font-weight: 600; }
-    .dash-card-delta { font-size: 0.7rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .dash-card-delta.up   { color: #1e6e34; }
-    .dash-card-delta.down { color: #8a0000; }
-    .dash-card-delta.flat { color: var(--color-text-faint); }
     .dash-card-spark-wrap { position: relative; height: 40px; }
     .dash-card-spark-wrap canvas { display: block; width: 100%; height: 40px; }
     .dash-card-spark-labels { display: flex; justify-content: space-between; margin-top: 2px; }
@@ -92,6 +88,38 @@
     .dash-modal-topdays { padding: 0.5rem 1.1rem 1rem; }
     .dash-modal-topdays-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 0.5rem; }
     .dash-modal-topdays canvas { display: block; width: 100%; height: 100px; }
+
+    /* modal tabs */
+    .dash-modal-tabs {
+        display: flex; gap: 0; border-bottom: 1px solid var(--color-border-light);
+        background: var(--color-border-faint);
+        padding: 0 1.1rem;
+    }
+    .dash-modal-tab {
+        padding: 0.55rem 1rem 0.5rem;
+        font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        border: none; background: none; color: var(--color-text-muted);
+        border-bottom: 2px solid transparent; margin-bottom: -1px;
+        transition: color 0.1s, border-color 0.1s;
+    }
+    .dash-modal-tab:hover { color: var(--color-text-strong); }
+    .dash-modal-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+    .dash-modal-pane { display: none; }
+    .dash-modal-pane.active { display: block; }
+
+    /* breakdown section */
+    .dash-modal-breakdown { padding: 0.75rem 1.1rem 1rem; }
+    .dash-modal-breakdown-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 0.5rem; }
+    .dash-modal-breakdown canvas { display: block; width: 100%; }
+    .dash-breakdown-toggles { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .dash-breakdown-btn {
+        padding: 0.22rem 0.65rem; border: 1px solid var(--color-border-medium);
+        border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600;
+        background: var(--color-surface-white); color: var(--color-text-muted);
+        transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .dash-breakdown-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .dash-breakdown-btn.active { background: var(--color-primary); color: var(--color-surface-white); border-color: var(--color-primary); }
 
     /* ── toolbar ─────────────────────────────────────────────────── */
     .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
@@ -269,29 +297,42 @@
 
 <!-- ── Dashboard Strip ───────────────────────────────────────────────────── -->
 <div class="dash-strip" id="dash-strip">
-    <div class="dash-card" id="dash-mob_kill"      onclick="openDashModal('mob_kill')">
-        <div class="dash-card-header"><span class="dash-card-cat">Mob Kills</span><span class="dash-card-period" id="dash-mob_kill-period">…</span></div>
-        <div class="dash-card-total-row"><span class="dash-card-total" id="dash-mob_kill-total">—</span><span class="dash-card-total-label">total</span></div>
-        <div class="dash-card-stats"><span class="dash-card-stat" id="dash-mob_kill-avg"></span><span class="dash-card-stat" id="dash-mob_kill-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-mob_kill-delta"></div>
-        <div class="dash-card-spark-wrap"><canvas id="dash-mob_kill-spark"></canvas></div>
-        <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-mob_kill-lbl-from"></span><span class="dash-card-spark-label" id="dash-mob_kill-lbl-to"></span></div>
+    <div class="dash-card" id="dash-player_login"  onclick="openDashModal('player_login')">
+        <div class="dash-card-header"><span class="dash-card-cat">Player Logins</span><span class="dash-card-period" id="dash-player_login-period">…</span></div>
+        <div class="dash-card-total-row"><span class="dash-card-total" id="dash-player_login-total">—</span><span class="dash-card-total-label">total</span></div>
+        <div class="dash-card-stats"><span class="dash-card-stat" id="dash-player_login-avg"></span><span class="dash-card-stat" id="dash-player_login-peak"></span></div>
+        <div class="dash-card-spark-wrap"><canvas id="dash-player_login-spark"></canvas></div>
+        <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-player_login-lbl-from"></span><span class="dash-card-spark-label" id="dash-player_login-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
     </div>
     <div class="dash-card" id="dash-player_death"  onclick="openDashModal('player_death')">
         <div class="dash-card-header"><span class="dash-card-cat">Player Deaths</span><span class="dash-card-period" id="dash-player_death-period">…</span></div>
         <div class="dash-card-total-row"><span class="dash-card-total" id="dash-player_death-total">—</span><span class="dash-card-total-label">total</span></div>
         <div class="dash-card-stats"><span class="dash-card-stat" id="dash-player_death-avg"></span><span class="dash-card-stat" id="dash-player_death-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-player_death-delta"></div>
         <div class="dash-card-spark-wrap"><canvas id="dash-player_death-spark"></canvas></div>
         <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-player_death-lbl-from"></span><span class="dash-card-spark-label" id="dash-player_death-lbl-to"></span></div>
+        <div class="dash-card-hint">Click to expand ↗</div>
+    </div>
+    <div class="dash-card" id="dash-mob_kill"      onclick="openDashModal('mob_kill')">
+        <div class="dash-card-header"><span class="dash-card-cat">Mob Kills</span><span class="dash-card-period" id="dash-mob_kill-period">…</span></div>
+        <div class="dash-card-total-row"><span class="dash-card-total" id="dash-mob_kill-total">—</span><span class="dash-card-total-label">total</span></div>
+        <div class="dash-card-stats"><span class="dash-card-stat" id="dash-mob_kill-avg"></span><span class="dash-card-stat" id="dash-mob_kill-peak"></span></div>
+        <div class="dash-card-spark-wrap"><canvas id="dash-mob_kill-spark"></canvas></div>
+        <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-mob_kill-lbl-from"></span><span class="dash-card-spark-label" id="dash-mob_kill-lbl-to"></span></div>
+        <div class="dash-card-hint">Click to expand ↗</div>
+    </div>
+    <div class="dash-card" id="dash-item_purchase" onclick="openDashModal('item_purchase')">
+        <div class="dash-card-header"><span class="dash-card-cat">Purchases</span><span class="dash-card-period" id="dash-item_purchase-period">…</span></div>
+        <div class="dash-card-total-row"><span class="dash-card-total" id="dash-item_purchase-total">—</span><span class="dash-card-total-label">total</span></div>
+        <div class="dash-card-stats"><span class="dash-card-stat" id="dash-item_purchase-avg"></span><span class="dash-card-stat" id="dash-item_purchase-peak"></span></div>
+        <div class="dash-card-spark-wrap"><canvas id="dash-item_purchase-spark"></canvas></div>
+        <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-item_purchase-lbl-from"></span><span class="dash-card-spark-label" id="dash-item_purchase-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
     </div>
     <div class="dash-card" id="dash-item_drop"     onclick="openDashModal('item_drop')">
         <div class="dash-card-header"><span class="dash-card-cat">Item Drops</span><span class="dash-card-period" id="dash-item_drop-period">…</span></div>
         <div class="dash-card-total-row"><span class="dash-card-total" id="dash-item_drop-total">—</span><span class="dash-card-total-label">total</span></div>
         <div class="dash-card-stats"><span class="dash-card-stat" id="dash-item_drop-avg"></span><span class="dash-card-stat" id="dash-item_drop-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-item_drop-delta"></div>
         <div class="dash-card-spark-wrap"><canvas id="dash-item_drop-spark"></canvas></div>
         <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-item_drop-lbl-from"></span><span class="dash-card-spark-label" id="dash-item_drop-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
@@ -300,25 +341,14 @@
         <div class="dash-card-header"><span class="dash-card-cat">Item Pickups</span><span class="dash-card-period" id="dash-item_pickup-period">…</span></div>
         <div class="dash-card-total-row"><span class="dash-card-total" id="dash-item_pickup-total">—</span><span class="dash-card-total-label">total</span></div>
         <div class="dash-card-stats"><span class="dash-card-stat" id="dash-item_pickup-avg"></span><span class="dash-card-stat" id="dash-item_pickup-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-item_pickup-delta"></div>
         <div class="dash-card-spark-wrap"><canvas id="dash-item_pickup-spark"></canvas></div>
         <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-item_pickup-lbl-from"></span><span class="dash-card-spark-label" id="dash-item_pickup-lbl-to"></span></div>
-        <div class="dash-card-hint">Click to expand ↗</div>
-    </div>
-    <div class="dash-card" id="dash-item_purchase" onclick="openDashModal('item_purchase')">
-        <div class="dash-card-header"><span class="dash-card-cat">Purchases</span><span class="dash-card-period" id="dash-item_purchase-period">…</span></div>
-        <div class="dash-card-total-row"><span class="dash-card-total" id="dash-item_purchase-total">—</span><span class="dash-card-total-label">total</span></div>
-        <div class="dash-card-stats"><span class="dash-card-stat" id="dash-item_purchase-avg"></span><span class="dash-card-stat" id="dash-item_purchase-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-item_purchase-delta"></div>
-        <div class="dash-card-spark-wrap"><canvas id="dash-item_purchase-spark"></canvas></div>
-        <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-item_purchase-lbl-from"></span><span class="dash-card-spark-label" id="dash-item_purchase-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
     </div>
     <div class="dash-card" id="dash-char_created"  onclick="openDashModal('char_created')">
         <div class="dash-card-header"><span class="dash-card-cat">Chars Created</span><span class="dash-card-period" id="dash-char_created-period">…</span></div>
         <div class="dash-card-total-row"><span class="dash-card-total" id="dash-char_created-total">—</span><span class="dash-card-total-label">total</span></div>
         <div class="dash-card-stats"><span class="dash-card-stat" id="dash-char_created-avg"></span><span class="dash-card-stat" id="dash-char_created-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-char_created-delta"></div>
         <div class="dash-card-spark-wrap"><canvas id="dash-char_created-spark"></canvas></div>
         <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-char_created-lbl-from"></span><span class="dash-card-spark-label" id="dash-char_created-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
@@ -327,7 +357,6 @@
         <div class="dash-card-header"><span class="dash-card-cat">Help Lookups</span><span class="dash-card-period" id="dash-help_topic-period">…</span></div>
         <div class="dash-card-total-row"><span class="dash-card-total" id="dash-help_topic-total">—</span><span class="dash-card-total-label">total</span></div>
         <div class="dash-card-stats"><span class="dash-card-stat" id="dash-help_topic-avg"></span><span class="dash-card-stat" id="dash-help_topic-peak"></span></div>
-        <div class="dash-card-delta flat" id="dash-help_topic-delta"></div>
         <div class="dash-card-spark-wrap"><canvas id="dash-help_topic-spark"></canvas></div>
         <div class="dash-card-spark-labels"><span class="dash-card-spark-label" id="dash-help_topic-lbl-from"></span><span class="dash-card-spark-label" id="dash-help_topic-lbl-to"></span></div>
         <div class="dash-card-hint">Click to expand ↗</div>
@@ -343,13 +372,29 @@
             <button class="dash-modal-close" onclick="closeDashModal()">&times;</button>
         </div>
         <div class="dash-modal-stats" id="dash-modal-stats"></div>
-        <div class="dash-modal-chart-wrap">
-            <canvas id="dash-modal-canvas"></canvas>
-            <div class="dash-modal-chart-label">Daily count — hover for details</div>
+        <div class="dash-modal-tabs">
+            <button class="dash-modal-tab active" id="dash-tab-trends"    onclick="switchModalTab('trends')">Trends</button>
+            <button class="dash-modal-tab"        id="dash-tab-breakdown" onclick="switchModalTab('breakdown')">Breakdown</button>
         </div>
-        <div class="dash-modal-topdays">
-            <div class="dash-modal-topdays-title">Top 10 Days</div>
-            <canvas id="dash-modal-topdays-canvas"></canvas>
+        <!-- Trends pane -->
+        <div class="dash-modal-pane active" id="dash-pane-trends">
+            <div class="dash-modal-chart-wrap">
+                <canvas id="dash-modal-canvas"></canvas>
+                <div class="dash-modal-chart-label">Daily count &mdash; hover for details</div>
+            </div>
+            <div class="dash-modal-topdays">
+                <div class="dash-modal-topdays-title">Top 10 Days</div>
+                <canvas id="dash-modal-topdays-canvas"></canvas>
+            </div>
+        </div>
+        <!-- Breakdown pane -->
+        <div class="dash-modal-pane" id="dash-pane-breakdown">
+            <div class="dash-modal-breakdown">
+                <div class="dash-breakdown-toggles" id="dash-breakdown-toggles"></div>
+                <div class="dash-modal-breakdown-title" id="dash-breakdown-title">Top entries in period</div>
+                <canvas id="dash-modal-breakdown-canvas"></canvas>
+                <div id="dash-breakdown-empty" style="display:none;padding:2rem;text-align:center;font-size:0.85rem;color:var(--color-text-faint);">No breakdown data available.</div>
+            </div>
         </div>
     </div>
 </div>
@@ -374,6 +419,7 @@
                     <option value="item_purchase">item_purchase</option>
                     <option value="char_created">char_created</option>
                     <option value="help_topic">help_topic</option>
+                    <option value="player_login">player_login</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -518,6 +564,7 @@ const CAT_COLORS = {
     item_purchase: '#4a9eff',
     char_created:  '#a06ee0',
     help_topic:    '#e06eb0',
+    player_login:  '#40c8c8',
 };
 const PALETTE = ['#e05c5c','#f0a840','#f0d040','#6ecb6e','#4a9eff','#a06ee0','#e06eb0',
                  '#40c8c8','#c8a040','#80c860','#6080e0','#e08040'];
@@ -547,8 +594,8 @@ async function initLookups() {
             for (const item of itemsJson.data) itemNames[item.ItemId] = item.Name || String(item.ItemId);
         if (mobsJson.success && Array.isArray(mobsJson.data))
             for (const mob of mobsJson.data) mobNames[mob.MobId] = mob.Character?.Name || String(mob.MobId);
-        if (racesJson.success && Array.isArray(racesJson.data))
-            for (const race of racesJson.data) raceNames[race.RaceId] = race.Name || String(race.RaceId);
+        if (racesJson.success && racesJson.data && typeof racesJson.data === 'object')
+            for (const [id, race] of Object.entries(racesJson.data)) raceNames[parseInt(id, 10)] = race.Name || String(id);
     } catch(_) {}
 }
 
@@ -569,7 +616,7 @@ function labelForRow(r) {
     if (r.itemid)  return (itemNames[r.itemid] || ('#' + r.itemid));
     if (r.zone)    return r.zone;
     if (r.roomid)  return (roomTitles[r.roomid] || ('#' + r.roomid));
-    if (r.raceid)  return (raceNames[r.raceid]  || ('Race ' + r.raceid));
+    if (r.raceid)  return (raceNames[r.raceid]  || ('#' + r.raceid));
     if (r.topic)   return r.topic;
     if (r.category) return r.category;
     if (r.date)    return fmtDate(r.date);
@@ -649,7 +696,9 @@ async function loadData() {
         sortAsc = document.getElementById('f-sort').value === 'asc';
 
         const unseenRooms = [...new Set(currentData.map(r => r.roomid).filter(id => id && !(id in roomTitles)))];
-        await Promise.all(unseenRooms.map(async id => {
+        // Pre-fill ephemeral room IDs (>= 1,000,000,000) so we never fetch them.
+        unseenRooms.forEach(id => { if (id >= 1000000000) roomTitles[id] = String(id); });
+        await Promise.all(unseenRooms.filter(id => id < 1000000000).map(async id => {
             try {
                 const res = await fetch('/admin/api/v1/rooms/' + id);
                 const j = await res.json();
@@ -745,6 +794,7 @@ async function loadAvailableDates() {
         allAvailableDates = [...new Set(json.data.map(r => r.date).filter(Boolean))].sort();
         populateDateSelects(allAvailableDates, allAvailableDates);
     } catch(_) {}
+    return allAvailableDates;
 }
 
 function populateDateSelects(fromDates, toDates) {
@@ -795,18 +845,21 @@ async function initDashboard() {
 // Derive the date range to use for dashboard cards from the current filter state.
 // Falls back to last 30 days when no date filters are set.
 function dashDateRange() {
-    const fromSel = document.getElementById('f-dateFrom');
-    const toSel   = document.getElementById('f-dateTo');
-    const today   = new Date();
+    const fromSel  = document.getElementById('f-dateFrom');
+    const toSel    = document.getElementById('f-dateTo');
+    const today    = new Date();
     const todayStr = today.toISOString().slice(0,10).replace(/-/g,'');
-    const dateFrom = (fromSel && fromSel.value) ? fromSel.value
-        : (() => { const d = new Date(today); d.setDate(d.getDate() - 29); return d.toISOString().slice(0,10).replace(/-/g,''); })();
-    const dateTo   = (toSel && toSel.value) ? toSel.value : todayStr;
+    const dateFrom = (fromSel && fromSel.value)
+        ? fromSel.value
+        : (allAvailableDates.length ? allAvailableDates[0] : todayStr);
+    const dateTo   = (toSel && toSel.value)
+        ? toSel.value
+        : (allAvailableDates.length ? allAvailableDates[allAvailableDates.length - 1] : todayStr);
     return { dateFrom, dateTo };
 }
 
 async function refreshDashboard() {
-    const cats = ['mob_kill','player_death','item_drop','item_pickup','item_purchase','char_created','help_topic'];
+    const cats = ['player_login','player_death','mob_kill','item_purchase','item_drop','item_pickup','char_created','help_topic'];
     const { dateFrom, dateTo } = dashDateRange();
     await Promise.all(cats.map(cat => loadDashCard(cat, dateFrom, dateTo)));
 }
@@ -835,28 +888,12 @@ async function loadDashCard(cat, dateFrom, dateTo) {
         const peak = Math.max(...counts, 0);
         const peakDate = peak > 0 ? dates[counts.indexOf(peak)] : null;
 
-        const half   = Math.floor(counts.length / 2);
-        const recent = counts.slice(half).reduce((a,b)=>a+b,0);
-        const prior  = counts.slice(0, half).reduce((a,b)=>a+b,0);
-        let deltaText = '', deltaClass = 'flat';
-        if (prior > 0) {
-            const pct = ((recent - prior) / prior * 100);
-            deltaText = (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% vs prior ' + half + ' days';
-            deltaClass = pct > 5 ? 'up' : pct < -5 ? 'down' : 'flat';
-        } else if (recent > 0) {
-            deltaText = 'new activity this period'; deltaClass = 'up';
-        } else {
-            deltaText = 'no activity in range';
-        }
-
         document.getElementById('dash-' + cat + '-total').textContent  = formatNum(total);
         document.getElementById('dash-' + cat + '-period').textContent = nDays + ' days';
         document.getElementById('dash-' + cat + '-avg').innerHTML      = '<strong>' + avg + '</strong>/day avg';
         document.getElementById('dash-' + cat + '-peak').innerHTML     = peakDate
             ? 'peak <strong>' + formatNum(peak) + '</strong> (' + fmtDate(peakDate).slice(5) + ')'
             : 'no activity';
-        document.getElementById('dash-' + cat + '-delta').textContent  = deltaText;
-        document.getElementById('dash-' + cat + '-delta').className    = 'dash-card-delta ' + deltaClass;
         document.getElementById('dash-' + cat + '-lbl-from').textContent = fmtDate(dateFrom).slice(5);
         document.getElementById('dash-' + cat + '-lbl-to').textContent   = fmtDate(dateTo).slice(5);
 
@@ -864,7 +901,6 @@ async function loadDashCard(cat, dateFrom, dateTo) {
     } catch(_) {
         document.getElementById('dash-' + cat + '-total').textContent  = '—';
         document.getElementById('dash-' + cat + '-period').textContent = '';
-        document.getElementById('dash-' + cat + '-delta').textContent  = 'unavailable';
     }
 }
 
@@ -905,12 +941,83 @@ function drawSparkline(canvasId, values, color) {
 const CAT_LABELS = {
     mob_kill: 'Mob Kills', player_death: 'Player Deaths',
     item_drop: 'Item Drops', item_pickup: 'Item Pickups',
-    item_purchase: 'Purchases', char_created: 'Chars Created', help_topic: 'Help Lookups',
+    item_purchase: 'Purchases', char_created: 'Chars Created',
+    help_topic: 'Help Lookups', player_login: 'Player Logins',
 };
+
+// What dimension to group by for the breakdown view of each category
+// What dimension to group by for the breakdown view of each category.
+// Each entry is an array of options; the first is the default shown on tab open.
+const CAT_BREAKDOWN = {
+    mob_kill:      [
+        { groupby: 'mob',  label: 'By Mob' },
+        { groupby: 'zone', label: 'By Zone' },
+        { groupby: 'room', label: 'By Room' },
+    ],
+    player_death:  [
+        { groupby: 'zone', label: 'By Zone' },
+        { groupby: 'room', label: 'By Room' },
+    ],
+    item_drop:     [
+        { groupby: 'item', label: 'By Item' },
+        { groupby: 'mob',  label: 'By Mob (dropper)' },
+        { groupby: 'zone', label: 'By Zone' },
+        { groupby: 'room', label: 'By Room' },
+    ],
+    item_pickup:   [
+        { groupby: 'item', label: 'By Item' },
+        { groupby: 'zone', label: 'By Zone' },
+        { groupby: 'room', label: 'By Room' },
+    ],
+    item_purchase: [
+        { groupby: 'item', label: 'By Item' },
+        { groupby: 'zone', label: 'By Zone' },
+    ],
+    char_created:  [
+        { groupby: 'race', label: 'By Race' },
+    ],
+    help_topic:    [
+        { groupby: 'topic', label: 'By Topic' },
+    ],
+    // player_login has no meaningful breakdown dimension
+};
+
+let currentModalCat = null;
+let currentModalTab = 'trends';
+let currentBreakdownIdx = 0;
+
+function switchModalTab(tab) {
+    currentModalTab = tab;
+    document.getElementById('dash-pane-trends').classList.toggle('active',    tab === 'trends');
+    document.getElementById('dash-pane-breakdown').classList.toggle('active', tab === 'breakdown');
+    document.getElementById('dash-tab-trends').classList.toggle('active',    tab === 'trends');
+    document.getElementById('dash-tab-breakdown').classList.toggle('active', tab === 'breakdown');
+    if (tab === 'breakdown' && currentModalCat) {
+        loadAndDrawBreakdown(currentModalCat, currentBreakdownIdx);
+    }
+}
+
+function selectBreakdown(idx) {
+    currentBreakdownIdx = idx;
+    document.querySelectorAll('.dash-breakdown-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    loadAndDrawBreakdown(currentModalCat, idx);
+}
 
 function openDashModal(cat) {
     const data = dashCardData[cat];
     if (!data) return;
+    currentModalCat = cat;
+    currentModalTab = 'trends';
+    // Hide Breakdown tab for categories with no meaningful breakdown dimension
+    const hasBreakdown = !!(CAT_BREAKDOWN[cat] && CAT_BREAKDOWN[cat].length);
+    document.getElementById('dash-tab-breakdown').style.display = hasBreakdown ? '' : 'none';
+    currentBreakdownIdx = 0;
+    // Reset to trends tab
+    document.getElementById('dash-pane-trends').classList.add('active');
+    document.getElementById('dash-pane-breakdown').classList.remove('active');
+    document.getElementById('dash-tab-trends').classList.add('active');
+    document.getElementById('dash-tab-breakdown').classList.remove('active');
+
     const { dates, counts, total, dateFrom, dateTo } = data;
     const color  = catColor(cat);
     const nDays  = dates.length;
@@ -918,17 +1025,6 @@ function openDashModal(cat) {
     const activeDays = counts.filter(c => c > 0).length;
     const peak   = Math.max(...counts, 0);
     const peakDate = peak > 0 ? dates[counts.indexOf(peak)] : null;
-    const half   = Math.floor(counts.length / 2);
-    const recent = counts.slice(half).reduce((a,b)=>a+b,0);
-    const prior  = counts.slice(0, half).reduce((a,b)=>a+b,0);
-    let trendText = 'stable', trendColor = '#888';
-    if (prior > 0) {
-        const pct = ((recent - prior) / prior * 100);
-        trendText  = (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% vs prior ' + half + ' days';
-        trendColor = pct > 5 ? '#1e6e34' : pct < -5 ? '#8a0000' : '#888';
-    } else if (recent > 0) {
-        trendText = 'new activity'; trendColor = '#1e6e34';
-    }
 
     document.getElementById('dash-modal-title').textContent  = CAT_LABELS[cat] || cat;
     document.getElementById('dash-modal-period').textContent = fmtDate(dateFrom) + ' – ' + fmtDate(dateTo) + ' (' + nDays + ' days)';
@@ -938,7 +1034,6 @@ function openDashModal(cat) {
         { label: 'Daily Avg',   value: avg,                           sub: 'events per day' },
         { label: 'Active Days', value: activeDays + ' / ' + nDays,   sub: 'days with activity' },
         { label: 'Peak Day',    value: peakDate ? formatNum(peak) : '—', sub: peakDate ? fmtDate(peakDate) : 'no data' },
-        { label: 'Trend',       value: trendText, sub: 'first vs second half', valueColor: trendColor },
     ].map(s => `<div class="dash-modal-stat">
         <div class="dash-modal-stat-label">${esc(s.label)}</div>
         <div class="dash-modal-stat-value"${s.valueColor ? ` style="color:${s.valueColor};font-size:0.82rem"` : ''}>${esc(s.value)}</div>
@@ -959,6 +1054,138 @@ function closeDashModal(e) {
     document.getElementById('dash-modal-backdrop').classList.remove('open');
     document.body.style.overflow = '';
     hideTooltip();
+}
+
+async function loadAndDrawBreakdown(cat, bdIdx) {
+    const data = dashCardData[cat];
+    if (!data) return;
+    const { dateFrom, dateTo } = data;
+    const options = CAT_BREAKDOWN[cat];
+    if (!options || !options.length) return;
+    const bd = options[bdIdx] || options[0];
+
+    // Render sub-toggle buttons
+    const togglesEl = document.getElementById('dash-breakdown-toggles');
+    if (options.length > 1) {
+        togglesEl.innerHTML = options.map((opt, i) =>
+            `<button class="dash-breakdown-btn${i === (bdIdx || 0) ? ' active' : ''}" onclick="selectBreakdown(${i})">${esc(opt.label)}</button>`
+        ).join('');
+    } else {
+        togglesEl.innerHTML = '';
+    }
+
+    const emptyEl  = document.getElementById('dash-breakdown-empty');
+    const titleEl  = document.getElementById('dash-breakdown-title');
+    const canvas   = document.getElementById('dash-modal-breakdown-canvas');
+    titleEl.textContent = bd.label + ' — ' + fmtDate(dateFrom) + ' to ' + fmtDate(dateTo);
+    emptyEl.style.display = 'none';
+    canvas.style.display  = 'block';
+
+    try {
+        const res  = await fetch(`/admin/api/v1/telemetry?category=${cat}&groupby=${bd.groupby}&dateFrom=${dateFrom}&dateTo=${dateTo}&sort=desc`);
+        const json = await res.json();
+        if (!json.success || !json.data || json.data.length === 0) {
+            emptyEl.style.display = 'block';
+            canvas.style.display  = 'none';
+            return;
+        }
+        const total = json.data.length;
+        titleEl.textContent = bd.label
+            + ' — ' + fmtDate(dateFrom) + ' to ' + fmtDate(dateTo)
+            + '  (' + total + ' entries)';
+        drawModalBreakdown('dash-modal-breakdown-canvas', json.data, cat, bd.groupby);
+    } catch(_) {
+        emptyEl.style.display = 'block';
+        canvas.style.display  = 'none';
+    }
+}
+
+function breakdownLabel(r, groupby) {
+    switch (groupby) {
+        case 'mob':   return mobNames[r.mobid]   || ('#' + r.mobid);
+        case 'item':  return itemNames[r.itemid]  || ('#' + r.itemid);
+        case 'zone':  return r.zone  || '?';
+        case 'room':  return (roomTitles[r.roomid] || '') + ' #' + r.roomid;
+        case 'race':  return raceNames[r.raceid]  || ('#' + r.raceid);
+        case 'topic': return r.topic || '?';
+        default:      return r.category || '?';
+    }
+}
+
+function drawModalBreakdown(canvasId, rows, cat, groupby) {
+    const data   = rows;  // caller already sliced to TOP
+    const color  = catColor(cat);
+    const total  = rows.reduce((s, r) => s + (r.count || 0), 0);
+    const maxVal = data.length ? (data[0].count || 1) : 1;
+
+    const barH   = 22;
+    const barGap = 5;
+    const padL   = 200;
+    const padR   = 70;
+    const padT   = 12;
+    const padB   = 12;
+    const H      = padT + data.length * (barH + barGap) + padB;
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const dpr    = window.devicePixelRatio || 1;
+    const W      = Math.max(canvas.parentElement.clientWidth - 32, 300);
+    canvas.style.height = H + 'px';
+    canvas.width  = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const barW = W - padL - padR;
+    ctx.clearRect(0, 0, W, H);
+    ctx.font = '11px system-ui, sans-serif';
+
+    const hitBoxes = [];
+    data.forEach((r, i) => {
+        const y   = padT + i * (barH + barGap);
+        const w   = Math.max(1, (r.count / maxVal) * barW);
+        const pct = total > 0 ? ((r.count / total) * 100).toFixed(1) : '0';
+        const lbl = breakdownLabel(r, groupby);
+        const trunc = lbl.length > 26 ? lbl.slice(0, 25) + '…' : lbl;
+
+        // Alternating row tint
+        if (i % 2 === 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.025)';
+            ctx.fillRect(0, y - 1, W, barH + 2);
+        }
+
+        // Bar
+        ctx.fillStyle = color + 'cc';
+        ctx.fillRect(padL, y, w, barH);
+
+        // Label
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#444';
+        ctx.fillText(trunc, padL - 6, y + barH / 2);
+
+        // Count + pct
+        ctx.textAlign = 'left'; ctx.fillStyle = '#333';
+        ctx.fillText(formatNum(r.count) + '  (' + pct + '%)', padL + w + 5, y + barH / 2);
+
+        hitBoxes.push({ x: padL, y, w, h: barH, r, pct, lbl });
+    });
+
+    // Axis line
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H - padB); ctx.stroke();
+
+    canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const hit = hitBoxes.find(b => mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
+        if (hit) {
+            showTooltip(e, [
+                hit.lbl,
+                { color, label: 'Count',      value: hit.r.count.toLocaleString() },
+                { color: '#888', label: '% of total', value: hit.pct + '%' },
+            ]);
+        } else hideTooltip();
+    };
+    canvas.onmouseleave = hideTooltip;
 }
 
 function drawModalLineChart(canvasId, dates, counts, color, cat) {
@@ -1772,7 +1999,7 @@ function renderDonutChart() {
     const segMap = {};
     for (const r of currentData) {
         let key = r.category || '?';
-        if (r.raceid) key = raceNames[r.raceid] || ('Race ' + r.raceid);
+        if (r.raceid) key = raceNames[r.raceid] || ('#' + r.raceid);
         else if (r.zone) key = r.zone;
         segMap[key] = (segMap[key] || 0) + (r.count || 0);
     }
@@ -1854,20 +2081,10 @@ function renderHelpChart() {
     extrasRow.style.display = 'flex';
 
     // Aggregate by topic
-    const topicMap = {}, topicFirst = {}, topicLast = {};
+    const topicMap = {};
     for (const r of currentData) {
         const key = r.topic || r.category || '?';
         topicMap[key]  = (topicMap[key]  || 0) + (r.count || 0);
-        if (!topicFirst[key] || r.date < topicFirst[key]) topicFirst[key] = r.date;
-        if (!topicLast[key]  || r.date > topicLast[key])  topicLast[key]  = r.date;
-    }
-
-    // Compute trend: early-half vs late-half counts
-    const datesByTopic = {};
-    for (const r of currentData) {
-        const key = r.topic || r.category || '?';
-        if (!datesByTopic[key]) datesByTopic[key] = {};
-        datesByTopic[key][r.date] = (datesByTopic[key][r.date] || 0) + (r.count || 0);
     }
 
     let topics = Object.entries(topicMap).sort((a,b) => b[1]-a[1]);
@@ -1875,7 +2092,7 @@ function renderHelpChart() {
     if (topN > 0) topics = topics.slice(0, topN);
 
     const barH = 24, barGap = 6;
-    const padL = 160, padR = 80, padT = 16, padB = 16;
+    const padL = 160, padR = 20, padT = 16, padB = 16;
     const H = padT + topics.length * (barH + barGap) + padB;
     const cv = setupCanvas('viz-canvas', H);
     if (!cv) return;
@@ -1892,24 +2109,12 @@ function renderHelpChart() {
         const y = padT + i * (barH + barGap);
         const w = Math.max(1, (val / maxVal) * barW);
 
-        // Trend calculation
-        const dates = Object.keys(datesByTopic[key] || {}).sort();
-        let trend = 0;
-        if (dates.length >= 2) {
-            const half = Math.floor(dates.length / 2);
-            const early = dates.slice(0, half).reduce((s,d) => s + (datesByTopic[key][d]||0), 0);
-            const late  = dates.slice(half).reduce((s,d) => s + (datesByTopic[key][d]||0), 0);
-            trend = early > 0 ? (late - early) / early : (late > 0 ? 1 : 0);
-        }
-        const isSpiking = trend > 0.5;
-        const barColor  = isSpiking ? '#f0a840' : '#4a9eff';
-
-        ctx.fillStyle = barColor + 'cc';
+        ctx.fillStyle = '#4a9eff' + 'cc';
         ctx.fillRect(padL, y, w, barH);
 
         // Label
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = isSpiking ? '#c07800' : '#444';
+        ctx.fillStyle = '#444';
         const truncKey = key.length > 20 ? key.slice(0,19) + '…' : key;
         ctx.fillText(truncKey, padL - 6, y + barH / 2);
 
@@ -1917,17 +2122,7 @@ function renderHelpChart() {
         ctx.textAlign = 'left'; ctx.fillStyle = '#333';
         ctx.fillText(formatNum(val), padL + w + 4, y + barH / 2);
 
-        // Trend arrow
-        if (dates.length >= 2) {
-            const pct = (trend * 100).toFixed(0);
-            const arrow = trend > 0.05 ? '↑' : trend < -0.05 ? '↓' : '→';
-            const trendColor = trend > 0.05 ? '#c07800' : trend < -0.05 ? '#888' : '#aaa';
-            ctx.fillStyle = trendColor;
-            ctx.textAlign = 'right';
-            ctx.fillText(arrow + ' ' + (trend > 0 ? '+' : '') + pct + '%', W - padR + 74, y + barH / 2);
-        }
-
-        hitBoxes.push({ x: padL, y, w, h: barH, key, val, trend });
+        hitBoxes.push({ x: padL, y, w, h: barH, key, val });
     });
 
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
@@ -1938,27 +2133,50 @@ function renderHelpChart() {
         const mx = e.clientX - rect.left, my = e.clientY - rect.top;
         const hit = hitBoxes.find(b => mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
         if (hit) {
-            const trendStr = hit.trend > 0.05 ? 'trending up' : hit.trend < -0.05 ? 'declining' : 'stable';
             showTooltip(e, [
                 hit.key,
                 { color: '#4a9eff', label: 'Lookups', value: hit.val.toLocaleString() },
                 { color: '#888',    label: '% of total', value: (hit.val / total * 100).toFixed(1) + '%' },
-                { color: '#888',    label: 'Trend', value: trendStr },
             ]);
         } else hideTooltip();
     };
     canvas.onmouseleave = hideTooltip;
 
-    setVizMeta('Help Topic Frequency', `${topics.length} topics. Orange = trending up (possible confusion spike).`, [
-        { color: '#4a9eff', label: 'Normal' },
-        { color: '#f0a840', label: 'Trending up (>+50%)' },
+    setVizMeta('Help Topic Frequency', `${topics.length} topics`, [
+        { color: '#4a9eff', label: 'Lookups' },
     ]);
 }
 
 // ─── boot ─────────────────────────────────────────────────────────────────────
-initLookups();
-loadAvailableDates();
-initDashboard();
+async function init() {
+    // Load lookups and available dates in parallel, then set default date range
+    // and immediately query + render.
+    await Promise.all([initLookups(), loadAvailableDates()]);
+
+    // Pre-select last 30 days in the date filters.
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0,10).replace(/-/g,'');
+    const d30 = new Date(today); d30.setDate(d30.getDate() - 29);
+    const fromStr = d30.toISOString().slice(0,10).replace(/-/g,'');
+
+    // Find the closest available date >= fromStr, or just use fromStr directly.
+    const fromSel = document.getElementById('f-dateFrom');
+    const toSel   = document.getElementById('f-dateTo');
+    // The selects are already populated by loadAvailableDates; pick the values.
+    const bestFrom = allAvailableDates.find(d => d >= fromStr) || (allAvailableDates.length ? allAvailableDates[0] : '');
+    const bestTo   = allAvailableDates.length ? allAvailableDates[allAvailableDates.length - 1] : '';
+    if (fromSel && bestFrom) fromSel.value = bestFrom;
+    if (toSel   && bestTo)   toSel.value   = bestTo;
+    // Re-constrain the To picker based on the chosen From.
+    if (bestFrom) onDateFromChange();
+    // Restore the To value after onDateFromChange rebuilt the select.
+    if (toSel && bestTo) toSel.value = bestTo;
+
+    // Run the initial query and render everything.
+    await loadData();
+}
+
+init();
 </script>
 
 {{template "footer" .}}

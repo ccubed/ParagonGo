@@ -21,6 +21,7 @@ const (
 	CatItemPurchase = "item_purchase"
 	CatCharCreated  = "char_created"
 	CatHelpTopic    = "help_topic"
+	CatPlayerLogin  = "player_login"
 )
 
 // Record holds a single aggregated counter for a unique combination of

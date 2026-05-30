@@ -21,7 +21,7 @@ func onMobItemDrop(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Continue
 	}
-	Track(CatItemDrop, evt.Zone, evt.ItemId, evt.MobId, evt.RoomId)
+	Track(CatItemDrop, evt.Zone, evt.ItemId, evt.MobId, rooms.GetOriginalRoom(evt.RoomId))
 	return events.Continue
 }
 
@@ -46,7 +46,7 @@ func onItemOwnership(e events.Event) events.ListenerReturn {
 		}
 	}
 
-	Track(CatItemPickup, zone, evt.Item.ItemId, 0, roomId)
+	Track(CatItemPickup, zone, evt.Item.ItemId, 0, rooms.GetOriginalRoom(roomId))
 	return events.Continue
 }
 
@@ -65,7 +65,7 @@ func onMobDeath(e events.Event) events.ListenerReturn {
 		zone = r.Zone
 	}
 
-	Track(CatMobKill, zone, 0, evt.MobId, evt.RoomId)
+	Track(CatMobKill, zone, 0, evt.MobId, rooms.GetOriginalRoom(evt.RoomId))
 	return events.Continue
 }
 
@@ -80,7 +80,7 @@ func onPlayerDeath(e events.Event) events.ListenerReturn {
 		zone = r.Zone
 	}
 
-	Track(CatPlayerDeath, zone, 0, evt.KillerMobId, evt.RoomId)
+	Track(CatPlayerDeath, zone, 0, evt.KillerMobId, rooms.GetOriginalRoom(evt.RoomId))
 	return events.Continue
 }
 
@@ -98,7 +98,7 @@ func onPurchase(e events.Event) events.ListenerReturn {
 		zone = r.Zone
 	}
 
-	Track(CatItemPurchase, zone, evt.ItemId, evt.SellerMobId, evt.RoomId)
+	Track(CatItemPurchase, zone, evt.ItemId, evt.SellerMobId, rooms.GetOriginalRoom(evt.RoomId))
 	return events.Continue
 }
 
