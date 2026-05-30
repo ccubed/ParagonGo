@@ -16,15 +16,15 @@ func Killstats(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	otherSuggestions := []string{}
 
-	var headers []string
-
 	tableTitle := `Kill Stats`
 
+	var headers []string
 	rows := [][]string{}
 
 	formatting := []string{
 		`<ansi fg="mobname">%s</ansi>`,
 		`<ansi fg="red">%s</ansi>`,
+		`<ansi fg="elite">%s</ansi>`,
 		`<ansi fg="230">%s</ansi>`,
 	}
 
@@ -33,6 +33,7 @@ func Killstats(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	//totalPVPDeaths := 0
 
 	mobKills := map[string]int{}
+	mobEliteKills := map[string]int{}
 	raceKills := map[string]int{}
 	areaKills := map[string]int{}
 	charKills := map[string]int{}
@@ -53,6 +54,14 @@ func Killstats(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 			// Populate area kills
 			areaKills[mobSpec.Zone] = areaKills[mobSpec.Zone] + kCt
+		}
+	}
+
+	// Aggregate elite kills by mob name from "mobId:mobName" keys.
+	for key, eCt := range user.Character.KD.EliteKills {
+		parts := strings.SplitN(key, ":", 2)
+		if len(parts) == 2 {
+			mobEliteKills[parts[1]] = mobEliteKills[parts[1]] + eCt
 		}
 	}
 
@@ -99,41 +108,57 @@ func Killstats(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		otherSuggestions = append(otherSuggestions, `<ansi fg="command">killstats race</ansi>`)
 	}
 
-	headers = []string{strings.Title(rest), `Quantity`, `%`}
+	isMobView := rest == `mob`
+
+	if isMobView {
+		headers = []string{strings.Title(rest), `Quantity`, `Elites`, `%`}
+	} else {
+		headers = []string{strings.Title(rest), `Quantity`, `%`}
+	}
 
 	for name, killCt := range renderStats {
 
-		rows = append(rows, []string{
-			name,
-			fmt.Sprintf("%d", killCt),
-			fmt.Sprintf("%2.f%%", float64(killCt)/float64(totalKills)*100),
-		})
+		if isMobView {
+			eliteCt := mobEliteKills[name]
+			eliteStr := ``
+			if eliteCt > 0 {
+				eliteStr = fmt.Sprintf("%d", eliteCt)
+			}
+			rows = append(rows, []string{
+				name,
+				fmt.Sprintf("%d", killCt),
+				eliteStr,
+				fmt.Sprintf("%2.f%%", float64(killCt)/float64(totalKills)*100),
+			})
+		} else {
+			rows = append(rows, []string{
+				name,
+				fmt.Sprintf("%d", killCt),
+				fmt.Sprintf("%2.f%%", float64(killCt)/float64(totalKills)*100),
+			})
+		}
 	}
 
-	rows = append(rows, []string{
-		``,
-		``,
-		``,
-	})
-
-	rows = append(rows, []string{
-		`Total Kills`,
-		fmt.Sprintf("%d", totalKills),
-		``,
-	})
+	if isMobView {
+		rows = append(rows, []string{``, ``, ``, ``})
+		rows = append(rows, []string{`Total Kills`, fmt.Sprintf("%d", totalKills), ``, ``})
+	} else {
+		rows = append(rows, []string{``, ``, ``})
+		rows = append(rows, []string{`Total Kills`, fmt.Sprintf("%d", totalKills), ``})
+	}
 
 	if totalDeaths == 0 {
-		rows = append(rows, []string{
-			`Total Deaths`,
-			fmt.Sprintf("%d", totalDeaths),
-			`N/A`,
-		})
+		if isMobView {
+			rows = append(rows, []string{`Total Deaths`, fmt.Sprintf("%d", totalDeaths), ``, `N/A`})
+		} else {
+			rows = append(rows, []string{`Total Deaths`, fmt.Sprintf("%d", totalDeaths), `N/A`})
+		}
 	} else {
-		rows = append(rows, []string{
-			`Total Deaths`,
-			fmt.Sprintf("%d", totalDeaths),
-			fmt.Sprintf("%.2f:1", kdRatio),
-		})
+		if isMobView {
+			rows = append(rows, []string{`Total Deaths`, fmt.Sprintf("%d", totalDeaths), ``, fmt.Sprintf("%.2f:1", kdRatio)})
+		} else {
+			rows = append(rows, []string{`Total Deaths`, fmt.Sprintf("%d", totalDeaths), fmt.Sprintf("%.2f:1", kdRatio)})
+		}
 	}
 
 	searchResultsTable := templates.GetTable(tableTitle+` by `+strings.Title(rest), headers, rows, formatting)

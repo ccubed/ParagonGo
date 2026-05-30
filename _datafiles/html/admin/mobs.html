@@ -76,11 +76,11 @@
     .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
 
     /* range sliders */
-    .range-wrap { display: flex; align-items: center; gap: 0.6rem; }
-    .range-wrap input[type="range"] { flex: 1; accent-color: var(--color-primary); }
+    .range-wrap { display: flex; flex-direction: column; gap: 0.2rem; }
+    .range-wrap input[type="range"] { width: 100%; accent-color: var(--color-primary); }
     .range-val {
-        font-family: monospace; font-size: 0.85rem; font-weight: 600;
-        min-width: 2.5rem; text-align: center; color: var(--color-primary);
+        font-family: monospace; font-size: 0.82rem; font-weight: 600;
+        text-align: center; color: var(--color-primary);
     }
 
     /* section cards */
@@ -277,17 +277,30 @@
                                    oninput="document.getElementById('f-activitylevel-val').textContent=this.value" />
                             <span class="range-val" id="f-activitylevel-val">10</span>
                         </div>
-                        <div class="field-hint">1-100% chance of acting each round</div>
                     </div>
                     <div class="field">
                         <label>Max Wander</label>
-                        <input type="number" id="f-maxwander" min="0" placeholder="0" />
-                        <div class="field-hint">Max rooms to wander from home (0 = stationary)</div>
+                        <div class="range-wrap">
+                            <input type="range" id="f-maxwander" min="-1" max="30" value="0"
+                                   oninput="updateWanderLabel(this.value)" />
+                            <span class="range-val" id="f-maxwander-val">stationary</span>
+                        </div>
                     </div>
                     <div class="field">
                         <label>Item Drop Chance</label>
-                        <input type="number" id="f-itemdropchance" min="0" max="100" placeholder="0" />
-                        <div class="field-hint">% chance of dropping items on death</div>
+                        <div class="range-wrap">
+                            <input type="range" id="f-itemdropchance" min="0" max="100" value="0"
+                                   oninput="document.getElementById('f-itemdropchance-val').textContent=this.value+'%'" />
+                            <span class="range-val" id="f-itemdropchance-val">0%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Elite Chance</label>
+                        <div class="range-wrap">
+                            <input type="range" id="f-elitechance" min="0" max="100" value="0"
+                                   oninput="document.getElementById('f-elitechance-val').textContent=this.value+'%'" />
+                            <span class="range-val" id="f-elitechance-val">0%</span>
+                        </div>
                     </div>
 
                     <div class="section-title" style="margin-top:0.5rem;">Groups</div>
@@ -389,7 +402,6 @@
                                    oninput="document.getElementById('f-alignment-val').textContent=this.value" />
                             <span class="range-val" id="f-alignment-val">0</span>
                         </div>
-                        <div class="field-hint">-100 (evil) to 100 (good), 0 = default from race</div>
                     </div>
 
                     <div class="section-title" style="margin-top:0.5rem;">Stats (Training Bonuses)</div>
@@ -744,8 +756,17 @@
         setVal('f-activitylevel', actLvl);
         document.getElementById('f-activitylevel-val').textContent = actLvl;
 
-        setVal('f-maxwander', mob.MaxWander || 0);
-        setVal('f-itemdropchance', mob.ItemDropChance || 0);
+        const wander = mob.MaxWander != null ? mob.MaxWander : 0;
+        setVal('f-maxwander', wander);
+        updateWanderLabel(wander);
+
+        const dropChance = mob.ItemDropChance || 0;
+        setVal('f-itemdropchance', dropChance);
+        document.getElementById('f-itemdropchance-val').textContent = dropChance + '%';
+
+        const eliteChance = mob.EliteChance || 0;
+        setVal('f-elitechance', eliteChance);
+        document.getElementById('f-elitechance-val').textContent = eliteChance + '%';
 
         const align = ch.Alignment || 0;
         setVal('f-alignment', align);
@@ -1297,8 +1318,9 @@
             Zone:           document.getElementById('f-zone').value.trim(),
             Hostile:        document.getElementById('f-hostile').value === 'true',
             ActivityLevel:  parseInt(document.getElementById('f-activitylevel').value, 10) || 10,
-            MaxWander:      parseInt(document.getElementById('f-maxwander').value, 10) || 0,
+            MaxWander:      parseInt(document.getElementById('f-maxwander').value, 10),
             ItemDropChance: parseInt(document.getElementById('f-itemdropchance').value, 10) || 0,
+            EliteChance:    parseInt(document.getElementById('f-elitechance').value, 10) || 0,
             ScriptTag:      document.getElementById('f-scripttag').value.trim(),
             Groups:         collectTags('groups-list'),
             Hates:          collectTags('hates-list'),
@@ -1451,6 +1473,15 @@
     function textToArray(id) {
         return document.getElementById(id).value.split('\n').map(s => s.trim()).filter(Boolean);
     }
+
+    window.updateWanderLabel = function (val) {
+        const n = parseInt(val, 10);
+        const el = document.getElementById('f-maxwander-val');
+        if (!el) return;
+        if (n === -1)     el.textContent = 'unlimited';
+        else if (n === 0) el.textContent = 'stationary';
+        else              el.textContent = n + (n === 1 ? ' room' : ' rooms');
+    };
 
     init();
 })();

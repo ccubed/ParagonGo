@@ -7,10 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -74,46 +72,22 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			if skillLevel >= 3 {
 
-				itemNames := []string{}
 				itemNamesFormatted := []string{}
 
 				for _, item := range u.Character.Items {
 
-					iName := item.DisplayName()
-					iNameFormatted := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, iName)
+					iNameFormatted := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, item.DisplayName())
 
 					iSpec := item.GetSpec()
 					if iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible {
 						if iSpec.Uses > 0 {
-							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)
 							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 						}
 					}
-					itemNames = append(itemNames, iName)
 					itemNamesFormatted = append(itemNamesFormatted, iNameFormatted)
 				}
 
-				raceInfo := races.GetRace(u.Character.GetRaceId())
-				if raceInfo == nil {
-					return true, nil
-				}
-
-				diceRoll := raceInfo.Damage.DiceRoll
-				if u.Character.Equipment.Weapon.ItemId != 0 {
-					iSpec := u.Character.Equipment.Weapon.GetSpec()
-					diceRoll = iSpec.Damage.DiceRoll
-				}
-
-				invData := map[string]any{
-					`Equipment`:          &u.Character.Equipment,
-					`ItemNames`:          itemNames,
-					`ItemNamesFormatted`: itemNamesFormatted,
-					`AttackDamage`:       diceRoll,
-					`RaceInfo`:           raceInfo,
-					`Count`:              fmt.Sprintf(`(%d/%d)`, len(u.Character.Items), u.Character.CarryCapacity()),
-				}
-
-				invTxt, _ = templates.Process("character/inventory", invData, user.UserId)
+				invTxt = buildPeepInventoryPanel(u.Character, itemNamesFormatted)
 			}
 
 			if skillLevel >= 4 {
@@ -142,45 +116,22 @@ func Peep(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			if skillLevel >= 3 {
 
-				itemNames := []string{}
 				itemNamesFormatted := []string{}
 
 				for _, item := range m.Character.Items {
 
-					iName := item.DisplayName()
-					iNameFormatted := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, iName)
+					iNameFormatted := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, item.DisplayName())
 
 					iSpec := item.GetSpec()
 					if iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible {
 						if iSpec.Uses > 0 {
-							iName = fmt.Sprintf(`%s (%d)`, iName, item.Uses)
 							iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 						}
 					}
-					itemNames = append(itemNames, iName)
 					itemNamesFormatted = append(itemNamesFormatted, iNameFormatted)
 				}
 
-				raceInfo := races.GetRace(m.Character.GetRaceId())
-				if raceInfo == nil {
-					return true, nil
-				}
-
-				diceRoll := raceInfo.Damage.DiceRoll
-				if m.Character.Equipment.Weapon.ItemId != 0 {
-					iSpec := m.Character.Equipment.Weapon.GetSpec()
-					diceRoll = iSpec.Damage.DiceRoll
-				}
-
-				invData := map[string]any{
-					`Equipment`:          &m.Character.Equipment,
-					`ItemNames`:          itemNames,
-					`ItemNamesFormatted`: itemNamesFormatted,
-					`AttackDamage`:       diceRoll,
-					`RaceInfo`:           raceInfo,
-				}
-
-				invTxt, _ = templates.Process("character/inventory", invData, user.UserId)
+				invTxt = buildPeepInventoryPanel(&m.Character, itemNamesFormatted)
 			}
 
 			if skillLevel >= 4 {

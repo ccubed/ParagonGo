@@ -1,6 +1,9 @@
 package characters
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type KDStats struct {
 	TotalKills  int         `json:"totalkills,omitempty"`  // Quick tally of kills
@@ -11,6 +14,9 @@ type KDStats struct {
 	PlayerKills    map[string]int `json:"playerkills,omitempty"`    // map of userid:username to count
 	PlayerDeaths   map[string]int `json:"playerdeaths,omitempty"`   // map of userid:username to count
 	TotalPvpDeaths int            `json:"totalpvpdeaths,omitempty"` // Quick tally of pvp deaths
+
+	EliteKills  map[string]int `json:"elitekills,omitempty"`  // map of mobId:mobName to count (not included in TotalKills)
+	EliteDeaths map[string]int `json:"elitedeaths,omitempty"` // map of mobId:mobName to count of times killed by an elite
 }
 
 func (kd *KDStats) GetMobKDRatio() float64 {
@@ -85,4 +91,39 @@ func (kd *KDStats) AddMobDeath() {
 
 func (kd *KDStats) AddPvpDeath() {
 	kd.TotalPvpDeaths++
+}
+
+func (kd *KDStats) AddEliteKill(mobId int, mobName string) {
+	if kd.EliteKills == nil {
+		kd.EliteKills = make(map[string]int)
+	}
+	key := fmt.Sprintf(`%d:%s`, mobId, mobName)
+	kd.EliteKills[key] = kd.EliteKills[key] + 1
+}
+
+func (kd *KDStats) AddEliteDeath(mobId int, mobName string) {
+	if kd.EliteDeaths == nil {
+		kd.EliteDeaths = make(map[string]int)
+	}
+	key := fmt.Sprintf(`%d:%s`, mobId, mobName)
+	kd.EliteDeaths[key] = kd.EliteDeaths[key] + 1
+}
+
+func (kd *KDStats) GetEliteKills(mobId ...int) int {
+	if len(mobId) == 0 {
+		total := 0
+		for _, v := range kd.EliteKills {
+			total += v
+		}
+		return total
+	}
+	total := 0
+	for key, v := range kd.EliteKills {
+		for _, id := range mobId {
+			if strings.HasPrefix(key, fmt.Sprintf(`%d:`, id)) {
+				total += v
+			}
+		}
+	}
+	return total
 }

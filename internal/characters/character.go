@@ -93,6 +93,8 @@ type Character struct {
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
 	KillerMobInstanceId int                            `yaml:"-"` // transient: mob instance that delivered the killing blow
+	KillerMobIsElite    bool                           `yaml:"-"` // transient: true if the killing mob was elite
+	KillerMobName       string                         `yaml:"-"` // transient: name of the mob that delivered the killing blow
 	permaBuffIds        []int                          // Buff Id's that are always present for this character
 	userId              int                            // User ID of the character if any
 }

@@ -139,6 +139,7 @@ colors:
   broadcast-body: 164
   mob-corpse: 67
   user-corpse: 143
+  elite: 220
   tip-text: 219
   character-joined: 120
   md-p: 8

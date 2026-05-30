@@ -1112,6 +1112,10 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 				if user.Character.Aggro != nil && user.Character.Aggro.MobInstanceId > 0 {
 					user.Character.KillerMobInstanceId = user.Character.Aggro.MobInstanceId
+					if killerMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId); killerMob != nil {
+						user.Character.KillerMobIsElite = killerMob.IsElite
+						user.Character.KillerMobName = killerMob.Character.Name
+					}
 				}
 				user.Command(`suicide`) // suicide drops all money/items and transports to land of the dead.
 

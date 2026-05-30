@@ -318,10 +318,55 @@ const UserPicker = (() => {
         searchInput.className = 'up-search';
         searchInput.placeholder = 'Type a username to search\u2026';
         searchInput.setAttribute('aria-label', 'Search users');
+
+        // Role filter buttons
+        const roleFilterWrap = document.createElement('div');
+        roleFilterWrap.style.cssText = 'display:flex;gap:0.4rem;margin-top:0.45rem;flex-wrap:wrap;';
+        const roleFilters = [
+            { label: 'All Admins', role: 'admin' },
+            { label: 'All Mods',   role: 'mod'   },
+        ];
+        let activeRole = null;
+        roleFilters.forEach(({ label, role }) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = label;
+            btn.dataset.role = role;
+            btn.style.cssText = 'padding:0.2rem 0.65rem;border-radius:999px;font-size:0.78rem;font-weight:600;cursor:pointer;border:1px solid var(--color-border-medium);background:var(--color-surface-raised);color:var(--color-text-muted);transition:background 0.12s,color 0.12s,border-color 0.12s;';
+            btn.addEventListener('click', () => {
+                if (activeRole === role) {
+                    // Deactivate — go back to search mode
+                    activeRole = null;
+                    btn.style.background = 'var(--color-surface-raised)';
+                    btn.style.color = 'var(--color-text-muted)';
+                    btn.style.borderColor = 'var(--color-border-medium)';
+                    tableWrap.innerHTML = '<div class="up-empty">Start typing to search for a user.</div>';
+                    visibleUsers = [];
+                    searchInput.focus();
+                } else {
+                    // Activate this role filter, deactivate others
+                    activeRole = role;
+                    roleFilterWrap.querySelectorAll('button').forEach(b => {
+                        b.style.background = 'var(--color-surface-raised)';
+                        b.style.color = 'var(--color-text-muted)';
+                        b.style.borderColor = 'var(--color-border-medium)';
+                    });
+                    btn.style.background = 'var(--color-primary)';
+                    btn.style.color = 'var(--color-primary-on)';
+                    btn.style.borderColor = 'var(--color-primary)';
+                    searchInput.value = '';
+                    clearTimeout(debounceTimer);
+                    doRoleSearch(role);
+                }
+            });
+            roleFilterWrap.appendChild(btn);
+        });
+
         const hint = document.createElement('div');
         hint.className = 'up-hint';
         hint.textContent = 'Type a username (min 2 chars) or a numeric user ID to search.';
         searchWrap.appendChild(searchInput);
+        searchWrap.appendChild(roleFilterWrap);
         searchWrap.appendChild(hint);
 
         const tableWrap = document.createElement('div');
@@ -392,6 +437,12 @@ const UserPicker = (() => {
         }
 
         async function doSearch(q) {
+            activeRole = null;
+            roleFilterWrap.querySelectorAll('button').forEach(b => {
+                b.style.background = 'var(--color-surface-raised)';
+                b.style.color = 'var(--color-text-muted)';
+                b.style.borderColor = 'var(--color-border-medium)';
+            });
             const trimmed = q.trim();
             const isNumeric = /^\d+$/.test(trimmed);
             if (trimmed.length < 2 && !isNumeric) {
@@ -401,6 +452,16 @@ const UserPicker = (() => {
             }
             tableWrap.innerHTML = '<div class="up-loading">Searching\u2026</div>';
             const res = await AdminAPI.get('/admin/api/v1/users/search?name=' + encodeURIComponent(q.trim()), true);
+            if (!res.ok) {
+                tableWrap.innerHTML = '<div class="up-empty">Search failed: ' + escHtml(res.error || 'unknown error') + '</div>';
+                return;
+            }
+            renderResults((res.data && res.data.data) || []);
+        }
+
+        async function doRoleSearch(role) {
+            tableWrap.innerHTML = '<div class="up-loading">Loading\u2026</div>';
+            const res = await AdminAPI.get('/admin/api/v1/users/search?role=' + encodeURIComponent(role), true);
             if (!res.ok) {
                 tableWrap.innerHTML = '<div class="up-empty">Search failed: ' + escHtml(res.error || 'unknown error') + '</div>';
                 return;

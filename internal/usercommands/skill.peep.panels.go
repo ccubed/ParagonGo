@@ -2,8 +2,10 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -73,4 +75,71 @@ func buildPeepLayoutInline() *templates.PanelLayout {
 		SetColumnGap(2)
 
 	return layout
+}
+
+// buildPeepInventoryPanel renders the equipment and carried items for a peep target.
+func buildPeepInventoryPanel(c *characters.Character, itemNamesFormatted []string) string {
+	layout, err := templates.LoadPanelLayout("character/inventory")
+	if err != nil {
+		layout = templates.NewPanelLayout("open", "single", 1, 1)
+		slot := layout.AddSlot()
+		layout.AddPanelsToSlot(slot, "equipment")
+		layout.Panel("equipment").
+			SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment</ansi> `).
+			SetWidth(78)
+	}
+
+	equipPanel := layout.Panel("equipment")
+	equipPanel.SetLabelWidth(9)
+
+	for _, slot := range characters.AllSlots() {
+		itm := c.Equipment.Get(slot)
+		if itm.IsDisabled() {
+			continue
+		}
+		label := characters.SlotLabel(slot)
+		equipPanel.Add(
+			fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, label),
+			fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, label),
+			fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, itm.NameComplex()),
+		)
+	}
+
+	var sb strings.Builder
+	sb.WriteString(layout.Render())
+	sb.WriteString(term.CRLFStr)
+
+	count := fmt.Sprintf(`(%d/%d)`, len(c.Items), c.CarryCapacity())
+	sb.WriteString(` Carrying: `)
+	lineLen := 0
+	lineNum := 1
+	for i, name := range itemNamesFormatted {
+		plainItem := c.Items[i]
+		plainLen := len(plainItem.Name())
+		if iSpec := plainItem.GetSpec(); iSpec.Uses > 0 &&
+			(iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible ||
+				iSpec.Subtype == items.Usable || iSpec.Type == items.Lockpicks) {
+			plainLen += 2 + len(fmt.Sprintf(`%d`, plainItem.Uses)) + 1
+		}
+		proposed := lineLen + plainLen + 2
+		if lineLen > 0 && proposed > 68 {
+			lineLen = 0
+			lineNum++
+			if lineNum == 2 {
+				sb.WriteString(term.CRLFStr)
+				sb.WriteString(fmt.Sprintf(` %-8s  `, count))
+			} else {
+				sb.WriteString(term.CRLFStr)
+				sb.WriteString(`           `)
+			}
+		}
+		sb.WriteString(name)
+		if i < len(itemNamesFormatted)-1 {
+			sb.WriteString(`, `)
+			lineLen += plainLen + 2
+		}
+	}
+	sb.WriteString(term.CRLFStr)
+
+	return sb.String()
 }

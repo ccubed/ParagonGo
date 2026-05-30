@@ -354,6 +354,14 @@ GamePlay:
   #   How many rounds between each alignment decay step toward neutral.
   #   Set to 0 to disable alignment decay entirely.
   AlignmentDecayRounds: 100
+  # - EliteLevelBonus -
+  #   Percent level increase applied to elite mob spawns.
+  #   Example: 20 = 20% higher level than base.
+  EliteLevelBonus: 20
+  # - EliteXPBonus -
+  #   Percent XP bonus awarded to players when killing an elite mob.
+  #   Example: 10 = 10% more XP than normal.
+  EliteXPBonus: 10
   # Party settings
   Party:
     # - MaxPlayerCount -

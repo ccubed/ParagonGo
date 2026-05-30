@@ -61,6 +61,8 @@ type Mob struct {
 	ScriptTag       string   `yaml:"scripttag"`                 // Script for this mob: mobs/frostfang/scripts/{mobId}-{mobname}-{ScriptTag}.js
 	QuestFlags      []string `yaml:"questflags,omitempty,flow"` // What quest flags are set on this mob?
 	BuffIds         []int    `yaml:"buffids,omitempty"`         // Buff Id's this mob always has upon spawn
+	EliteChance     int      `yaml:"elitechance,omitempty"`     // Percent chance (0-100) this mob spawns as elite
+	IsElite         bool     `yaml:"-"`                         // Runtime flag: true if this instance is elite
 	tempDataStore   map[string]any
 	conversationId  int              // Identifier of conversation currently involved in.
 	Path            PathQueue        `yaml:"-"` // a pre-calculated path the mob is following.
@@ -155,6 +157,21 @@ func NewMobById(mobId MobId, homeRoomId int, forceLevel ...int) *Mob {
 		if len(forceLevel) > 0 && forceLevel[0] > 0 {
 			mob.Character.Level = forceLevel[0]
 		}
+
+		// Elite spawn check
+		if mob.EliteChance > 0 && util.Rand(100) < mob.EliteChance {
+			mob.IsElite = true
+			cfg := configs.GetGamePlayConfig()
+			bonusPct := int(cfg.EliteLevelBonus)
+			if bonusPct <= 0 {
+				bonusPct = 20
+			}
+			mob.Character.Level = mob.Character.Level + int(math.Ceil(float64(mob.Character.Level)*float64(bonusPct)/100.0))
+			if mob.Character.Level < 1 {
+				mob.Character.Level = 1
+			}
+		}
+
 		mob.Character.StatPoints = 0
 		{
 			cfgProg := configs.GetProgressionConfig()
@@ -172,6 +189,10 @@ func NewMobById(mobId MobId, homeRoomId int, forceLevel ...int) *Mob {
 		mob.Character.AutoTrain()
 		mob.Character.Health = mob.Character.HealthMax.Value
 		mob.Character.Mana = mob.Character.ManaMax.Value
+
+		if mob.IsElite {
+			mob.Character.SetAdjective(`elite`, true)
+		}
 
 		mob.Character.SetPermaBuffs(mob.BuffIds)
 
@@ -618,6 +639,12 @@ func (r *Mob) Validate() error {
 		r.ItemDropChance = 0
 	} else if r.ItemDropChance > 100 {
 		r.ItemDropChance = 100
+	}
+
+	if r.EliteChance < 0 {
+		r.EliteChance = 0
+	} else if r.EliteChance > 100 {
+		r.EliteChance = 100
 	}
 
 	r.Character.Validate()

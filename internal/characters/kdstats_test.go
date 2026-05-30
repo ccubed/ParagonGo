@@ -517,3 +517,150 @@ func TestKDStats_AddPvpDeath(t *testing.T) {
 		})
 	}
 }
+func TestKDStats_AddEliteKill(t *testing.T) {
+	tests := []struct {
+		name          string
+		initialKills  map[string]int
+		initialTotal  int
+		mobId         int
+		mobName       string
+		expectedKey   string
+		expectedCount int
+		expectedTotal int
+	}{
+		{
+			name:          "Add elite kill to empty map",
+			initialKills:  nil,
+			initialTotal:  0,
+			mobId:         5,
+			mobName:       "Dragon",
+			expectedKey:   "5:Dragon",
+			expectedCount: 1,
+			expectedTotal: 0, // TotalKills must NOT be incremented
+		},
+		{
+			name:          "Add elite kill to existing map, new mob",
+			initialKills:  map[string]int{"1:Orc": 2},
+			initialTotal:  5,
+			mobId:         7,
+			mobName:       "Troll",
+			expectedKey:   "7:Troll",
+			expectedCount: 1,
+			expectedTotal: 5, // TotalKills must NOT be incremented
+		},
+		{
+			name:          "Add elite kill to existing map, same mob",
+			initialKills:  map[string]int{"3:Goblin": 4},
+			initialTotal:  10,
+			mobId:         3,
+			mobName:       "Goblin",
+			expectedKey:   "3:Goblin",
+			expectedCount: 5,
+			expectedTotal: 10, // TotalKills must NOT be incremented
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kd := &KDStats{
+				EliteKills: tt.initialKills,
+				TotalKills: tt.initialTotal,
+			}
+			kd.AddEliteKill(tt.mobId, tt.mobName)
+			assert.Equal(t, tt.expectedCount, kd.EliteKills[tt.expectedKey])
+			assert.Equal(t, tt.expectedTotal, kd.TotalKills)
+		})
+	}
+}
+func TestKDStats_AddEliteDeath(t *testing.T) {
+	tests := []struct {
+		name          string
+		initialDeaths map[string]int
+		mobId         int
+		mobName       string
+		expectedKey   string
+		expectedCount int
+	}{
+		{
+			name:          "Add elite death to empty map",
+			initialDeaths: nil,
+			mobId:         2,
+			mobName:       "Wyvern",
+			expectedKey:   "2:Wyvern",
+			expectedCount: 1,
+		},
+		{
+			name:          "Add elite death to existing map, new mob",
+			initialDeaths: map[string]int{"4:Ogre": 1},
+			mobId:         9,
+			mobName:       "Basilisk",
+			expectedKey:   "9:Basilisk",
+			expectedCount: 1,
+		},
+		{
+			name:          "Add elite death to existing map, same mob",
+			initialDeaths: map[string]int{"4:Ogre": 3},
+			mobId:         4,
+			mobName:       "Ogre",
+			expectedKey:   "4:Ogre",
+			expectedCount: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kd := &KDStats{
+				EliteDeaths: tt.initialDeaths,
+			}
+			kd.AddEliteDeath(tt.mobId, tt.mobName)
+			assert.Equal(t, tt.expectedCount, kd.EliteDeaths[tt.expectedKey])
+		})
+	}
+}
+func TestKDStats_GetEliteKills(t *testing.T) {
+	tests := []struct {
+		name  string
+		kills map[string]int
+		input []int
+		want  int
+	}{
+		{
+			name:  "No mobId returns total of all elite kills",
+			kills: map[string]int{"1:Rat": 3, "2:Wolf": 5},
+			input: []int{},
+			want:  8,
+		},
+		{
+			name:  "Single mobId present",
+			kills: map[string]int{"1:Rat": 3, "2:Wolf": 5},
+			input: []int{1},
+			want:  3,
+		},
+		{
+			name:  "Single mobId not present",
+			kills: map[string]int{"1:Rat": 3, "2:Wolf": 5},
+			input: []int{9},
+			want:  0,
+		},
+		{
+			name:  "Multiple mobIds",
+			kills: map[string]int{"1:Rat": 3, "2:Wolf": 5, "10:Dragon": 1},
+			input: []int{1, 10},
+			want:  4,
+		},
+		{
+			name:  "Nil map returns zero",
+			kills: nil,
+			input: []int{},
+			want:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kd := &KDStats{EliteKills: tt.kills}
+			got := kd.GetEliteKills(tt.input...)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

@@ -68,6 +68,54 @@ func searchByUserId(uid int) []UserSearchResult {
 	return []UserSearchResult{result}
 }
 
+// SearchUsersByRole returns all users whose Role matches the given role string
+// (case-insensitive). Results are capped at 500.
+func SearchUsersByRole(role string) []UserSearchResult {
+	if role == "" {
+		return nil
+	}
+	needle := strings.ToLower(role)
+
+	type candidate struct {
+		userId   int
+		username string
+	}
+
+	var matches []candidate
+	GetUserIndex().ForEachRecord(func(rec IndexUserRecord) bool {
+		if len(matches) >= 500 {
+			return false
+		}
+		matches = append(matches, candidate{
+			userId:   int(rec.UserID),
+			username: string(bytes.TrimRight(rec.Username[:], "\x00")),
+		})
+		return true
+	})
+
+	results := make([]UserSearchResult, 0, len(matches))
+	for _, c := range matches {
+		var userRole, userEmail string
+		if u := GetByUserId(c.userId); u != nil {
+			userRole = u.Role
+			userEmail = u.EmailAddress
+		} else if loaded, err := LoadUser(c.username, true); err == nil {
+			userRole = loaded.Role
+			userEmail = loaded.EmailAddress
+		}
+		if strings.ToLower(userRole) != needle {
+			continue
+		}
+		results = append(results, UserSearchResult{
+			UserId:   c.userId,
+			Username: c.username,
+			Role:     userRole,
+			Email:    userEmail,
+		})
+	}
+	return results
+}
+
 func searchByUsername(searchName string) []UserSearchResult {
 	needle := strings.ToLower(searchName)
 

@@ -138,6 +138,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 					if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
 						user.Character.KD.AddMobKill(int(mob.MobId))
+						if mob.IsElite {
+							user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
+						}
 					}
 
 					xpScaler := 1.0
@@ -155,6 +158,14 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					}
 
 					finalXPVal := int(math.Ceil(float64(xpVal) * xpScaler))
+
+					if mob.IsElite {
+						eliteBonus := int(configs.GetGamePlayConfig().EliteXPBonus)
+						if eliteBonus <= 0 {
+							eliteBonus = 10
+						}
+						finalXPVal = finalXPVal + int(math.Ceil(float64(finalXPVal)*float64(eliteBonus)/100.0))
+					}
 
 					mudlog.Debug("XP Calculation", "MobLevel", mob.Character.Level, "XPBase", mobXP, "xpVal", xpVal, "xpVariation", xpVariation, "xpScaler", xpScaler, "finalXPVal", finalXPVal)
 
@@ -233,6 +244,14 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				allMembers := p.GetMembers()
 				xpSplit := xp / len(allMembers)
 
+				if mob.IsElite {
+					eliteBonus := int(configs.GetGamePlayConfig().EliteXPBonus)
+					if eliteBonus <= 0 {
+						eliteBonus = 10
+					}
+					xpSplit = xpSplit + int(math.Ceil(float64(xpSplit)*float64(eliteBonus)/100.0))
+				}
+
 				mudlog.Info(`Party XP`, `totalXP`, xp, `splitXP`, xpSplit, `memberCt`, len(allMembers))
 
 				for _, memberId := range allMembers {
@@ -241,6 +260,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 						if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
 							user.Character.KD.AddMobKill(int(mob.MobId))
+							if mob.IsElite {
+								user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
+							}
 						}
 
 						user.GrantXP(xpSplit, `combat`)

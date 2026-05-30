@@ -31,6 +31,9 @@ type GamePlay struct {
 	XPScale              ConfigFloat `yaml:"XPScale"`
 	MobConverseChance    ConfigInt   `yaml:"MobConverseChance"`    // Chance 1-100 of attempting to converse when idle
 	AlignmentDecayRounds ConfigInt   `yaml:"AlignmentDecayRounds"` // Rounds between each alignment decay step toward neutral (0 = disabled)
+	// Elite mob settings
+	EliteLevelBonus ConfigInt `yaml:"EliteLevelBonus"` // Percent level increase for elite mob spawns (e.g. 20 = 20% higher level)
+	EliteXPBonus    ConfigInt `yaml:"EliteXPBonus"`    // Percent XP bonus for killing an elite mob (e.g. 10 = 10% more XP)
 }
 
 // CombatConfig holds configurable min/max bounds for every combat calculation.
@@ -177,6 +180,14 @@ func (g *GamePlay) Validate() {
 
 	if g.AlignmentDecayRounds < 0 {
 		g.AlignmentDecayRounds = 100
+	}
+
+	if g.EliteLevelBonus < 0 {
+		g.EliteLevelBonus = 20
+	}
+
+	if g.EliteXPBonus < 0 {
+		g.EliteXPBonus = 10
 	}
 
 	g.Combat.validate()

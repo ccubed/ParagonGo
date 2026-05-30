@@ -231,6 +231,29 @@
             width: 52px;
             flex-shrink: 0;
         }
+
+        .ks-row-elite {
+            font-size: 0.78em;
+            color: var(--t-text-secondary);
+            width: 42px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .ks-row-elite.has-elites {
+            color: #dca000;
+            font-weight: bold;
+        }
+
+        .ks-col-header-elite {
+            font-size: 0.62em;
+            color: var(--t-text-heading);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            width: 42px;
+            text-align: right;
+            flex-shrink: 0;
+        }
     `);
 
     // -----------------------------------------------------------------------
@@ -268,12 +291,14 @@
             '<div class="ks-tab-panel active" id="ks-mobs">' +
                 '<div class="ks-summary" id="ks-mob-summary">' +
                     '<div class="ks-summary-cell"><span class="ks-summary-label">Kills</span><span class="ks-summary-value" id="ks-mob-total">-</span></div>' +
+                    '<div class="ks-summary-cell"><span class="ks-summary-label">Elites</span><span class="ks-summary-value" id="ks-mob-elites">-</span></div>' +
                     '<div class="ks-summary-cell"><span class="ks-summary-label">Deaths</span><span class="ks-summary-value" id="ks-mob-deaths">-</span></div>' +
                     '<div class="ks-summary-cell"><span class="ks-summary-label">K/D</span><span class="ks-summary-value" id="ks-mob-kd">-</span></div>' +
                 '</div>' +
                 '<div class="ks-col-header">' +
                     '<span class="ks-col-header-name">Mob</span>' +
                     '<span class="ks-col-header-count">Kills</span>' +
+                    '<span class="ks-col-header-elite">Elites</span>' +
                     '<span class="ks-col-header-pct">%</span>' +
                     '<span class="ks-col-header-bar"></span>' +
                 '</div>' +
@@ -394,6 +419,41 @@
         });
     }
 
+    function renderMobList(listEl, mapObj, eliteMap, total) {
+        listEl.innerHTML = '';
+
+        if (!mapObj || Object.keys(mapObj).length === 0) {
+            listEl.innerHTML = '<div class="ks-empty">No data yet.</div>';
+            return;
+        }
+
+        const entries = Object.entries(mapObj);
+        entries.sort(function(a, b) { return b[1] - a[1]; });
+
+        const maxVal = entries[0][1];
+        const elite  = eliteMap || {};
+
+        entries.forEach(function(entry) {
+            const name      = entry[0];
+            const count     = entry[1];
+            const eliteCt   = elite[name] || 0;
+            const pct       = total > 0 ? (count / total * 100) : 0;
+            const barW      = maxVal > 0 ? Math.round(count / maxVal * 100) : 0;
+            const eliteCls  = eliteCt > 0 ? ' has-elites' : '';
+            const eliteTxt  = eliteCt > 0 ? String(eliteCt) : '-';
+
+            const row = document.createElement('div');
+            row.className = 'ks-row';
+            row.innerHTML =
+                '<span class="ks-row-name">' + name + '</span>' +
+                '<span class="ks-row-count">' + count + '</span>' +
+                '<span class="ks-row-elite' + eliteCls + '">' + eliteTxt + '</span>' +
+                '<span class="ks-row-pct">' + pct.toFixed(1) + '%</span>' +
+                '<div class="ks-bar-track"><div class="ks-bar-fill" style="width:' + barW + '%"></div></div>';
+            listEl.appendChild(row);
+        });
+    }
+
     function renderPvpList(listEl, playersObj, total) {
         listEl.innerHTML = '';
 
@@ -441,9 +501,11 @@
 
         /* Mob summary */
         const mobTotal  = document.getElementById('ks-mob-total');
+        const mobElites = document.getElementById('ks-mob-elites');
         const mobDeaths = document.getElementById('ks-mob-deaths');
         const mobKD     = document.getElementById('ks-mob-kd');
         if (mobTotal)  { mobTotal.textContent  = mob.total  !== undefined ? mob.total  : '0'; }
+        if (mobElites) { mobElites.textContent = mob.elite_kills !== undefined ? mob.elite_kills : '0'; }
         if (mobDeaths) { mobDeaths.textContent = mob.deaths !== undefined ? mob.deaths : '0'; }
         if (mobKD) {
             mobKD.textContent = fmtKD(mob.kd_ratio);
@@ -454,7 +516,7 @@
         const mobList  = document.getElementById('ks-mob-list');
         const raceList = document.getElementById('ks-race-list');
         const areaList = document.getElementById('ks-area-list');
-        if (mobList)  { renderList(mobList,  mob.by_name, mob.total); }
+        if (mobList)  { renderMobList(mobList, mob.by_name, mob.by_elite, mob.total); }
         if (raceList) { renderList(raceList, mob.by_race, mob.total); }
         if (areaList) { renderList(areaList, mob.by_area, mob.total); }
 

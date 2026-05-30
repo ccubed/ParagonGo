@@ -175,14 +175,26 @@ func apiV1CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /admin/api/v1/users/search
+//
+// Query params (mutually exclusive; name takes priority):
+//
+//	name=<string>  - search by username or numeric user ID (existing behaviour)
+//	role=<string>  - return all users with the given role (admin, mod, user, guest)
 func apiV1SearchUsers(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	if name == "" {
-		writeAPIError(w, http.StatusBadRequest, "name query parameter is required")
+	role := r.URL.Query().Get("role")
+
+	if name == "" && role == "" {
+		writeAPIError(w, http.StatusBadRequest, "name or role query parameter is required")
 		return
 	}
 
-	results := users.SearchUsers(name)
+	var results []users.UserSearchResult
+	if name != "" {
+		results = users.SearchUsers(name)
+	} else {
+		results = users.SearchUsersByRole(role)
+	}
 	if results == nil {
 		results = []users.UserSearchResult{}
 	}

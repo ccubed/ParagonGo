@@ -829,6 +829,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		mobKills := map[string]int{}
 		raceKills := map[string]int{}
 		areaKills := map[string]int{}
+		eliteKills := map[string]int{}
 		charKills := map[string]GMCPCharModule_Payload_Kills_PvpEntry{}
 
 		totalMobKills := 0
@@ -845,6 +846,14 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			}
 		}
 
+		// Build elite kills by mob name from the "mobId:mobName" keyed map.
+		for key, eCt := range user.Character.KD.EliteKills {
+			parts := strings.SplitN(key, ":", 2)
+			if len(parts) == 2 {
+				eliteKills[parts[1]] = eliteKills[parts[1]] + eCt
+			}
+		}
+
 		for userIdNameStr, killCount := range user.Character.KD.PlayerKills {
 			parts := strings.Split(userIdNameStr, `:`)
 			if len(parts) == 2 {
@@ -858,12 +867,14 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		payload.Kills = &GMCPCharModule_Payload_Kills{
 			Mob: GMCPCharModule_Payload_Kills_Section{
-				Total:   totalMobKills,
-				Deaths:  user.Character.KD.GetMobDeaths(),
-				KDRatio: mobKDRatio,
-				ByName:  mobKills,
-				ByRace:  raceKills,
-				ByArea:  areaKills,
+				Total:      totalMobKills,
+				Deaths:     user.Character.KD.GetMobDeaths(),
+				KDRatio:    mobKDRatio,
+				EliteKills: user.Character.KD.GetEliteKills(),
+				ByName:     mobKills,
+				ByElite:    eliteKills,
+				ByRace:     raceKills,
+				ByArea:     areaKills,
 			},
 			Pvp: GMCPCharModule_Payload_Kills_PvpSection{
 				Total:   totalPvpKills,
@@ -1132,12 +1143,14 @@ type GMCPCharModule_Payload_Kills struct {
 }
 
 type GMCPCharModule_Payload_Kills_Section struct {
-	Total   int            `json:"total"`
-	Deaths  int            `json:"deaths"`
-	KDRatio float64        `json:"kd_ratio"`
-	ByName  map[string]int `json:"by_name"`
-	ByRace  map[string]int `json:"by_race"`
-	ByArea  map[string]int `json:"by_area"`
+	Total      int            `json:"total"`
+	Deaths     int            `json:"deaths"`
+	KDRatio    float64        `json:"kd_ratio"`
+	EliteKills int            `json:"elite_kills"`
+	ByName     map[string]int `json:"by_name"`
+	ByElite    map[string]int `json:"by_elite"`
+	ByRace     map[string]int `json:"by_race"`
+	ByArea     map[string]int `json:"by_area"`
 }
 
 type GMCPCharModule_Payload_Kills_PvpSection struct {

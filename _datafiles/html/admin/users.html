@@ -329,7 +329,24 @@
             <div class="section-card" id="perm-section" style="display:none;">
                 <div class="section-title">Permissions</div>
                 <div class="span2">
-                    <p id="perm-admin-note" style="display:none; font-size:0.85rem; color:var(--color-text-muted); font-style:italic; margin-bottom:0.5rem;">Admins have all permissions and cannot be restricted.</p>
+                    <div id="perm-admin-note" style="display:none; margin-bottom:0.5rem;">
+                        <div style="
+                            display:flex; align-items:flex-start; gap:0.65rem;
+                            background:var(--color-warning-bg); color:var(--color-warning-text);
+                            border:1px solid var(--color-warning-text); border-radius:5px;
+                            padding:0.65rem 0.85rem; font-size:0.85rem; line-height:1.5;
+                        ">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:0.1rem">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            <div>
+                                <strong>Admins have unlimited permissions and capabilities.</strong>
+                                An admin account can access and modify everything on the server with no restrictions. Grant this role with caution.
+                            </div>
+                        </div>
+                    </div>
                     <p id="perm-user-note" style="display:none; font-size:0.85rem; color:var(--color-text-muted); font-style:italic; margin-bottom:0.5rem;">Regular users have no elevated permissions.</p>
                     <div id="perm-mod-panel" style="display:none;">
                         <p style="font-size:0.82rem; color:var(--color-text-muted); margin-bottom:0.75rem;">Select the permissions this moderator should have. Prefix-match applies: granting <code>room</code> also grants <code>room.edit</code>, <code>room.edit.exits</code>, etc.</p>

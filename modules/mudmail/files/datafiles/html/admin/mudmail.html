@@ -196,11 +196,11 @@
 
     // ── Lookup user picker ───────────────────────────────────────────
     window.pickLookupUser = function () {
-        CharacterPicker.open({
+        UserPicker.open({
             onSelect: (user) => {
                 currentUserId = user.user_id;
                 const display = document.getElementById('lookup-display');
-                display.textContent = '#' + user.user_id + ' ' + user.username + ' (' + user.character_name + ')';
+                display.textContent = '#' + user.user_id + ' ' + user.username;
                 display.className = 'picker-display has-value';
                 loadMessages();
             },
@@ -229,7 +229,7 @@
             '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--color-text-faint);">Loading...</td></tr>';
         document.getElementById('no-results').style.display = 'none';
 
-        const res = await AdminAPI.get('/admin/api/v1/mudmail?user_id=' + uid);
+        const res = await AdminAPI.get('/admin/api/v1/mudmail?user_id=' + currentUserId);
         if (!res.ok) {
             showStatus('Failed to load messages: ' + (res.error || 'unknown error'), false);
             return;
