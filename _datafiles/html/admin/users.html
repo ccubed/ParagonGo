@@ -101,18 +101,22 @@
     .eq-lock-btn[data-locked="false"] { color: var(--color-text-faint); }
     .eq-lock-btn[data-locked="true"]:hover  { color: #c53030; }
     .eq-lock-btn[data-locked="false"]:hover { color: #e53e3e; }
-    .shop-picker-wrap.item-locked {
-        border: 1px solid #e53e3e;
-        background: #fff5f5;
-        border-radius: 4px;
-        padding: 0.2rem 0.4rem;
-    }
-
     /* equipment picker */
-    .shop-picker-wrap { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-    .shop-picker-display { font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace; }
+    .shop-picker-wrap {
+        display: flex; gap: 0.4rem; align-items: center;
+        border: 1px solid transparent; border-radius: 4px; padding: 0.2rem 0.4rem;
+    }
+    .shop-picker-wrap.item-locked {
+        border-color: #e53e3e;
+        background: #fff5f5;
+    }
+    .shop-picker-display {
+        font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace;
+        flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .shop-picker-display.empty { color: var(--color-text-placeholder); font-style: italic; font-family: inherit; }
-    .shop-picker-wrap.eq-disabled { background: var(--color-border-strong); border-radius: 4px; padding: 0.2rem 0.5rem; opacity: 0.6; cursor: not-allowed; }
+    .shop-picker-btns { display: flex; gap: 0.25rem; align-items: center; flex-shrink: 0; }
+    .shop-picker-wrap.eq-disabled { background: var(--color-border-strong); opacity: 0.6; cursor: not-allowed; }
     .shop-picker-wrap.eq-disabled * { pointer-events: none; }
     .shop-picker-wrap.eq-disabled .shop-picker-display { color: var(--color-text-faint); font-style: normal; font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 
@@ -781,9 +785,11 @@
                 '<label>' + label + '</label>' +
                 '<div class="shop-picker-wrap" id="' + id + '" data-value="0">' +
                     '<span class="shop-picker-display empty">nothing</span>' +
-                    '<button type="button" class="btn-add-sm" style="margin-top:0" onclick="pickEquip(\'' + id + '\')">Pick&hellip;</button>' +
-                    '<button type="button" class="btn-icon" title="Clear" onclick="clearEquip(\'' + id + '\')">\u00d7</button>' +
-                    '<button type="button" class="eq-lock-btn" data-locked="false" title="Item is removable. Click to permanently bind it to this character." onclick="toggleEquipLock(\'' + id + '\')">\uD83D\uDD13</button>' +
+                    '<span class="shop-picker-btns">' +
+                        '<button type="button" class="btn-add-sm" style="margin-top:0" onclick="pickEquip(\'' + id + '\')">Pick&hellip;</button>' +
+                        '<button type="button" class="btn-icon" title="Clear" onclick="clearEquip(\'' + id + '\')">\u00d7</button>' +
+                        '<button type="button" class="eq-lock-btn" data-locked="false" title="Item is removable. Click to permanently bind it to this character." onclick="toggleEquipLock(\'' + id + '\')">\uD83D\uDD13</button>' +
+                    '</span>' +
                 '</div>';
             grid.appendChild(field);
         }
@@ -802,6 +808,14 @@
             wrap.querySelectorAll('button').forEach(btn => { btn.disabled = isDisabled; });
             const display = wrap.querySelector('.shop-picker-display');
             if (display && isDisabled) {
+                wrap.dataset.value = '0';
+                wrap.classList.remove('item-locked');
+                const lockBtn = wrap.querySelector('.eq-lock-btn');
+                if (lockBtn) {
+                    lockBtn.dataset.locked = 'false';
+                    lockBtn.textContent = '\uD83D\uDD13';
+                    lockBtn.title = 'Item is removable. Click to permanently bind it to this character.';
+                }
                 display.textContent = 'DISABLED';
                 display.className = 'shop-picker-display';
             } else if (display && !isDisabled && wrap.dataset.value === '0') {
