@@ -354,6 +354,10 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		for _, item := range allWornItems {
 
+			if item.IsRemoveLocked() {
+				continue
+			}
+
 			roll := util.Rand(100)
 
 			util.LogRoll(`Drop Item`, roll, mob.ItemDropChance)

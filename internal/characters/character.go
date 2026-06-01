@@ -1983,6 +1983,9 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		if !c.Equipment.Offhand.IsDisabled() { // Don't allow equipping on a disabled slot
 			// If it's a 2 handed weapon, remove whatever is in the offhand
 			if iHandsRequired == 2 || !canDualWield && c.Equipment.Offhand.GetSpec().Type == items.Weapon {
+				if c.Equipment.Offhand.IsRemoveLocked() && c.Health > 0 {
+					return returnItems, false, `Your ` + c.Equipment.Offhand.DisplayName() + ` is bound to you and cannot be removed.`
+				}
 				returnItems = append(returnItems, c.Equipment.Offhand)
 				c.Equipment.Offhand = items.Item{}
 			}
@@ -1990,6 +1993,9 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 
 		if c.Equipment.Weapon.IsCursed() {
 			return returnItems, false, `Your ` + c.Equipment.Weapon.DisplayName() + ` is cursed and prevents you from removing it.`
+		}
+		if c.Equipment.Weapon.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Weapon.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 
 		returnItems = append(returnItems, c.Equipment.Weapon)
@@ -2006,9 +2012,15 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 				if c.Equipment.Weapon.IsCursed() {
 					return returnItems, false, `Your ` + c.Equipment.Weapon.DisplayName() + ` is cursed and prevents you from removing it.`
 				}
+				if c.Equipment.Weapon.IsRemoveLocked() && c.Health > 0 {
+					return returnItems, false, `Your ` + c.Equipment.Weapon.DisplayName() + ` is bound to you and cannot be removed.`
+				}
 				returnItems = append(returnItems, c.Equipment.Weapon)
 				c.Equipment.Weapon = items.Item{}
 			}
+		}
+		if c.Equipment.Offhand.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Offhand.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 		returnItems = append(returnItems, c.Equipment.Offhand)
 		c.Equipment.Offhand = i
@@ -2016,11 +2028,17 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		if c.Equipment.Head.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your head.`
 		}
+		if c.Equipment.Head.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Head.DisplayName() + ` is bound to you and cannot be removed.`
+		}
 		returnItems = append(returnItems, c.Equipment.Head)
 		c.Equipment.Head = i
 	case items.Neck:
 		if c.Equipment.Neck.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your neck.`
+		}
+		if c.Equipment.Neck.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Neck.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 		returnItems = append(returnItems, c.Equipment.Neck)
 		c.Equipment.Neck = i
@@ -2028,11 +2046,17 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		if c.Equipment.Body.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your body.`
 		}
+		if c.Equipment.Body.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Body.DisplayName() + ` is bound to you and cannot be removed.`
+		}
 		returnItems = append(returnItems, c.Equipment.Body)
 		c.Equipment.Body = i
 	case items.Belt:
 		if c.Equipment.Belt.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your head.`
+		}
+		if c.Equipment.Belt.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Belt.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 		returnItems = append(returnItems, c.Equipment.Belt)
 		c.Equipment.Belt = i
@@ -2040,11 +2064,17 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		if c.Equipment.Gloves.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things as gloves.`
 		}
+		if c.Equipment.Gloves.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Gloves.DisplayName() + ` is bound to you and cannot be removed.`
+		}
 		returnItems = append(returnItems, c.Equipment.Gloves)
 		c.Equipment.Gloves = i
 	case items.Ring:
 		if c.Equipment.Ring.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear rings.`
+		}
+		if c.Equipment.Ring.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Ring.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 		returnItems = append(returnItems, c.Equipment.Ring)
 		c.Equipment.Ring = i
@@ -2052,11 +2082,17 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		if c.Equipment.Legs.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your legs.`
 		}
+		if c.Equipment.Legs.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Legs.DisplayName() + ` is bound to you and cannot be removed.`
+		}
 		returnItems = append(returnItems, c.Equipment.Legs)
 		c.Equipment.Legs = i
 	case items.Feet:
 		if c.Equipment.Feet.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your feet.`
+		}
+		if c.Equipment.Feet.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, `Your ` + c.Equipment.Feet.DisplayName() + ` is bound to you and cannot be removed.`
 		}
 		returnItems = append(returnItems, c.Equipment.Feet)
 		c.Equipment.Feet = i
@@ -2073,6 +2109,9 @@ func (c *Character) RemoveFromBody(i items.Item) bool {
 
 	for _, slot := range AllSlots() {
 		if i.Equals(*c.Equipment.Get(slot)) {
+			if i.IsRemoveLocked() && c.Health > 0 {
+				return false
+			}
 			c.Equipment.Set(slot, items.Item{})
 			c.reapplyPermabuffs(i)
 			return true

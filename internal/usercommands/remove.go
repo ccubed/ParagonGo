@@ -16,6 +16,9 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if rest == "all" {
 		removedItems := []items.Item{}
 		for _, item := range user.Character.Equipment.GetAllItems() {
+			if item.IsRemoveLocked() {
+				continue
+			}
 			Remove(item.Name(), user, room, flags)
 			removedItems = append(removedItems, item)
 		}
@@ -34,6 +37,13 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if !found || matchItem.ItemId < 1 {
 		user.SendText(fmt.Sprintf(`You don't appear to be using a "%s".`, rest))
 	} else {
+
+		if matchItem.IsRemoveLocked() {
+			user.SendText(
+				fmt.Sprintf(`Your <ansi fg="item">%s</ansi> is bound to you and <ansi fg="red-bold">cannot be removed</ansi>.`, matchItem.DisplayName()),
+			)
+			return true, nil
+		}
 
 		if matchItem.IsCursed() && user.Character.Health > 0 {
 			if user.Character.GetSkillLevel(skills.Enchant) < 4 {

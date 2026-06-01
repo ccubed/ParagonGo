@@ -59,6 +59,11 @@ func Disarm(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				return true, nil
 			}
 
+			if m.Character.Equipment.Weapon.IsRemoveLocked() {
+				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s weapon is bound to them and cannot be disarmed!`, m.Character.Name))
+				return true, nil
+			}
+
 			chanceIn100 := (user.Character.Stats.Speed.ValueAdj + user.Character.Stats.Smarts.ValueAdj) - (m.Character.Stats.Strength.ValueAdj + m.Character.Stats.Perception.ValueAdj)
 			if chanceIn100 < 0 {
 				chanceIn100 = 0
@@ -103,6 +108,16 @@ func Disarm(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			if u.Character.HasBuffFlag(buffs.PermaGear) {
 				user.SendText(fmt.Sprintf(`Some force prevents you from disarming <ansi fg="username">%s</ansi>!`, u.Character.Name))
+				return true, nil
+			}
+
+			if u.Character.Equipment.Weapon.ItemId == 0 {
+				user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> has no weapon to disarm!`, u.Character.Name))
+				return true, nil
+			}
+
+			if u.Character.Equipment.Weapon.IsRemoveLocked() {
+				user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi>'s weapon is bound to them and cannot be disarmed!`, u.Character.Name))
 				return true, nil
 			}
 

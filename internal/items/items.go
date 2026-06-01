@@ -35,17 +35,18 @@ const (
 
 // Instance properties that may change
 type Item struct {
-	ItemId        int            `yaml:"itemid,omitempty"`
-	UUID          uuid.UUID      `yaml:"-"`                       // `yaml:"uuid,omitempty"`
-	Blob          string         `yaml:"blob,omitempty"`          // Does this item have a blob? Should be base64 encoded.
-	Uses          int            `yaml:"uses,omitempty"`          // How many uses it has left
-	LastUsedRound uint64         `yaml:"lastusedround,omitempty"` // Last round this item was used
-	Spec          *ItemSpec      `yaml:"overrides,omitempty"`
-	Uncursed      bool           `yaml:"uncursed,omitempty"`     // Is this item uncursed?
-	Enchantments  uint8          `yaml:"enchantments,omitempty"` // Is this item enchanted?
-	Adjectives    []string       `yaml:"adjectives,omitempty"`   // Decorative text for the name of the item (e.g. "exploding")
-	StashedBy     int            `yaml:"stashedby,omitempty"`    // userid of whoever stashed this item
-	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
+	ItemId            int            `yaml:"itemid,omitempty"`
+	UUID              uuid.UUID      `yaml:"-"`                       // `yaml:"uuid,omitempty"`
+	Blob              string         `yaml:"blob,omitempty"`          // Does this item have a blob? Should be base64 encoded.
+	Uses              int            `yaml:"uses,omitempty"`          // How many uses it has left
+	LastUsedRound     uint64         `yaml:"lastusedround,omitempty"` // Last round this item was used
+	Spec              *ItemSpec      `yaml:"overrides,omitempty"`
+	Uncursed          bool           `yaml:"uncursed,omitempty"`          // Is this item uncursed?
+	Enchantments      uint8          `yaml:"enchantments,omitempty"`      // Is this item enchanted?
+	Adjectives        []string       `yaml:"adjectives,omitempty"`        // Decorative text for the name of the item (e.g. "exploding")
+	StashedBy         int            `yaml:"stashedby,omitempty"`         // userid of whoever stashed this item
+	CanNeverBeRemoved bool           `yaml:"canneverberemoved,omitempty"` // If true, this item can never be unequipped once worn
+	tempDataStore     map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
 func New(itemId int) Item {
@@ -342,6 +343,10 @@ func (i *Item) Uncurse() {
 
 func (i *Item) IsCursed() bool {
 	return i.GetSpec().Cursed && !i.Uncursed
+}
+
+func (i *Item) IsRemoveLocked() bool {
+	return i.CanNeverBeRemoved
 }
 
 // Gets the specifics of the item damage

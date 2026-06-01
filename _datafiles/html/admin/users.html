@@ -91,6 +91,23 @@
     .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-faint); padding: 0 0.2rem; line-height: 1; }
     .btn-icon:hover { color: var(--color-danger); }
 
+    /* equipment lock button */
+    .eq-lock-btn {
+        background: none; border: none; cursor: pointer; font-size: 1rem;
+        line-height: 1; padding: 0 0.15rem; transition: color 0.15s;
+        flex-shrink: 0;
+    }
+    .eq-lock-btn[data-locked="true"]  { color: #e53e3e; }
+    .eq-lock-btn[data-locked="false"] { color: var(--color-text-faint); }
+    .eq-lock-btn[data-locked="true"]:hover  { color: #c53030; }
+    .eq-lock-btn[data-locked="false"]:hover { color: #e53e3e; }
+    .shop-picker-wrap.item-locked {
+        border: 1px solid #e53e3e;
+        background: #fff5f5;
+        border-radius: 4px;
+        padding: 0.2rem 0.4rem;
+    }
+
     /* equipment picker */
     .shop-picker-wrap { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
     .shop-picker-display { font-size: 0.82rem; color: var(--color-text-strong); font-family: monospace; }
@@ -709,7 +726,8 @@
         const eq = ch.Equipment || {};
         for (const slot of EQ_SLOTS) {
             const key = slot.charAt(0).toUpperCase() + slot.slice(1);
-            setEquipSlot('f-eq-' + slot, eqItemId(eq[key]));
+            const slotData = eq[key] || {};
+            setEquipSlot('f-eq-' + slot, eqItemId(slotData), slotData.CanNeverBeRemoved || false);
         }
 
         // Inventory
@@ -765,6 +783,7 @@
                     '<span class="shop-picker-display empty">nothing</span>' +
                     '<button type="button" class="btn-add-sm" style="margin-top:0" onclick="pickEquip(\'' + id + '\')">Pick&hellip;</button>' +
                     '<button type="button" class="btn-icon" title="Clear" onclick="clearEquip(\'' + id + '\')">\u00d7</button>' +
+                    '<button type="button" class="eq-lock-btn" data-locked="false" title="Item is removable. Click to permanently bind it to this character." onclick="toggleEquipLock(\'' + id + '\')">\uD83D\uDD13</button>' +
                 '</div>';
             grid.appendChild(field);
         }
@@ -792,7 +811,7 @@
         }
     }
 
-    function setEquipSlot(slotId, itemId) {
+    function setEquipSlot(slotId, itemId, locked) {
         const wrap = document.getElementById(slotId);
         if (!wrap) return;
         wrap.dataset.value = itemId || 0;
@@ -801,11 +820,42 @@
         if (!itemId || itemId === 0) {
             display.textContent = 'nothing';
             display.className = 'shop-picker-display empty';
+            const lockBtn = wrap.querySelector('.eq-lock-btn');
+            if (lockBtn) {
+                lockBtn.dataset.locked = 'false';
+                lockBtn.textContent = '\uD83D\uDD13';
+                lockBtn.title = 'Item is removable. Click to permanently bind it to this character.';
+            }
+            wrap.classList.remove('item-locked');
         } else {
             display.textContent = '#' + itemId + ' ' + itemName(itemId);
             display.className = 'shop-picker-display';
+            const lockBtn = wrap.querySelector('.eq-lock-btn');
+            if (lockBtn && locked !== undefined) {
+                const isLocked = !!locked;
+                lockBtn.dataset.locked = isLocked ? 'true' : 'false';
+                lockBtn.textContent = isLocked ? '\uD83D\uDD12' : '\uD83D\uDD13';
+                lockBtn.title = isLocked
+                    ? 'Item is permanently bound. This item will NEVER be removed from this character (not even on death). Click to unlock.'
+                    : 'Item is removable. Click to permanently bind it to this character.';
+                wrap.classList.toggle('item-locked', isLocked);
+            }
         }
     }
+
+    window.toggleEquipLock = function (slotId) {
+        const wrap = document.getElementById(slotId);
+        if (!wrap || !wrap.dataset.value || wrap.dataset.value === '0') return;
+        const lockBtn = wrap.querySelector('.eq-lock-btn');
+        if (!lockBtn) return;
+        const nowLocked = lockBtn.dataset.locked !== 'true';
+        lockBtn.dataset.locked = nowLocked ? 'true' : 'false';
+        lockBtn.textContent = nowLocked ? '\uD83D\uDD12' : '\uD83D\uDD13';
+        lockBtn.title = nowLocked
+            ? 'Item is permanently bound. This item will NEVER be removed from this character (not even on death). Click to unlock.'
+            : 'Item is removable. Click to permanently bind it to this character.';
+        wrap.classList.toggle('item-locked', nowLocked);
+    };
 
     window.pickEquip = function (slotId) {
         Picker.open({
@@ -1197,7 +1247,9 @@
         function eqSlot(id) {
             const el = document.getElementById(id);
             const val = el ? (parseInt(el.dataset.value, 10) || 0) : 0;
-            return { ItemId: val };
+            const lockBtn = el && el.querySelector('.eq-lock-btn');
+            const locked = lockBtn ? lockBtn.dataset.locked === 'true' : false;
+            return { ItemId: val, CanNeverBeRemoved: locked };
         }
 
         const payload = {

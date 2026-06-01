@@ -132,6 +132,9 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 			// Unequip everything
 			for _, itm := range user.Character.GetAllWornItems() {
+				if itm.IsRemoveLocked() {
+					continue
+				}
 				Remove(itm.Name(), user, room, flags)
 			}
 			// drop all items / gold
@@ -157,6 +160,9 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		if config.Death.EquipmentDropChance >= 0 {
 			chanceInt := int(config.Death.EquipmentDropChance * 100)
 			for _, itm := range user.Character.GetAllWornItems() {
+				if itm.IsRemoveLocked() {
+					continue
+				}
 				if util.Rand(100) < chanceInt {
 
 					Remove(itm.Name(), user, room, flags)
