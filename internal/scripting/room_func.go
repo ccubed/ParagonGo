@@ -412,6 +412,14 @@ func (r ScriptRoom) IsEphemeral() bool {
 	return rooms.IsEphemeralRoomId(r.roomRecord.RoomId)
 }
 
+// PlaySound plays a sound for all players currently in the room.
+// soundId is the identifier defined in audio.yaml (e.g. "room-enter").
+// category groups related sounds for client-side volume control (e.g. "combat", "movement").
+// Optional excludeUserIds are user IDs that should NOT receive the sound.
+func (r ScriptRoom) PlaySound(soundId string, category string, excludeUserIds ...int) {
+	r.roomRecord.PlaySound(soundId, category, excludeUserIds...)
+}
+
 // ////////////////////////////////////////////////////////
 //
 // # These functions get exported to the scripting engine

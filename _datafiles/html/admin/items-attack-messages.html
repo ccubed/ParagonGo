@@ -56,6 +56,7 @@
         display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0;
         border-bottom: 1px solid var(--color-page-bg); font-size: 0.84rem;
     }
+    .msg-item.editing { align-items: flex-start; background: var(--color-row-hover); padding: 0.5rem 0.35rem; border-radius: 4px; border-bottom-color: var(--color-border-medium); }
     .msg-index {
         font-size: 0.72rem; color: var(--color-text-secondary); font-family: monospace; min-width: 1.5rem;
         text-align: right; padding-top: 0.15rem; flex-shrink: 0;
@@ -106,7 +107,35 @@
 
     .empty-msg { font-size: 0.82rem; color: var(--color-text-placeholder); font-style: italic; padding: 0.3rem 0; }
 
-    .msg-add-warning {
+    .msg-edit {
+        background: none; border: none; cursor: pointer; color: var(--color-text-placeholder); font-size: 0.85rem; padding: 0 0.2rem;
+        flex-shrink: 0; line-height: 1.2;
+    }
+    .msg-edit:hover { color: var(--color-primary); }
+
+    .msg-inline-edit { flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
+    .msg-inline-edit textarea {
+        width: 100%; padding: 0.3rem 0.45rem; border: 1px solid var(--color-primary);
+        border-radius: 4px; font-size: 0.82rem; font-family: monospace; resize: vertical; min-height: 2.2rem;
+    }
+    .msg-inline-edit textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .msg-inline-actions { display: flex; gap: 0.35rem; align-items: center; }
+    .btn-save-edit {
+        padding: 0.25rem 0.65rem; background: var(--color-primary); color: var(--color-surface-white);
+        border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-save-edit:hover { background: var(--color-primary-hover); }
+    .btn-save-edit:disabled { background: var(--color-btn-disabled); cursor: default; }
+    .btn-cancel-edit {
+        padding: 0.25rem 0.65rem; background: none; color: var(--color-text-muted);
+        border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.78rem; cursor: pointer;
+    }
+    .btn-cancel-edit:hover { border-color: var(--color-text-subtle); color: var(--color-text); }
+    .msg-inline-preview {
+        font-family: monospace; font-size: 0.78rem;
+        background: var(--color-code-bg); color: var(--color-border-medium);
+        border-radius: 3px; padding: 0.2rem 0.4rem; min-height: 1.3em;
+    }
         display: none; font-size: 0.78rem; color: var(--color-error-text); background: var(--color-error-bg);
         border: 1px solid var(--color-danger); border-radius: 4px; padding: 0.3rem 0.55rem;
         margin-top: 0.3rem; line-height: 1.4;
@@ -140,7 +169,7 @@
         white-space: pre;
         pointer-events: none;
         z-index: 9999;
-        max-width: 600px;
+        width: max-content;
     }
 </style>
 
@@ -326,24 +355,25 @@
                 renderProximitySection('separate', 'Separate Rooms', 'Combatants are in different rooms (ranged only)', SEPARATE_TARGETS, sep, int) +
             '</div>';
         }).join('');
-
-        document.querySelectorAll('.proximity-section').forEach(function(s) {
-            s.classList.add('open');
-        });
     }
 
     function renderProximitySection(proximity, title, hint, targets, data, intensity) {
-        var html = '<div class="proximity-section open">' +
-            '<div class="proximity-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+        var hasAny = false;
+        for (var i = 0; i < targets.length; i++) {
+            var key = capitalizeTarget(targets[i]);
+            if ((data[key] || []).length > 0) { hasAny = true; break; }
+        }
+
+        var html = '<div class="proximity-section' + (hasAny ? ' open' : '') + '">' +
+            '<div class="proximity-header" onclick="this.parentElement.classList.toggle(\'open\')">'+
                 '<span class="arrow">&#9654;</span> ' + escHtml(title) +
                 ' <span class="proximity-hint">(' + escHtml(hint) + ')</span>' +
             '</div>' +
             '<div class="proximity-body">';
 
-        for (var i = 0; i < targets.length; i++) {
-            var t = targets[i];
-            var key = t.charAt(0).toUpperCase() === t.charAt(0) ? t : capitalizeTarget(t);
-            var msgs = data[key] || [];
+        for (var j = 0; j < targets.length; j++) {
+            var t = targets[j];
+            var msgs = data[capitalizeTarget(t)] || [];
             html += renderTargetGroup(intensity, proximity, t, msgs);
         }
 
@@ -372,9 +402,10 @@
             html += '<li class="empty-msg">No messages defined.</li>';
         } else {
             for (var i = 0; i < msgs.length; i++) {
-                html += '<li class="msg-item">' +
+                html += '<li class="msg-item" id="msg-item-' + id + '-' + i + '">' +
                     '<span class="msg-index">' + i + '</span>' +
                     '<span class="msg-text" onmouseenter="showAnsiTooltip(event,this)" onmouseleave="hideAnsiTooltip()">' + escHtml(msgs[i]) + '</span>' +
+                    '<button class="msg-edit" title="Edit" onclick="editMsg(\'' + escAttr(intensity) + '\',\'' + escAttr(proximity) + '\',\'' + escAttr(target) + '\',' + i + ')" aria-label="Edit message">&#9998;</button>' +
                     '<button class="msg-delete" title="Delete" onclick="deleteMsg(\'' + escAttr(intensity) + '\',\'' + escAttr(proximity) + '\',\'' + escAttr(target) + '\',' + i + ')">&times;</button>' +
                 '</li>';
             }
@@ -528,6 +559,94 @@
     document.addEventListener('mousemove', function(event) {
         if (_ansiTooltip && _ansiTooltip.style.display === 'block') positionTooltip(event);
     });
+
+    function editMsg(intensity, proximity, target, index) {
+        var id = intensity + '-' + proximity + '-' + target;
+        var li = document.getElementById('msg-item-' + id + '-' + index);
+        if (!li || li.classList.contains('editing')) return;
+
+        var textEl = li.querySelector('.msg-text');
+        var rawText = textEl ? textEl.textContent : '';
+
+        li.classList.add('editing');
+        // Hide the static display elements
+        li.querySelector('.msg-index').style.display = 'none';
+        textEl.style.display = 'none';
+        li.querySelector('.msg-edit').style.display = 'none';
+        li.querySelector('.msg-delete').style.display = 'none';
+
+        var wrap = document.createElement('div');
+        wrap.className = 'msg-inline-edit';
+
+        var ta = document.createElement('textarea');
+        ta.value = rawText;
+        ta.rows = Math.max(1, Math.ceil(rawText.length / 80));
+
+        var preview = document.createElement('div');
+        preview.className = 'msg-inline-preview';
+        var renderPreview = function() {
+            var raw = ta.value
+                .replace(/\{sourcetype\}/g, 'username')
+                .replace(/\{targettype\}/g, 'mobname');
+            preview.innerHTML = raw.trim() ? ansitags.parse(raw) : '';
+        };
+        renderPreview();
+        ta.addEventListener('input', renderPreview);
+
+        var actions = document.createElement('div');
+        actions.className = 'msg-inline-actions';
+
+        var saveBtn = document.createElement('button');
+        saveBtn.className = 'btn-save-edit';
+        saveBtn.textContent = 'Save';
+        saveBtn.onclick = function() { saveEdit(saveBtn, intensity, proximity, target, index, ta); };
+
+        var cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn-cancel-edit';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = function() { cancelEdit(li, textEl); };
+
+        actions.appendChild(saveBtn);
+        actions.appendChild(cancelBtn);
+        wrap.appendChild(ta);
+        wrap.appendChild(preview);
+        wrap.appendChild(actions);
+        li.appendChild(wrap);
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+
+    function cancelEdit(li, textEl) {
+        var wrap = li.querySelector('.msg-inline-edit');
+        if (wrap) wrap.remove();
+        li.classList.remove('editing');
+        li.querySelector('.msg-index').style.display = '';
+        textEl.style.display = '';
+        li.querySelector('.msg-edit').style.display = '';
+        li.querySelector('.msg-delete').style.display = '';
+    }
+
+    async function saveEdit(btn, intensity, proximity, target, index, ta) {
+        var message = ta.value.trim();
+        if (!message) { showStatus('error', 'Message cannot be empty.'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving\u2026';
+
+        var url = '/admin/api/v1/items/attack-messages/' +
+            encodeURIComponent(activeSubtype) + '/' +
+            encodeURIComponent(intensity) + '/' +
+            encodeURIComponent(proximity) + '/' +
+            encodeURIComponent(target) + '/' + index;
+
+        var res = await AdminAPI.patch(url, { message: message });
+        btn.disabled = false;
+        btn.textContent = 'Save';
+        if (!res.ok) { showStatus('error', res.error || 'Save failed.'); return; }
+
+        showStatus('success', 'Message updated.');
+        await reloadAndRender();
+    }
 
     loadData();
 </script>

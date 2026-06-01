@@ -247,6 +247,39 @@ func apiV1PutItemAttackMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, APIResponse[struct{}]{Success: true})
 }
 
+// PATCH /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}/{index}
+func apiV1PatchItemAttackMessage(w http.ResponseWriter, r *http.Request) {
+	subtype := items.ItemSubType(r.PathValue("subtype"))
+	intensity := items.Intensity(r.PathValue("intensity"))
+	proximity := r.PathValue("proximity")
+	target := r.PathValue("target")
+
+	index, err := strconv.Atoi(r.PathValue("index"))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid index: "+r.PathValue("index"))
+		return
+	}
+
+	var body struct {
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
+		return
+	}
+	if body.Message == "" {
+		writeAPIError(w, http.StatusBadRequest, "message is required")
+		return
+	}
+
+	if err := items.UpdateAttackMessage(subtype, intensity, proximity, target, index, body.Message); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse[struct{}]{Success: true})
+}
+
 // DELETE /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}/{index}
 func apiV1DeleteItemAttackMessage(w http.ResponseWriter, r *http.Request) {
 	subtype := items.ItemSubType(r.PathValue("subtype"))

@@ -114,27 +114,77 @@
     .supported-row .btn-icon { background: none; border: none; cursor: pointer; color: var(--color-text-placeholder); font-size: 1rem; line-height: 1; padding: 0 0.15rem; flex-shrink: 0; margin-top: 0.35rem; }
     .supported-row .btn-icon:hover { color: var(--color-danger); }
 
-    /* ---- turn list ---- */
+    /* ---- turn / phase list ---- */
     .turns-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-bottom: 0.5rem; line-height: 1.5; }
-    .turn-rows { display: flex; flex-direction: column; gap: 0.35rem; }
-    .turn-row { display: flex; gap: 0.5rem; align-items: flex-start; }
-    .turn-row-num { font-size: 0.7rem; color: var(--color-btn-cancel-hover); font-family: monospace; padding-top: 0.45rem; min-width: 1.6rem; text-align: right; flex-shrink: 0; }
+    .turn-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    /* Phase card — one card per game-round turn */
+    .phase-card {
+        border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden;
+        transition: border-left-width 0.12s, border-left-color 0.12s;
+    }
+    .phase-card.phase-grouped {
+        border-left: 3px solid var(--color-info-text);
+    }
+    .phase-header {
+        background: var(--color-surface-raised); padding: 0.35rem 0.65rem;
+        display: flex; align-items: center; gap: 0.55rem;
+        border-bottom: 1px solid var(--color-border-light);
+    }
+    .phase-num {
+        background: var(--color-primary); color: var(--color-primary-on);
+        border-radius: 10px; font-size: 0.68rem; font-weight: 700;
+        padding: 0.15rem 0.55rem; min-width: 1.6rem; text-align: center;
+        font-family: monospace; flex-shrink: 0;
+    }
+    .phase-sim-badge {
+        display: none;
+        background: var(--color-info-bg); color: var(--color-info-text);
+        border-radius: 10px; font-size: 0.65rem; font-weight: 700;
+        padding: 0.12rem 0.55rem; letter-spacing: 0.04em; text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .phase-card.phase-grouped .phase-sim-badge { display: inline-block; }
+    .phase-header .phase-remove {
+        margin-left: auto; background: none; border: none; cursor: pointer;
+        color: var(--color-text-placeholder); font-size: 1rem; line-height: 1; padding: 0 0.15rem;
+    }
+    .phase-header .phase-remove:hover { color: var(--color-danger); }
+    .phase-body {
+        padding: 0.5rem 0.65rem; display: flex; flex-direction: column; gap: 0.3rem;
+        background: var(--color-surface-white);
+    }
+    .phase-card.phase-grouped .phase-body {
+        background: var(--color-row-hover);
+    }
+
+    /* Individual command line within a phase */
+    .phase-cmd-line { display: flex; gap: 0.4rem; align-items: center; }
     .turn-speaker {
-        width: 4.5rem; flex-shrink: 0; padding: 0.35rem 0.45rem; border: 1px solid var(--color-border-medium);
+        width: 4.5rem; flex-shrink: 0; padding: 0.32rem 0.4rem; border: 1px solid var(--color-border-medium);
         border-radius: 4px; font-size: 0.82rem; font-family: monospace; background: var(--color-surface-white);
         text-align: center;
     }
     .turn-speaker:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .turn-cmd {
-        flex: 1; padding: 0.35rem 0.55rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        flex: 1; padding: 0.32rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
         font-size: 0.83rem; font-family: monospace; background: var(--color-surface-white);
     }
     .turn-cmd:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
-    .turn-row .btn-icon { background: none; border: none; cursor: pointer; color: var(--color-text-placeholder); font-size: 1rem; line-height: 1; padding: 0 0.15rem; flex-shrink: 0; margin-top: 0.35rem; }
-    .turn-row .btn-icon:hover { color: var(--color-danger); }
-    .turn-row-actions { display: flex; gap: 0.2rem; flex-direction: column; flex-shrink: 0; }
-    .turn-row-actions .btn-micro { background: none; border: 1px solid var(--color-border); border-radius: 3px; cursor: pointer; font-size: 0.7rem; color: var(--color-text-placeholder); padding: 0.1rem 0.3rem; line-height: 1; }
-    .turn-row-actions .btn-micro:hover { color: var(--color-primary); border-color: var(--color-text-placeholder); }
+    .phase-cmd-line .cmd-remove {
+        background: none; border: none; cursor: pointer;
+        color: var(--color-text-placeholder); font-size: 0.9rem; line-height: 1; padding: 0 0.1rem; flex-shrink: 0;
+    }
+    .phase-cmd-line .cmd-remove:hover { color: var(--color-danger); }
+
+    /* Add-simultaneous button inside a phase body */
+    .btn-add-sim {
+        font-size: 0.72rem; padding: 0.18rem 0.55rem;
+        border: 1px dashed var(--color-text-placeholder); background: none;
+        border-radius: 4px; cursor: pointer; color: var(--color-text-muted);
+        width: fit-content; margin-top: 0.1rem;
+    }
+    .btn-add-sim:hover { border-color: var(--color-info-text); color: var(--color-info-text); }
 
     .btn-add-sm { font-size: 0.8rem; padding: 0.3rem 0.7rem; border: 1px dashed var(--color-text-placeholder); background: none; border-radius: 4px; cursor: pointer; color: var(--color-text-muted); margin-top: 0.3rem; }
     .btn-add-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
@@ -706,65 +756,71 @@
     };
 
     // -------------------------------------------------------------------------
-    // Turn rows
+    // Turn / phase rows
     // -------------------------------------------------------------------------
     function appendTurnRow(container, cmds) {
-        // Each turn is an array of commands. We render the first command inline;
-        // additional commands in the same turn are shown as sub-rows.
-        const row = document.createElement('div');
-        row.className = 'turn-row';
+        const card = document.createElement('div');
+        card.className = 'phase-card';
 
-        const num = document.createElement('span');
-        num.className = 'turn-row-num';
-        renumberTurns(container, num);
+        // Header: phase number badge + simultaneous badge + remove button
+        const header = document.createElement('div');
+        header.className = 'phase-header';
 
-        // We store all commands for this turn in a sub-container
-        const cmdWrap = document.createElement('div');
-        cmdWrap.className = 'turn-cmds';
-        cmdWrap.style.cssText = 'flex:1; display:flex; flex-direction:column; gap:0.25rem;';
+        const numBadge = document.createElement('span');
+        numBadge.className = 'phase-num';
+        numBadge.textContent = String(container.querySelectorAll('.phase-card').length + 1);
 
-        const firstCmd = (cmds && cmds.length) ? cmds[0] : '';
-        appendCmdLine(cmdWrap, firstCmd);
-        for (let i = 1; i < (cmds || []).length; i++) {
-            appendCmdLine(cmdWrap, cmds[i]);
-        }
-
-        const addCmdBtn = document.createElement('button');
-        addCmdBtn.type = 'button';
-        addCmdBtn.className = 'btn-add-sm';
-        addCmdBtn.style.cssText = 'font-size:0.72rem; padding:0.15rem 0.5rem; margin-top:0.15rem; width:fit-content;';
-        addCmdBtn.textContent = '+ simultaneous cmd';
-        addCmdBtn.title = 'Add another command that runs in the same round as this turn';
-        addCmdBtn.onclick = () => appendCmdLine(cmdWrap, '');
-        cmdWrap.appendChild(addCmdBtn);
+        const simBadge = document.createElement('span');
+        simBadge.className = 'phase-sim-badge';
+        simBadge.textContent = 'simultaneous';
 
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
-        removeBtn.className = 'btn-icon';
-        removeBtn.title = 'Remove turn';
+        removeBtn.className = 'phase-remove';
+        removeBtn.title = 'Remove this turn';
         removeBtn.textContent = '\u00d7';
-        removeBtn.style.marginTop = '0.35rem';
         removeBtn.onclick = () => {
-            row.remove();
+            card.remove();
             renumberAllTurns(container);
         };
 
-        row.appendChild(num);
-        row.appendChild(cmdWrap);
-        row.appendChild(removeBtn);
-        container.appendChild(row);
+        header.appendChild(numBadge);
+        header.appendChild(simBadge);
+        header.appendChild(removeBtn);
+
+        // Body: command lines + add-simultaneous button
+        const body = document.createElement('div');
+        body.className = 'phase-body';
+
+        const addSimBtn = document.createElement('button');
+        addSimBtn.type = 'button';
+        addSimBtn.className = 'btn-add-sim';
+        addSimBtn.textContent = '+ simultaneous cmd';
+        addSimBtn.title = 'Add another command that runs in the same round';
+        addSimBtn.onclick = () => appendCmdLine(body, '');
+        body.appendChild(addSimBtn);
+
+        // Populate command lines (insert before the add button)
+        const cmdList = (cmds && cmds.length) ? cmds : [''];
+        for (const cmd of cmdList) {
+            appendCmdLine(body, cmd);
+        }
+
+        card.appendChild(header);
+        card.appendChild(body);
+        container.appendChild(card);
         renumberAllTurns(container);
+        updatePhaseGrouped(card);
     }
 
-    function appendCmdLine(cmdWrap, value) {
+    function appendCmdLine(body, value) {
         const line = document.createElement('div');
-        line.style.cssText = 'display:flex; gap:0.4rem; align-items:center;';
+        line.className = 'phase-cmd-line';
 
         const speakerSel = document.createElement('select');
         speakerSel.className = 'turn-speaker';
-        speakerSel.style.cssText = 'width:5rem; flex-shrink:0; padding:0.35rem 0.45rem; border:1px solid var(--color-border-medium); border-radius:4px; font-size:0.82rem; font-family:monospace; background:var(--color-surface-white);';
         speakerSel.title = '#1 = initiator, #2 = participant';
-        [['#1', '#1 (initiator)'], ['#2', '#2 (participant)']].forEach(([val, label]) => {
+        [['#1', '#1 (initiator)'], ['#2', '#2 (participant)']].forEach(([val]) => {
             const o = document.createElement('option');
             o.value = val; o.textContent = val;
             speakerSel.appendChild(o);
@@ -775,7 +831,6 @@
         cmdInput.className = 'turn-cmd';
         cmdInput.placeholder = 'e.g. say Hello there!';
 
-        // Parse existing value: split on first space after #1/#2 prefix
         const trimmed = (value || '').trim();
         const match = trimmed.match(/^(#[12])\s+(.*)$/);
         if (match) {
@@ -788,25 +843,32 @@
 
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
-        removeBtn.className = 'btn-icon';
+        removeBtn.className = 'cmd-remove';
         removeBtn.title = 'Remove command';
         removeBtn.textContent = '\u00d7';
-        removeBtn.style.cssText = 'background:none; border:none; cursor:pointer; color:var(--color-text-placeholder); font-size:0.9rem; line-height:1; padding:0 0.1rem; flex-shrink:0;';
         removeBtn.onclick = () => {
-            // Don't remove the last cmd line in a turn
-            const lines = cmdWrap.querySelectorAll('div');
-            if (lines.length <= 1) return;
+            const card = body.closest('.phase-card');
+            if (body.querySelectorAll('.phase-cmd-line').length <= 1) return;
             line.remove();
+            updatePhaseGrouped(card);
         };
 
         line.appendChild(speakerSel);
         line.appendChild(cmdInput);
         line.appendChild(removeBtn);
 
-        // Insert before the "+ simultaneous cmd" button if it exists
-        const addBtn = cmdWrap.querySelector('.btn-add-sm');
-        if (addBtn) cmdWrap.insertBefore(line, addBtn);
-        else cmdWrap.appendChild(line);
+        // Insert before the add-sim button
+        const addBtn = body.querySelector('.btn-add-sim');
+        if (addBtn) body.insertBefore(line, addBtn);
+        else body.appendChild(line);
+
+        const card = body.closest('.phase-card');
+        if (card) updatePhaseGrouped(card);
+    }
+
+    function updatePhaseGrouped(card) {
+        const count = card.querySelectorAll('.phase-cmd-line').length;
+        card.classList.toggle('phase-grouped', count > 1);
     }
 
     window.addTurnRow = function (btn) {
@@ -814,16 +876,10 @@
         appendTurnRow(turnRows, ['']);
     };
 
-    function renumberTurns(container, numEl) {
-        // Used during initial append before the row is in the DOM
-        const count = container.querySelectorAll('.turn-row').length;
-        numEl.textContent = (count + 1) + '.';
-    }
-
     function renumberAllTurns(container) {
-        container.querySelectorAll('.turn-row').forEach((row, i) => {
-            const num = row.querySelector('.turn-row-num');
-            if (num) num.textContent = (i + 1) + '.';
+        container.querySelectorAll('.phase-card').forEach((card, i) => {
+            const num = card.querySelector('.phase-num');
+            if (num) num.textContent = String(i + 1);
         });
     }
 
@@ -856,9 +912,9 @@
 
             // Conversation (array of turns, each turn is array of command strings)
             const conversation = [];
-            block.querySelectorAll('.turn-row').forEach(row => {
+            block.querySelectorAll('.phase-card').forEach(card => {
                 const cmds = [];
-                row.querySelectorAll('.turn-cmds > div').forEach(line => {
+                card.querySelectorAll('.phase-cmd-line').forEach(line => {
                     const speaker = line.querySelector('select') ? line.querySelector('select').value : '#1';
                     const cmd     = (line.querySelector('input[type="text"]') || {}).value || '';
                     const full    = (cmd.trim()) ? speaker + ' ' + cmd.trim() : '';

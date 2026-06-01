@@ -378,6 +378,27 @@
             </div>
         </details>
 
+        <details class="fn-card" data-search="PlaySound sound audio identifier category user actor">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.PlaySound</span><span class="fn-p">(</span><span class="fn-a">soundId</span> <span class="fn-t">string</span>, <span class="fn-a">category</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Plays a sound for this actor. Only affects user actors &mdash; silently ignored for mobs. <code>soundId</code> must match an identifier defined in <strong>audio.yaml</strong> (e.g. <code>"levelup"</code>). <code>category</code> groups related sounds for client-side volume control (e.g. <code>"combat"</code>, <code>"other"</code>).</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">soundId</td><td class="at">string</td><td>Identifier from audio.yaml (e.g. <code>"levelup"</code>, <code>"hit-self"</code>).</td></tr>
+                    <tr><td class="an">category</td><td class="at">string</td><td>Client volume category (e.g. <code>"combat"</code>, <code>"movement"</code>, <code>"other"</code>).</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="PlayMusic music audio file identifier user actor stop off">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.PlayMusic</span><span class="fn-p">(</span><span class="fn-a">musicFileOrId</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Changes the background music for this actor. Only affects user actors. <code>musicFileOrId</code> may be a filepath (e.g. <code>"static/audio/music/intro.mp3"</code>) or a sound identifier from audio.yaml whose filepath resolves to a music file. Pass <code>"Off"</code> to stop music.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">musicFileOrId</td><td class="at">string</td><td>Music filepath, audio.yaml identifier, or <code>"Off"</code> to stop.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
         <details class="fn-card" data-search="Command execute command string waitTurns force action">
             <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.Command</span><span class="fn-p">(</span><span class="fn-a">cmd</span> <span class="fn-t">string</span><span class="fn-p"> [, </span><span class="fn-a">waitTurns</span> <span class="fn-t">int</span><span class="fn-p">])</span></span><span class="fn-ret-badge ret-void">void</span></summary>
             <div class="fn-body">
@@ -1043,6 +1064,18 @@ if (pet !== null) {
         <details class="fn-card" data-search="GetItems items floor array ItemObject room">
             <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetItems</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]ItemObject</span></summary>
             <div class="fn-body"><p class="fn-desc">Returns all items on the floor of the room.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="PlaySound sound audio identifier category room all players">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.PlaySound</span><span class="fn-p">(</span><span class="fn-a">soundId</span> <span class="fn-t">string</span>, <span class="fn-a">category</span> <span class="fn-t">string</span><span class="fn-p"> [, </span><span class="fn-a">excludeUserIds&hellip;</span><span class="fn-p">])</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Plays a sound for all players currently in the room. <code>soundId</code> must match an identifier defined in <strong>audio.yaml</strong> (e.g. <code>"room-enter"</code>). <code>category</code> groups related sounds for client-side volume control. Optionally exclude specific user IDs from receiving the sound.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">soundId</td><td class="at">string</td><td>Identifier from audio.yaml (e.g. <code>"room-enter"</code>, <code>"change"</code>).</td></tr>
+                    <tr><td class="an">category</td><td class="at">string</td><td>Client volume category (e.g. <code>"combat"</code>, <code>"movement"</code>, <code>"other"</code>).</td></tr>
+                    <tr><td class="an">excludeUserIds</td><td class="at">int&hellip; (optional)</td><td>User IDs that should not receive the sound.</td></tr>
+                </tbody></table>
+            </div>
         </details>
 
         <details class="fn-card" data-search="GetStashItems stash items hidden array ItemObject room">

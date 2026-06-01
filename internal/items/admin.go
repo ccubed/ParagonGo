@@ -68,6 +68,64 @@ func AddAttackMessage(subtype ItemSubType, intensity Intensity, proximity, targe
 	return SaveAttackMessageGroup(group)
 }
 
+func UpdateAttackMessage(subtype ItemSubType, intensity Intensity, proximity, target string, index int, message string) error {
+	group, ok := attackMessages[subtype]
+	if !ok {
+		return fmt.Errorf("unknown subtype: %s", subtype)
+	}
+
+	opts, ok := group.Options[intensity]
+	if !ok {
+		return fmt.Errorf("unknown intensity: %s", intensity)
+	}
+
+	update := func(sl MessageOptions, i int) (MessageOptions, error) {
+		if i < 0 || i >= len(sl) {
+			return nil, fmt.Errorf("index %d out of range (length %d)", i, len(sl))
+		}
+		sl[i] = ItemMessage(message)
+		return sl, nil
+	}
+
+	var err error
+	switch proximity {
+	case "together":
+		switch target {
+		case "toattacker":
+			opts.Together.ToAttacker, err = update(opts.Together.ToAttacker, index)
+		case "todefender":
+			opts.Together.ToDefender, err = update(opts.Together.ToDefender, index)
+		case "toroom":
+			opts.Together.ToRoom, err = update(opts.Together.ToRoom, index)
+		default:
+			return fmt.Errorf("unknown together target: %s", target)
+		}
+	case "separate":
+		switch target {
+		case "toattacker":
+			opts.Separate.ToAttacker, err = update(opts.Separate.ToAttacker, index)
+		case "todefender":
+			opts.Separate.ToDefender, err = update(opts.Separate.ToDefender, index)
+		case "toattackerroom":
+			opts.Separate.ToAttackerRoom, err = update(opts.Separate.ToAttackerRoom, index)
+		case "todefenderroom":
+			opts.Separate.ToDefenderRoom, err = update(opts.Separate.ToDefenderRoom, index)
+		default:
+			return fmt.Errorf("unknown separate target: %s", target)
+		}
+	default:
+		return fmt.Errorf("unknown proximity: %s (expected together or separate)", proximity)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	group.Options[intensity] = opts
+
+	return SaveAttackMessageGroup(group)
+}
+
 func DeleteAttackMessage(subtype ItemSubType, intensity Intensity, proximity, target string, index int) error {
 	group, ok := attackMessages[subtype]
 	if !ok {

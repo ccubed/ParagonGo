@@ -16,9 +16,10 @@ import (
 )
 
 type AudioConfig struct {
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	FilePath    string `yaml:"filepath,omitempty" json:"filepath,omitempty"`
-	Volume      int    `yaml:"volume,omitempty" json:"volume,omitempty"`
+	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
+	FilePath    string   `yaml:"filepath,omitempty" json:"filepath,omitempty"`
+	Volume      int      `yaml:"volume,omitempty" json:"volume,omitempty"`
+	Tags        []string `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
 var (
@@ -62,6 +63,32 @@ func GetMusicFiles() []string {
 		}
 		files = append(files, "static/audio/music/"+name)
 	}
+	sort.Strings(files)
+	return files
+}
+
+// GetSoundFiles returns a sorted list of all sound filenames found recursively
+// under PublicHtml/static/audio/sound/. Files whose names begin with "_" are skipped.
+func GetSoundFiles() []string {
+	publicHtml := configs.GetFilePathsConfig().PublicHtml.String()
+	root := filepath.Join(publicHtml, "static", "audio", "sound")
+
+	var files []string
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if strings.HasPrefix(name, "_") {
+			return nil
+		}
+		rel, relErr := filepath.Rel(publicHtml, path)
+		if relErr != nil {
+			return nil
+		}
+		files = append(files, filepath.ToSlash(rel))
+		return nil
+	})
 	sort.Strings(files)
 	return files
 }

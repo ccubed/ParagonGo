@@ -824,6 +824,27 @@ func (a ScriptActor) GetLastInputRound() uint64 {
 	return 0
 }
 
+// PlaySound sends a sound event to this actor. Only affects user actors.
+// soundId is the identifier defined in audio.yaml (e.g. "levelup").
+// category groups related sounds for client-side volume control (e.g. "combat", "other").
+func (a ScriptActor) PlaySound(soundId string, category string) {
+	if a.userRecord == nil {
+		return
+	}
+	a.userRecord.PlaySound(soundId, category)
+}
+
+// PlayMusic sends a music-change event to this actor. Only affects user actors.
+// musicFileOrId may be a filepath (e.g. "static/audio/music/intro.mp3") or a sound
+// identifier from audio.yaml whose filepath resolves to a music file.
+// Pass "Off" to stop music.
+func (a ScriptActor) PlayMusic(musicFileOrId string) {
+	if a.userRecord == nil {
+		return
+	}
+	a.userRecord.PlayMusic(musicFileOrId)
+}
+
 func (a ScriptActor) Pathing() bool {
 	if a.mobRecord == nil {
 		return false

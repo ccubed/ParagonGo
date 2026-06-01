@@ -11,8 +11,10 @@
     .api-entry[open] summary::before { transform: rotate(90deg); }
     .api-entry summary:hover { background: var(--color-surface-alt); }
     .method { font-family: monospace; font-size: 0.8rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; flex-shrink: 0; }
-    .method-get   { background: var(--color-success-bg); color: var(--color-success-text); }
-    .method-patch { background: var(--color-warning-bg); color: var(--color-warning-text); }
+    .method-get    { background: var(--color-success-bg); color: var(--color-success-text); }
+    .method-post   { background: var(--color-info-bg, #dbeafe); color: var(--color-info-text, #1d4ed8); }
+    .method-patch  { background: var(--color-warning-bg); color: var(--color-warning-text); }
+    .method-delete { background: var(--color-error-bg); color: var(--color-error-text); }
     .api-path { font-family: monospace; font-size: 0.9rem; color: var(--color-primary); }
     .api-desc { font-size: 0.85rem; color: var(--color-text-muted); margin-left: auto; text-align: right; }
     .api-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
@@ -47,21 +49,59 @@
         <summary>
             <span class="method method-get">GET</span>
             <span class="api-path">/admin/api/v1/audio</span>
-            <span class="api-desc">Return sounds and music</span>
-            <span class="perm-badge">audio.read</span>
+            <span class="api-desc">Return sounds, music, and available sound files</span>
         </summary>
         <div class="api-body">
-            <p>Returns two sections:</p>
+            <p>Returns three sections:</p>
             <ul>
-                <li><code>sounds</code> - map of identifier &rarr; audio config loaded from <code>audio.yaml</code>. Each entry has an optional <code>description</code>, a <code>filepath</code> (relative to <code>WebCDNLocation</code>, or host root if blank), and an optional <code>volume</code> (0&ndash;100).</li>
-                <li><code>music</code> - sorted list of filenames found in <code>PublicHtml/static/audio/music/</code>. Files whose names begin with <code>_</code> are excluded. This list is read-only.</li>
+                <li><code>sounds</code> &mdash; map of identifier &rarr; audio config loaded from <code>audio.yaml</code>. Each entry has an optional <code>description</code>, a <code>filepath</code> (relative to <code>WebCDNLocation</code>, or host root if blank), and an optional <code>volume</code> (0&ndash;100).</li>
+                <li><code>music</code> &mdash; sorted list of filenames found in <code>PublicHtml/static/audio/music/</code>. Files beginning with <code>_</code> are excluded. Read-only.</li>
+                <li><code>soundFiles</code> &mdash; sorted list of all files found recursively under <code>PublicHtml/static/audio/sound/</code>. Files beginning with <code>_</code> are excluded. Read-only.</li>
             </ul>
             <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> \
      <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/audio</span></div>
             <div class="response-examples">
                 <details class="resp-entry">
                     <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
-                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"sounds":{"intro":{"description":"Plays at login screen","filepath":"static/audio/music/intro.mp3","volume":20},"levelup":{"description":"When leveling up","filepath":"static/audio/sound/other/levelup.mp3"}},"music":["static/audio/music/catacombs.mp3","static/audio/music/dark-forest.mp3","static/audio/music/frostfang.mp3","static/audio/music/intro.mp3"]}}</div></div>
+                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"sounds":{"intro":{"description":"Plays at login screen","filepath":"static/audio/music/intro.mp3","volume":20},"levelup":{"description":"When leveling up","filepath":"static/audio/sound/other/levelup.mp3"}},"music":["static/audio/music/intro.mp3"],"soundFiles":["static/audio/sound/combat/hit-other.mp3","static/audio/sound/other/levelup.mp3"]}}</div></div>
+                </details>
+            </div>
+        </div>
+    </details>
+
+    <details class="api-entry">
+        <summary>
+            <span class="method method-post">POST</span>
+            <span class="api-path">/admin/api/v1/audio</span>
+            <span class="api-desc">Create a new sound entry</span>
+            <span class="perm-badge">audio.write</span>
+        </summary>
+        <div class="api-body">
+            <p>Creates a new sound identifier. Returns <code>409 Conflict</code> if the identifier already exists.</p>
+            <p>Body fields:</p>
+            <ul>
+                <li><code>identifier</code> (string, required) &mdash; unique key used in code to trigger the sound.</li>
+                <li><code>description</code> (string, optional) &mdash; human-readable description.</li>
+                <li><code>filepath</code> (string, optional) &mdash; path relative to <code>WebCDNLocation</code>.</li>
+                <li><code>volume</code> (integer 0&ndash;100, optional) &mdash; base volume; 0 means use 100%.</li>
+                <li><code>tags</code> (array of strings, optional) &mdash; free-form labels describing where this sound is used.</li>
+            </ul>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> <span class="flag">-X</span> POST \
+     <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> \
+     <span class="flag">-d</span> <span class="str">'{"identifier":"my-sound","description":"Custom sound","filepath":"static/audio/sound/other/change.mp3","volume":80}'</span> \
+     <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/audio</span></div>
+            <div class="response-examples">
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success &mdash; returns full updated audio data</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"sounds":{...},"music":[...],"soundFiles":[...]}}</div></div>
+                </details>
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-err">400</span> <span class="resp-label">Bad Request &mdash; missing identifier</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":false,"error":"identifier is required"}</div></div>
+                </details>
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-err">409</span> <span class="resp-label">Conflict &mdash; identifier already exists</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":false,"error":"identifier already exists: my-sound"}</div></div>
                 </details>
             </div>
         </div>
@@ -71,29 +111,48 @@
         <summary>
             <span class="method method-patch">PATCH</span>
             <span class="api-path">/admin/api/v1/audio</span>
-            <span class="api-desc">Replace the sounds configuration</span>
+            <span class="api-desc">Replace the entire sounds configuration</span>
             <span class="perm-badge">audio.write</span>
         </summary>
         <div class="api-body">
             <p>Replaces the entire sounds configuration with the provided map. The body must be a JSON object mapping identifiers to audio config objects. The updated configuration is written to <code>audio.yaml</code> and reloaded in memory.</p>
-            <p>The <code>music</code> list is derived from disk and cannot be modified through this endpoint. The response includes the saved sounds and the current music file list.</p>
-            <p>Each entry supports three optional fields: <code>description</code> (string), <code>filepath</code> (string), and <code>volume</code> (integer 0&ndash;100).</p>
+            <p>The <code>music</code> and <code>soundFiles</code> lists are derived from disk and cannot be modified through this endpoint.</p>
             <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> <span class="flag">-X</span> PATCH \
      <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> \
-     <span class="flag">-d</span> <span class="str">'{"intro":{"description":"Plays at login screen","filepath":"static/audio/music/intro.mp3","volume":20},"levelup":{"description":"When leveling up","filepath":"static/audio/sound/other/levelup.mp3"}}'</span> \
+     <span class="flag">-d</span> <span class="str">'{"intro":{"description":"Plays at login screen","filepath":"static/audio/music/intro.mp3","volume":20}}'</span> \
      <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/audio</span></div>
             <div class="response-examples">
                 <details class="resp-entry">
                     <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
-                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"sounds":{"intro":{"description":"Plays at login screen","filepath":"static/audio/music/intro.mp3","volume":20},"levelup":{"description":"When leveling up","filepath":"static/audio/sound/other/levelup.mp3"}},"music":["static/audio/music/catacombs.mp3","static/audio/music/dark-forest.mp3","static/audio/music/frostfang.mp3","static/audio/music/intro.mp3"]}}</div></div>
+                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"sounds":{...},"music":[...],"soundFiles":[...]}}</div></div>
                 </details>
                 <details class="resp-entry">
                     <summary><span class="method resp-label status-err">400</span> <span class="resp-label">Bad Request</span></summary>
                     <div class="resp-body"><div class="curl-block">{"success":false,"error":"malformed request body: unexpected EOF"}</div></div>
                 </details>
+            </div>
+        </div>
+    </details>
+
+    <details class="api-entry">
+        <summary>
+            <span class="method method-delete">DELETE</span>
+            <span class="api-path">/admin/api/v1/audio/{identifier}</span>
+            <span class="api-desc">Delete a single sound entry</span>
+            <span class="perm-badge">audio.write</span>
+        </summary>
+        <div class="api-body">
+            <p>Removes the named sound identifier from <code>audio.yaml</code> and reloads the in-memory configuration. Returns <code>404</code> if the identifier does not exist.</p>
+            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> <span class="flag">-X</span> DELETE \
+     <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/audio/my-sound</span></div>
+            <div class="response-examples">
                 <details class="resp-entry">
-                    <summary><span class="method resp-label status-err">500</span> <span class="resp-label">Internal Server Error</span></summary>
-                    <div class="resp-body"><div class="curl-block">{"success":false,"error":"writing audio config file: permission denied"}</div></div>
+                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Success</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":true}</div></div>
+                </details>
+                <details class="resp-entry">
+                    <summary><span class="method resp-label status-err">404</span> <span class="resp-label">Not Found</span></summary>
+                    <div class="resp-body"><div class="curl-block">{"success":false,"error":"identifier not found: my-sound"}</div></div>
                 </details>
             </div>
         </div>

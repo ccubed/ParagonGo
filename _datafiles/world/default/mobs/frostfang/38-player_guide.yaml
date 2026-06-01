@@ -1,21 +1,48 @@
-mobid:  38
+mobid: 38
 zone: Frostfang
 itemdropchance: 2
-hostile: false
-maxwander: 0
-groups: 
-  - frostfang-npc
 activitylevel: 10
+groups:
+- frostfang-npc
 character:
   name: player guide
-  description: 'In combat, the Guide proves to be a steadfast protector, always ready to lend a helping hand when danger looms. They are a skilled warrior, wielding their frost-forged weapon with precision and using their keen senses to anticipate threats. New players can rely on the Guide to watch their back in the heat of battle, providing both tactical advice and unwavering support to ensure their safety.'
+  description: In combat, the Guide proves to be a steadfast protector, always ready
+    to lend a helping hand when danger looms. They are a skilled warrior, wielding
+    their frost-forged weapon with precision and using their keen senses to anticipate
+    threats. New players can rely on the Guide to watch their back in the heat of
+    battle, providing both tactical advice and unwavering support to ensure their
+    safety.
+  zone: Nowhere
   raceid: 1
+  stats:
+    strength:
+      base: 1
+    speed: {}
+    smarts:
+      base: 1
+    vitality:
+      base: 1
+    mysticism: {}
+    perception:
+      base: 1
   level: 10
+  experience: 1
   gold: 3
   equipment:
     weapon:
       itemid: 10002
+      canneverberemoved: true
+    offhand: {}
+    head: {}
     neck:
       itemid: 20002
+      canneverberemoved: true
+    body: {}
+    belt: {}
+    gloves: {}
+    ring: {}
+    legs: {}
     feet:
       itemid: 20003
+      canneverberemoved: true
+  created: 2026-06-01T09:27:31.459452-07:00

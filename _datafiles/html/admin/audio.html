@@ -4,31 +4,37 @@
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
     .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
-    .page-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.25rem; align-items: start; }
+    .page-layout { display: grid; grid-template-columns: 270px 1fr; gap: 1.25rem; align-items: start; }
     @media (max-width: 800px) { .page-layout { grid-template-columns: 1fr; } }
 
     .sidebar { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--color-border-light); }
-    .sidebar-header input[type="search"] { width: 100%; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
-    .entry-list { overflow-y: auto; max-height: 72vh; }
+    .sidebar-header { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--color-border-light); display: flex; gap: 0.5rem; align-items: center; }
+    .sidebar-header input[type="search"] { flex: 1; padding: 0.35rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; }
+    .entry-list { overflow-y: auto; max-height: 70vh; }
 
     .list-section-label {
         padding: 0.35rem 0.9rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.07em; color: var(--color-text-faint); background: var(--color-page-bg); border-bottom: 1px solid var(--color-border-light);
-        border-top: 1px solid var(--color-border-light); position: sticky; top: 0; z-index: 1;
+        letter-spacing: 0.07em; color: var(--color-text-faint); background: var(--color-page-bg);
+        border-bottom: 1px solid var(--color-border-light); border-top: 1px solid var(--color-border-light);
+        position: sticky; top: 0; z-index: 1;
     }
     .list-section-label:first-child { border-top: none; }
 
     .entry-row {
-        padding: 0.45rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
+        padding: 0.4rem 0.9rem; cursor: pointer; border-bottom: 1px solid var(--color-border-faint);
         font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
     }
     .entry-row:last-child { border-bottom: none; }
     .entry-row:hover { background: var(--color-row-hover); }
     .entry-row.active { background: var(--color-primary); color: var(--color-surface-white); }
     .entry-row.active .play-btn { color: var(--color-nav-link); }
-    .entry-row.active .play-btn:hover { color: var(--color-surface-white); }
     .entry-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-badge {
+        flex-shrink: 0; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem;
+        border-radius: 3px; background: var(--color-border-faint); color: var(--color-text-faint);
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .entry-row.active .entry-badge { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
     .play-btn {
         flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 0 0.2rem;
         font-size: 1rem; color: var(--color-text-muted); line-height: 1;
@@ -38,6 +44,13 @@
     .entry-row.active .play-btn.playing { color: var(--color-error-text); }
     .no-entries { padding: 1.5rem; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
 
+    .btn-new {
+        margin: 0.55rem 0.9rem; padding: 0.38rem 0.9rem; border: none; border-radius: 4px;
+        background: var(--color-success-text); color: var(--color-surface-white);
+        font-size: 0.82rem; font-weight: 600; cursor: pointer; display: block; text-align: center;
+    }
+    .btn-new:hover { background: var(--color-btn-new-hover); }
+
     .editor-panel { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; }
     .editor-placeholder { color: var(--color-text-placeholder); text-align: center; padding: 4rem 1rem; font-size: 0.9rem; }
 
@@ -45,29 +58,87 @@
     .status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
     .status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
 
-    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.5rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.75rem; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); padding: 0.5rem 0 0.4rem; border-bottom: 1px solid var(--color-border-light); margin-bottom: 0.85rem; }
 
     .field { margin-bottom: 1rem; }
     .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.03em; }
-    .field input[type="text"] { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.875rem; font-family: inherit; }
+    .field input[type="text"] { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.875rem; font-family: inherit; box-sizing: border-box; }
     .field input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .field input[readonly] { background: var(--color-page-bg); color: var(--color-text-muted); cursor: default; }
     .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
+
+    .filepath-row { display: flex; gap: 0.5rem; align-items: flex-start; }
+    .filepath-row input[type="text"] { flex: 1; }
+    .filepath-row select { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.85rem; font-family: inherit; background: var(--color-surface-white); cursor: pointer; }
+    .filepath-row select:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .filepath-toggle { flex-shrink: 0; padding: 0.4rem 0.65rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.8rem; background: var(--color-page-bg); cursor: pointer; color: var(--color-text-muted); white-space: nowrap; }
+    .filepath-toggle:hover { background: var(--color-row-hover); color: var(--color-primary); }
 
     .volume-row { display: flex; align-items: center; gap: 0.75rem; }
     .volume-row input[type="range"] { flex: 1; accent-color: var(--color-primary); cursor: pointer; }
     .volume-value { font-size: 0.875rem; font-weight: 600; color: var(--color-primary); min-width: 2.5rem; text-align: right; white-space: nowrap; }
     .volume-default-label { font-size: 0.78rem; color: var(--color-text-faint); font-style: italic; margin-top: 0.25rem; min-height: 1.1em; }
 
+    .playback-preview {
+        margin-top: 0.75rem; padding: 0.65rem 0.85rem; border-radius: 5px;
+        background: var(--color-page-bg); border: 1px solid var(--color-border-light);
+        display: flex; align-items: center; gap: 0.75rem;
+    }
+    .preview-play-btn {
+        flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+        border: none; background: var(--color-primary); color: var(--color-surface-white);
+        cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+    }
+    .preview-play-btn:hover { background: var(--color-primary-hover); }
+    .preview-play-btn.playing { background: var(--color-danger); }
+    .progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+    .progress-bar-bg { height: 4px; background: var(--color-border-medium); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--color-primary); border-radius: 2px; width: 0%; transition: width 0.1s linear; }
+    .preview-label { font-size: 0.75rem; color: var(--color-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .tags-input-wrap {
+        display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;
+        padding: 0.35rem 0.5rem; border: 1px solid var(--color-border-medium);
+        border-radius: 4px; min-height: 2.2rem; cursor: text;
+    }
+    .tags-input-wrap:focus-within { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
+    .tag-chip {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.15rem 0.5rem; border-radius: 10px;
+        background: var(--color-border-faint); border: 1px solid var(--color-border-light);
+        font-size: 0.78rem; color: var(--color-text-muted); white-space: nowrap;
+    }
+    .tag-chip-remove { background: none; border: none; cursor: pointer; padding: 0; line-height: 1; font-size: 0.8rem; color: var(--color-text-faint); }
+    .tag-chip-remove:hover { color: var(--color-error-text); }
+    .tags-text-input { border: none; outline: none; font-size: 0.85rem; font-family: inherit; background: transparent; min-width: 120px; flex: 1; }
+
     .btn-row { display: flex; gap: 0.6rem; margin-top: 1.25rem; }
     .btn-save { padding: 0.45rem 1.2rem; background: var(--color-primary); color: var(--color-surface-white); border: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
     .btn-save:hover { background: var(--color-primary-hover); }
+    .btn-delete { padding: 0.45rem 1rem; background: var(--color-surface-white); color: var(--color-error-text); border: 1px solid var(--color-btn-delete-border); border-radius: 4px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn-delete:hover { background: var(--color-error-bg); }
 
-    .music-info { color: var(--color-text-muted); font-size: 0.875rem; padding: 2rem 1rem; text-align: center; }
-    .music-info strong { display: block; margin-bottom: 0.4rem; font-size: 1rem; color: var(--color-primary); }
+    .music-file-name { font-size: 1rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem; }
+    .music-hint { color: var(--color-text-muted); font-size: 0.875rem; margin-bottom: 1rem; }
+
+    .unassigned-callout {
+        margin-top: 1.25rem; padding: 0.75rem 0.9rem;
+        background: var(--color-warning-bg); border: 1px solid var(--color-warning-border, var(--color-border));
+        border-radius: 5px;
+    }
+    .unassigned-callout h4 { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-warning-text); margin-bottom: 0.5rem; }
+    .unassigned-file-list { display: flex; flex-direction: column; gap: 0.3rem; }
+    .unassigned-file-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .unassigned-file-path { flex: 1; font-family: monospace; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-assign { flex-shrink: 0; padding: 0.2rem 0.55rem; border: 1px solid var(--color-primary); border-radius: 3px; background: none; color: var(--color-primary); font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
+    .btn-assign:hover { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-play-small { flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 0 0.15rem; font-size: 0.9rem; color: var(--color-text-muted); line-height: 1; }
+    .btn-play-small:hover { color: var(--color-primary); }
+    .btn-play-small.playing { color: var(--color-danger); }
 </style>
 
 <h1>Audio</h1>
-<p class="subtitle">View and edit audio configuration. Play or stop any sound or music file.</p>
+<p class="subtitle">Manage sound event mappings and preview music files.</p>
 
 <div class="page-layout">
     <div class="sidebar">
@@ -77,10 +148,11 @@
         <div id="entryList" class="entry-list">
             <div class="no-entries">Loading&hellip;</div>
         </div>
+        <button class="btn-new" onclick="newSound()">+ New Sound</button>
     </div>
 
     <div class="editor-panel">
-        <div id="editorPlaceholder" class="editor-placeholder">Select an entry to view or edit.</div>
+        <div id="editorPlaceholder" class="editor-placeholder">Select an entry to view or edit, or click &ldquo;New Sound&rdquo; to add one.</div>
 
         <div id="soundForm" style="display:none">
             <div id="statusBar" class="status-bar"></div>
@@ -88,19 +160,34 @@
 
             <div class="field">
                 <label for="fieldId">Identifier</label>
-                <input type="text" id="fieldId" readonly />
-                <div class="field-hint">Identifier cannot be changed.</div>
+                <input type="text" id="fieldId" placeholder="e.g. my-sound" />
+                <div class="field-hint" id="fieldIdHint">Used in code: <code>user.PlaySound("my-sound", "category")</code></div>
             </div>
 
             <div class="field">
                 <label for="fieldDescription">Description</label>
-                <input type="text" id="fieldDescription" placeholder="e.g. Plays at login screen" />
+                <input type="text" id="fieldDescription" placeholder="e.g. Plays when leveling up" />
             </div>
 
             <div class="field">
-                <label for="fieldFilePath">File Path</label>
-                <input type="text" id="fieldFilePath" placeholder="e.g. static/audio/sound/other/change.mp3" />
-                <div class="field-hint">Relative to WebCDNLocation in config.yaml, or host root if blank.</div>
+                <label>File Path</label>
+                <div class="filepath-row">
+                    <input type="text" id="fieldFilePath" placeholder="e.g. static/audio/sound/other/change.mp3" oninput="onFilePathInput()" />
+                    <button class="filepath-toggle" id="filePickerToggle" onclick="toggleFilePicker()" title="Pick from available files">Browse</button>
+                </div>
+                <div style="display:none; margin-top:0.4rem;" id="filePickerWrap">
+                    <select id="filePicker" size="6" style="width:100%;" onchange="onFilePickerChange()">
+                        <option value="" disabled>Loading files&hellip;</option>
+                    </select>
+                </div>
+                <div class="field-hint">Relative to <code>WebCDNLocation</code> in config.yaml, or host root if blank.</div>
+                <div class="playback-preview">
+                    <button class="preview-play-btn" id="previewPlayBtn" onclick="togglePreviewPlay()" title="Preview">&#9654;</button>
+                    <div class="progress-wrap">
+                        <div class="preview-label" id="previewLabel">No file selected</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+                    </div>
+                </div>
             </div>
 
             <div class="field">
@@ -109,19 +196,41 @@
                     <input type="range" id="fieldVolume" min="0" max="100" value="0" oninput="updateVolumeDisplay()" />
                     <span class="volume-value" id="volumeValueDisplay">0</span>
                 </div>
-                <div class="volume-default-label" id="volumeDefaultLabel">Default volume</div>
-                <div class="field-hint">Percentage of the file&rsquo;s full encoded volume (1&ndash;100). At 0, the server uses 100% as the default. This is the base level before the player&rsquo;s own category slider and per-sound overrides are applied on top.</div>
+                <div class="volume-default-label" id="volumeDefaultLabel">Default volume (100%)</div>
+                <div class="field-hint">Base volume 1&ndash;100. At 0, the server uses 100% as the default. Applied before the player&rsquo;s own category and per-sound overrides.</div>
+            </div>
+
+            <div class="field">
+                <label>Tags</label>
+                <div class="tags-input-wrap" id="tagsWrap" onclick="document.getElementById('tagsTextInput').focus()">
+                    <input class="tags-text-input" id="tagsTextInput" placeholder="Add tag&hellip;" onkeydown="onTagKeyDown(event)" />
+                </div>
+                <div class="field-hint">Press Enter or comma to add. Describe where this sound is used, e.g. &ldquo;combat&rdquo; or &ldquo;login screen&rdquo;.</div>
             </div>
 
             <div class="btn-row">
                 <button class="btn-save" onclick="saveEntry()">Save</button>
+                <button class="btn-delete" id="btnDelete" onclick="deleteEntry()" style="display:none">Delete</button>
+            </div>
+
+            <div id="unassignedCallout" style="display:none" class="unassigned-callout">
+                <h4>Unassigned Files</h4>
+                <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:0.6rem;">These files exist on disk but are not mapped to any sound identifier. Click &ldquo;Use&rdquo; to fill in the path above.</p>
+                <div id="unassignedList" class="unassigned-file-list"></div>
             </div>
         </div>
 
-        <div id="musicInfo" style="display:none">
-            <div class="music-info">
-                <strong id="musicInfoName"></strong>
-                Music files are served from <code>static/audio/music/</code> and are not configurable here.
+        <div id="musicPanel" style="display:none">
+            <div id="statusBarMusic" class="status-bar"></div>
+            <p class="section-title">Music File</p>
+            <div class="music-file-name" id="musicFileName"></div>
+            <div class="music-hint">Music files are served from <code>static/audio/music/</code> and are not configurable here. Place new <code>.mp3</code> files in that directory and they will appear automatically (files beginning with <code>_</code> are hidden).</div>
+            <div class="playback-preview">
+                <button class="preview-play-btn" id="musicPreviewPlayBtn" onclick="toggleMusicPreviewPlay()" title="Preview">&#9654;</button>
+                <div class="progress-wrap">
+                    <div class="preview-label" id="musicPreviewLabel">Ready</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="musicProgressFill"></div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -130,10 +239,15 @@
 <script>
 let soundsData = {};
 let musicFiles = [];
+let soundFiles = [];
 let activeId = null;
 let activeType = null; // 'sound' | 'music'
+let isNew = false;
 let currentAudio = null;
 let currentPlayingId = null;
+let progressInterval = null;
+let filePickerVisible = false;
+let currentTags = [];
 
 async function loadAudio() {
     const res = await AdminAPI.get('/admin/api/v1/audio');
@@ -141,39 +255,51 @@ async function loadAudio() {
     const data = (res.data && res.data.data) || {};
     soundsData = data.sounds || {};
     musicFiles = data.music || [];
+    soundFiles = data.soundFiles || [];
     renderList();
 }
 
 function filterEntries() {
     const q = document.getElementById('entrySearch').value.toLowerCase();
-    document.querySelectorAll('.entry-row').forEach(row => {
-        const name = (row.dataset.id || '').toLowerCase();
-        row.style.display = name.includes(q) ? '' : 'none';
+    let lastLabel = null;
+    let labelHasVisible = false;
+    document.querySelectorAll('#entryList > *').forEach(el => {
+        if (el.classList.contains('list-section-label')) {
+            if (lastLabel) lastLabel.style.display = labelHasVisible ? '' : 'none';
+            lastLabel = el;
+            labelHasVisible = false;
+        } else if (el.classList.contains('entry-row')) {
+            const visible = !q || (el.dataset.id || '').toLowerCase().includes(q);
+            el.style.display = visible ? '' : 'none';
+            if (visible) labelHasVisible = true;
+        }
     });
-    document.querySelectorAll('.list-section-label').forEach(lbl => {
-        lbl.style.display = '';
-    });
+    if (lastLabel) lastLabel.style.display = labelHasVisible ? '' : 'none';
 }
 
 function renderList() {
     const list = document.getElementById('entryList');
     let html = '';
 
-    // Sounds section
     const soundIds = Object.keys(soundsData).sort();
     html += '<div class="list-section-label">Sounds</div>';
     if (soundIds.length === 0) {
         html += '<div class="no-entries">No sound entries.</div>';
     } else {
         soundIds.forEach(id => {
+            const entry = soundsData[id] || {};
+            const hasTags = entry.tags && entry.tags.length > 0;
+            const badge = hasTags
+                ? `<span class="entry-badge" title="${escAttr(entry.tags.join(', '))}">${escHtml(entry.tags[0])}</span>`
+                : '';
             html += `<div class="entry-row" data-id="${escAttr(id)}" data-type="sound">
                 <span class="entry-name" onclick="selectEntry(${escAttr(JSON.stringify(id))}, 'sound')">${escHtml(id)}</span>
+                ${badge}
                 <button class="play-btn" id="playbtn-sound-${escAttr(id)}" onclick="togglePlay(event, ${escAttr(JSON.stringify(id))}, 'sound')" title="Play">&#9654;</button>
             </div>`;
         });
     }
 
-    // Music section
     html += '<div class="list-section-label">Music</div>';
     if (musicFiles.length === 0) {
         html += '<div class="no-entries">No music files found.</div>';
@@ -189,55 +315,231 @@ function renderList() {
 
     list.innerHTML = html;
     if (activeId && activeType) highlightRow(activeId, activeType);
-    if (currentPlayingId) refreshPlayButton(currentPlayingId);
+    refreshAllPlayButtons();
+    filterEntries();
 }
 
 function highlightRow(id, type) {
     document.querySelectorAll('.entry-row').forEach(r => r.classList.remove('active'));
     const row = document.querySelector(`.entry-row[data-id="${escAttr(id)}"][data-type="${escAttr(type)}"]`);
-    if (row) row.classList.add('active');
+    if (row) { row.classList.add('active'); row.scrollIntoView({ block: 'nearest' }); }
 }
 
 function selectEntry(id, type) {
     activeId = id;
     activeType = type;
+    isNew = false;
     highlightRow(id, type);
-
-    document.getElementById('editorPlaceholder').style.display = 'none';
-    document.getElementById('soundForm').style.display = 'none';
-    document.getElementById('musicInfo').style.display = 'none';
-    document.getElementById('statusBar').className = 'status-bar';
-    document.getElementById('statusBar').textContent = '';
+    hideAllPanels();
 
     if (type === 'sound') {
         const entry = soundsData[id] || {};
         document.getElementById('soundForm').style.display = '';
-        document.getElementById('editorTitle').textContent = 'Edit: ' + id;
-        document.getElementById('fieldId').value = id;
+        document.getElementById('editorTitle').textContent = 'Edit Sound';
+        const idField = document.getElementById('fieldId');
+        idField.value = id;
+        idField.readOnly = true;
+        document.getElementById('fieldIdHint').innerHTML = `Used in code: <code>user.PlaySound("${escHtml(id)}", "category")</code>`;
         document.getElementById('fieldDescription').value = entry.description || '';
         document.getElementById('fieldFilePath').value = entry.filepath || '';
         document.getElementById('fieldVolume').value = entry.volume != null ? entry.volume : 0;
+        document.getElementById('btnDelete').style.display = '';
+        document.getElementById('unassignedCallout').style.display = 'none';
         updateVolumeDisplay();
+        updatePreviewLabel();
+        setTags(entry.tags || []);
+        hideFilePicker();
+        populateFilePicker();
     } else {
-        document.getElementById('musicInfo').style.display = '';
-        document.getElementById('musicInfoName').textContent = id.replace(/^.*\//, '');
+        showMusicPanel(id);
     }
+}
+
+function newSound() {
+    stopAudio();
+    activeId = null;
+    activeType = 'sound';
+    isNew = true;
+    document.querySelectorAll('.entry-row').forEach(r => r.classList.remove('active'));
+    hideAllPanels();
+    document.getElementById('soundForm').style.display = '';
+    document.getElementById('editorTitle').textContent = 'New Sound';
+    const idField = document.getElementById('fieldId');
+    idField.value = '';
+    idField.readOnly = false;
+    document.getElementById('fieldIdHint').innerHTML = 'Choose a unique identifier used in code to trigger this sound.';
+    document.getElementById('fieldDescription').value = '';
+    document.getElementById('fieldFilePath').value = '';
+    document.getElementById('fieldVolume').value = 0;
+    document.getElementById('btnDelete').style.display = 'none';
+    updateVolumeDisplay();
+    updatePreviewLabel();
+    setTags([]);
+    hideFilePicker();
+    populateFilePicker();
+    renderUnassignedFiles();
+    idField.focus();
+}
+
+function showMusicPanel(path) {
+    document.getElementById('musicPanel').style.display = '';
+    document.getElementById('musicFileName').textContent = path.replace(/^.*\//, '');
+    document.getElementById('musicPreviewLabel').textContent = 'Ready';
+    document.getElementById('musicProgressFill').style.width = '0%';
+    const btn = document.getElementById('musicPreviewPlayBtn');
+    btn.textContent = '\u25B6';
+    btn.classList.remove('playing');
+}
+
+function renderUnassignedFiles() {
+    const assignedPaths = new Set(Object.values(soundsData).map(e => e.filepath).filter(Boolean));
+    const allFiles = [...soundFiles, ...musicFiles];
+    const unassigned = allFiles.filter(f => !assignedPaths.has(f));
+
+    const callout = document.getElementById('unassignedCallout');
+    const listEl = document.getElementById('unassignedList');
+    if (unassigned.length === 0) { callout.style.display = 'none'; return; }
+
+    callout.style.display = '';
+    listEl.innerHTML = unassigned.map(f =>
+        `<div class="unassigned-file-row">
+            <button class="btn-play-small" id="uplaybtn-${escAttr(f)}" onclick="togglePlayPath(event, ${escAttr(JSON.stringify(f))})" title="Preview">&#9654;</button>
+            <span class="unassigned-file-path" title="${escAttr(f)}">${escHtml(f)}</span>
+            <button class="btn-assign" onclick="assignFile(${escAttr(JSON.stringify(f))})">Use</button>
+        </div>`
+    ).join('');
+}
+
+function assignFile(filepath) {
+    stopAudio();
+    const name = filepath.replace(/^.*\//, '').replace(/\.[^.]+$/, '');
+    document.getElementById('fieldFilePath').value = filepath;
+    document.getElementById('fieldId').value = name;
+    updatePreviewLabel();
+    const sel = document.getElementById('filePicker');
+    sel.value = filepath;
+}
+
+function hideAllPanels() {
+    document.getElementById('editorPlaceholder').style.display = 'none';
+    document.getElementById('soundForm').style.display = 'none';
+    document.getElementById('musicPanel').style.display = 'none';
+    const sb = document.getElementById('statusBar');
+    sb.className = 'status-bar'; sb.textContent = '';
+    const sbm = document.getElementById('statusBarMusic');
+    sbm.className = 'status-bar'; sbm.textContent = '';
+}
+
+// ---- Tags ----
+
+function setTags(tags) {
+    currentTags = tags.slice();
+    renderTagChips();
+}
+
+function renderTagChips() {
+    const wrap = document.getElementById('tagsWrap');
+    const input = document.getElementById('tagsTextInput');
+    wrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+    currentTags.forEach((tag, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${escHtml(tag)}<button class="tag-chip-remove" onclick="removeTag(${i})" title="Remove">&times;</button>`;
+        wrap.insertBefore(chip, input);
+    });
+    input.placeholder = currentTags.length === 0 ? 'Add tag\u2026' : '';
+}
+
+function removeTag(index) {
+    currentTags.splice(index, 1);
+    renderTagChips();
+}
+
+function onTagKeyDown(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        commitTag();
+    } else if (e.key === 'Backspace' && e.target.value === '' && currentTags.length > 0) {
+        currentTags.pop();
+        renderTagChips();
+    }
+}
+
+function commitTag() {
+    const input = document.getElementById('tagsTextInput');
+    const val = input.value.replace(/,/g, '').trim();
+    if (val && !currentTags.includes(val)) {
+        currentTags.push(val);
+        renderTagChips();
+    }
+    input.value = '';
+}
+
+// ---- File picker ----
+
+function populateFilePicker() {
+    const sel = document.getElementById('filePicker');
+    const allFiles = [...soundFiles, ...musicFiles];
+    if (allFiles.length === 0) { sel.innerHTML = '<option value="" disabled>No files found</option>'; return; }
+    sel.innerHTML = '<option value="">-- select a file --</option>' +
+        allFiles.map(f => `<option value="${escAttr(f)}">${escHtml(f)}</option>`).join('');
+    const cur = document.getElementById('fieldFilePath').value.trim();
+    if (cur) sel.value = cur;
+}
+
+function toggleFilePicker() {
+    filePickerVisible = !filePickerVisible;
+    document.getElementById('filePickerWrap').style.display = filePickerVisible ? '' : 'none';
+    document.getElementById('filePickerToggle').textContent = filePickerVisible ? 'Hide' : 'Browse';
+}
+
+function hideFilePicker() {
+    filePickerVisible = false;
+    document.getElementById('filePickerWrap').style.display = 'none';
+    document.getElementById('filePickerToggle').textContent = 'Browse';
+}
+
+function onFilePickerChange() {
+    const sel = document.getElementById('filePicker');
+    if (sel.value) {
+        document.getElementById('fieldFilePath').value = sel.value;
+        updatePreviewLabel();
+    }
+}
+
+function onFilePathInput() {
+    const val = document.getElementById('fieldFilePath').value.trim();
+    document.getElementById('filePicker').value = val || '';
+    updatePreviewLabel();
 }
 
 // ---- Playback ----
 
-function togglePlay(evt, id, type) {
-    evt.stopPropagation();
-    if (currentPlayingId === id && currentAudio && !currentAudio.paused) {
-        stopAudio();
-    } else {
-        playAudio(id, type);
-    }
+function updatePreviewLabel() {
+    const fp = document.getElementById('fieldFilePath').value.trim();
+    document.getElementById('previewLabel').textContent = fp ? fp.replace(/^.*\//, '') : 'No file selected';
+    document.getElementById('progressFill').style.width = '0%';
+    const btn = document.getElementById('previewPlayBtn');
+    if (!fp) { btn.textContent = '\u25B6'; btn.classList.remove('playing'); }
 }
 
-function playAudio(id, type) {
-    stopAudio();
+function togglePreviewPlay() {
+    const fp = document.getElementById('fieldFilePath').value.trim();
+    if (!fp) return;
+    const src = '/' + fp.replace(/^\//, '');
+    if (currentPlayingId === src && currentAudio && !currentAudio.paused) { stopAudio(); }
+    else { playAudioSrc(src); }
+}
 
+function toggleMusicPreviewPlay() {
+    if (!activeId || activeType !== 'music') return;
+    const src = '/' + activeId.replace(/^\//, '');
+    if (currentPlayingId === src && currentAudio && !currentAudio.paused) { stopAudio(); }
+    else { playAudioSrc(src); }
+}
+
+function togglePlay(evt, id, type) {
+    evt.stopPropagation();
     let src;
     if (type === 'sound') {
         const entry = soundsData[id] || {};
@@ -245,90 +547,159 @@ function playAudio(id, type) {
     } else {
         src = '/' + id;
     }
+    if (!src) return;
+    if (currentPlayingId === src && currentAudio && !currentAudio.paused) { stopAudio(); }
+    else { playAudioSrc(src); }
+}
 
-    if (!src) {
-        return;
-    }
+function togglePlayPath(evt, filepath) {
+    evt.stopPropagation();
+    const src = '/' + filepath.replace(/^\//, '');
+    if (currentPlayingId === src && currentAudio && !currentAudio.paused) { stopAudio(); }
+    else { playAudioSrc(src); }
+}
 
+function playAudioSrc(src) {
+    stopAudio();
     currentAudio = new Audio(src);
-    currentPlayingId = id;
-    refreshPlayButton(id);
+    currentPlayingId = src;
+    refreshAllPlayButtons();
 
-    currentAudio.addEventListener('ended', () => {
-        currentPlayingId = null;
-        currentAudio = null;
-        refreshPlayButton(id);
-    });
-    currentAudio.addEventListener('error', () => {
-        currentPlayingId = null;
-        currentAudio = null;
-        refreshPlayButton(id);
-    });
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+        if (!currentAudio || currentAudio.paused) { clearInterval(progressInterval); return; }
+        const pct = currentAudio.duration ? (currentAudio.currentTime / currentAudio.duration) * 100 : 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('musicProgressFill').style.width = pct + '%';
+    }, 100);
 
-    currentAudio.play().catch(() => {
-        currentPlayingId = null;
-        currentAudio = null;
-        refreshPlayButton(id);
-    });
+    currentAudio.addEventListener('ended', () => { stopAudio(); });
+    currentAudio.addEventListener('error', () => { stopAudio(); });
+    currentAudio.play().catch(() => { stopAudio(); });
 }
 
 function stopAudio() {
+    clearInterval(progressInterval);
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
-        const prev = currentPlayingId;
         currentAudio = null;
-        currentPlayingId = null;
-        if (prev) refreshPlayButton(prev);
     }
+    currentPlayingId = null;
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('musicProgressFill').style.width = '0%';
+    refreshAllPlayButtons();
 }
 
-function refreshPlayButton(id) {
-    // Reset all play buttons first, then set the active one
-    document.querySelectorAll('.play-btn').forEach(btn => {
-        btn.textContent = '\u25B6';
-        btn.classList.remove('playing');
-        btn.title = 'Play';
+function refreshAllPlayButtons() {
+    document.querySelectorAll('.play-btn').forEach(btn => { btn.textContent = '\u25B6'; btn.classList.remove('playing'); btn.title = 'Play'; });
+    document.querySelectorAll('.btn-play-small').forEach(btn => { btn.textContent = '\u25B6'; btn.classList.remove('playing'); });
+    const previewBtn = document.getElementById('previewPlayBtn');
+    if (previewBtn) { previewBtn.textContent = '\u25B6'; previewBtn.classList.remove('playing'); }
+    const musicBtn = document.getElementById('musicPreviewPlayBtn');
+    if (musicBtn) { musicBtn.textContent = '\u25B6'; musicBtn.classList.remove('playing'); }
+
+    if (!currentPlayingId) return;
+
+    Object.entries(soundsData).forEach(([id, entry]) => {
+        if (entry.filepath && '/' + entry.filepath.replace(/^\//, '') === currentPlayingId) {
+            const btn = document.getElementById(`playbtn-sound-${id}`);
+            if (btn) { btn.textContent = '\u25A0'; btn.classList.add('playing'); btn.title = 'Stop'; }
+        }
     });
-    if (currentPlayingId) {
-        // Find the button for the currently playing entry (could be sound or music)
-        ['sound', 'music'].forEach(type => {
-            const btn = document.getElementById(`playbtn-${type}-${currentPlayingId}`);
-            if (btn) {
-                btn.textContent = '\u25A0';
-                btn.classList.add('playing');
-                btn.title = 'Stop';
-            }
-        });
+    musicFiles.forEach(path => {
+        if ('/' + path === currentPlayingId) {
+            const btn = document.getElementById(`playbtn-music-${path}`);
+            if (btn) { btn.textContent = '\u25A0'; btn.classList.add('playing'); btn.title = 'Stop'; }
+        }
+    });
+    document.querySelectorAll('.btn-play-small').forEach(btn => {
+        const row = btn.closest('.unassigned-file-row');
+        if (!row) return;
+        const pathSpan = row.querySelector('.unassigned-file-path');
+        if (pathSpan && '/' + pathSpan.title.replace(/^\//, '') === currentPlayingId) {
+            btn.textContent = '\u25A0'; btn.classList.add('playing');
+        }
+    });
+    const fp = document.getElementById('fieldFilePath');
+    if (fp && fp.value && '/' + fp.value.replace(/^\//, '') === currentPlayingId) {
+        if (previewBtn) { previewBtn.textContent = '\u25A0'; previewBtn.classList.add('playing'); }
+    }
+    if (activeType === 'music' && activeId && '/' + activeId === currentPlayingId) {
+        if (musicBtn) { musicBtn.textContent = '\u25A0'; musicBtn.classList.add('playing'); }
     }
 }
 
 function updateVolumeDisplay() {
     const val = parseInt(document.getElementById('fieldVolume').value, 10) || 0;
     document.getElementById('volumeValueDisplay').textContent = val;
-    document.getElementById('volumeDefaultLabel').textContent = val === 0 ? 'Default volume' : '';
+    document.getElementById('volumeDefaultLabel').textContent = val === 0 ? 'Default volume (100%)' : '';
 }
 
+// ---- Save / Delete ----
 
 async function saveEntry() {
-    if (!activeId || activeType !== 'sound') return;
+    commitTag();
+    const id = document.getElementById('fieldId').value.trim();
+    if (!id) { showStatus('error', 'Identifier is required.'); return; }
+
     const description = document.getElementById('fieldDescription').value.trim();
     const filepath = document.getElementById('fieldFilePath').value.trim();
     const volume = parseInt(document.getElementById('fieldVolume').value, 10) || 0;
+    const tags = currentTags.slice();
 
-    const updated = Object.assign({}, soundsData);
-    updated[activeId] = { description, filepath, volume };
-
-    const res = await AdminAPI.patch('/admin/api/v1/audio', updated);
-    if (res.ok) {
-        const data = (res.data && res.data.data) || {};
-        soundsData = data.sounds || updated;
-        musicFiles = data.music || musicFiles;
-        renderList();
-        highlightRow(activeId, 'sound');
-        showStatus('success', `Entry "${activeId}" saved.`);
+    if (isNew) {
+        const res = await AdminAPI.post('/admin/api/v1/audio', { identifier: id, description, filepath, volume, tags });
+        if (res.ok) {
+            const data = (res.data && res.data.data) || {};
+            soundsData = data.sounds || soundsData;
+            musicFiles = data.music || musicFiles;
+            soundFiles = data.soundFiles || soundFiles;
+            activeId = id;
+            activeType = 'sound';
+            isNew = false;
+            renderList();
+            highlightRow(id, 'sound');
+            document.getElementById('fieldId').readOnly = true;
+            document.getElementById('btnDelete').style.display = '';
+            document.getElementById('unassignedCallout').style.display = 'none';
+            document.getElementById('fieldIdHint').innerHTML = `Used in code: <code>user.PlaySound("${escHtml(id)}", "category")</code>`;
+            showStatus('success', `Sound "${id}" created.`);
+        } else {
+            showStatus('error', res.error || 'Create failed.');
+        }
     } else {
-        showStatus('error', res.error || 'Save failed.');
+        const updated = Object.assign({}, soundsData);
+        updated[activeId] = Object.assign({}, soundsData[activeId] || {}, { description, filepath, volume, tags });
+        const res = await AdminAPI.patch('/admin/api/v1/audio', updated);
+        if (res.ok) {
+            const data = (res.data && res.data.data) || {};
+            soundsData = data.sounds || updated;
+            musicFiles = data.music || musicFiles;
+            soundFiles = data.soundFiles || soundFiles;
+            renderList();
+            highlightRow(activeId, 'sound');
+            showStatus('success', `Sound "${activeId}" saved.`);
+        } else {
+            showStatus('error', res.error || 'Save failed.');
+        }
+    }
+}
+
+async function deleteEntry() {
+    if (!activeId || activeType !== 'sound') return;
+    if (!confirm(`Delete sound "${activeId}"? This cannot be undone.`)) return;
+
+    const res = await AdminAPI.delete(`/admin/api/v1/audio/${encodeURIComponent(activeId)}`);
+    if (res.ok) {
+        delete soundsData[activeId];
+        activeId = null;
+        activeType = null;
+        renderList();
+        hideAllPanels();
+        document.getElementById('editorPlaceholder').style.display = '';
+    } else {
+        showStatus('error', res.error || 'Delete failed.');
     }
 }
 
@@ -341,6 +712,17 @@ function showStatus(type, msg) {
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s) { return String(s).replace(/"/g,'&quot;'); }
+
+// AdminAPI.delete shim
+if (AdminAPI && !AdminAPI.delete) {
+    AdminAPI.delete = async function(url) {
+        try {
+            const resp = await fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+            const json = await resp.json().catch(() => ({}));
+            return { ok: resp.ok && json.success !== false, data: json, error: json.error || (resp.ok ? null : resp.statusText) };
+        } catch(e) { return { ok: false, error: String(e) }; }
+    };
+}
 
 loadAudio();
 </script>
