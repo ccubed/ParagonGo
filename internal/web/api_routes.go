@@ -99,6 +99,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /admin/api/v1/colorpatterns", doBasicAuth(RequirePermission("colorpatterns.write", RunWithMUDLocked(apiV1DeleteColorPattern))))
 
 	// Mobs
+	mux.HandleFunc("GET /admin/api/v1/mobs/ranks", doBasicAuth(RunWithMUDLocked(apiV1GetMobRanks)))
 	mux.HandleFunc("GET /admin/api/v1/mobs", doBasicAuth(RunWithMUDLocked(apiV1GetMobs)))
 	mux.HandleFunc("POST /admin/api/v1/mobs", doBasicAuth(RequirePermission("mobs.write", RunWithMUDLocked(apiV1CreateMob))))
 	mux.HandleFunc("GET /admin/api/v1/mobs/{mobId}/script", doBasicAuth(RunWithMUDLocked(apiV1GetMobScript)))

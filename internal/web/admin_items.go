@@ -194,6 +194,10 @@ func adminPetsRanks(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "pets-ranks.html", nil)
 }
 
+func adminMobRankings(w http.ResponseWriter, r *http.Request) {
+	serveAdminTemplate(w, r, "mob-rankings.html", nil)
+}
+
 func adminSpells(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "spells.html", nil)
 }

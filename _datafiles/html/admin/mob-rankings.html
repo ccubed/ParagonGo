@@ -1,0 +1,445 @@
+{{template "header" .}}
+
+<style>
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+    .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .last-updated { font-size: 0.78rem; color: var(--color-text-placeholder); margin-left: auto; }
+
+    .status-bar { display: none; padding: 0.5rem 0.85rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
+    .status-bar.error { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
+
+    .view-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+    .view-tab {
+        flex: 1; padding: 0.55rem 0.5rem; border: none; background: var(--color-page-bg);
+        cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--color-text-muted);
+        border-right: 1px solid var(--color-border); transition: background 0.1s, color 0.1s;
+        text-align: center; line-height: 1.3;
+    }
+    .view-tab:last-child { border-right: none; }
+    .view-tab:hover { background: var(--color-border-strong); color: var(--color-primary); }
+    .view-tab.active { background: var(--color-primary); color: var(--color-surface-white); }
+    .view-tab .tab-title { display: block; }
+    .view-tab .tab-hint { display: block; font-size: 0.72rem; font-weight: 400; opacity: 0.75; margin-top: 0.1rem; }
+
+    .filter-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-bar label { font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap; }
+    .filter-bar select, .filter-bar input[type="text"] {
+        padding: 0.3rem 0.6rem; border: 1px solid var(--color-border-medium); border-radius: 4px;
+        font-size: 0.82rem; background: var(--color-surface-white);
+    }
+    .filter-bar select:focus, .filter-bar input[type="text"]:focus { outline: 2px solid var(--color-primary); }
+
+    .rank-table-wrap { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+    .rank-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .rank-table th {
+        background: var(--color-primary); color: var(--color-code-text);
+        padding: 0.5rem 0.85rem; text-align: left;
+        font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+        font-weight: 600; white-space: nowrap;
+    }
+    .rank-table th.sortable { cursor: pointer; user-select: none; }
+    .rank-table th.sortable:hover { color: var(--color-surface-white); }
+    .rank-table th .sort-arrow { margin-left: 0.3rem; font-size: 0.65rem; opacity: 0.5; }
+    .rank-table th.sorted-asc .sort-arrow::after  { content: " ▲"; opacity: 1; }
+    .rank-table th.sorted-desc .sort-arrow::after { content: " ▼"; opacity: 1; }
+    .rank-table th:not(.sorted-asc):not(.sorted-desc) .sort-arrow::after { content: " ⇅"; }
+    .rank-table td { padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--color-border-faint); vertical-align: middle; }
+    .rank-table tr:last-child td { border-bottom: none; }
+    .rank-table tr:hover td { background: var(--color-row-hover); }
+
+    .mob-name { font-weight: 600; color: var(--color-primary); }
+    .mob-name a { color: inherit; text-decoration: none; }
+    .mob-name a:hover { text-decoration: underline; }
+    .mob-id { font-family: monospace; font-size: 0.78rem; color: var(--color-text-placeholder); }
+
+    .zone-pill {
+        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px;
+        font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+        background: var(--color-chip-bg); color: var(--color-chip-text);
+    }
+
+    .hostile-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 700; }
+    .hostile-yes { background: var(--color-error-bg); color: var(--color-error-text); }
+    .hostile-no  { background: var(--color-success-bg); color: var(--color-success-text); }
+
+    .num { font-family: monospace; }
+    .muted { color: var(--color-text-placeholder); }
+
+    .score-cell { white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+    .score-val { font-family: monospace; font-weight: 700; color: var(--color-primary); min-width: 4rem; }
+    .score-bar-track { display: inline-block; width: 80px; height: 8px; background: var(--color-border-light); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .score-bar-fill  { display: block; height: 8px; border-radius: 3px; background: var(--color-accent-link); transition: width 0.3s ease; }
+    .score-bar-fill.top { background: var(--color-danger); }
+
+    .skeleton-row td { padding: 0.55rem 0.85rem; }
+    .skel { background: var(--color-border-light); border-radius: 3px; height: 14px; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .empty-state { padding: 3rem; text-align: center; color: var(--color-text-placeholder); font-size: 0.9rem; }
+
+    .tip {
+        display: none; position: fixed; z-index: 200;
+        background: var(--color-primary); color: var(--color-border-strong);
+        font-size: 0.78rem; font-family: system-ui, sans-serif; font-weight: 400;
+        text-transform: none; letter-spacing: normal;
+        line-height: 1.5; max-width: 280px;
+        padding: 0.5rem 0.75rem; border-radius: 5px;
+        box-shadow: 0 3px 10px var(--color-shadow);
+        pointer-events: none; white-space: normal;
+    }
+
+    .detail-panel {
+        display: none; margin-top: 1.5rem;
+        background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px;
+        padding: 1.25rem; animation: slideIn 0.15s ease;
+    }
+    .detail-panel.open { display: block; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .detail-header h2 { font-size: 1.1rem; margin: 0; }
+    .detail-close { background: none; border: none; cursor: pointer; font-size: 1.2rem; color: var(--color-text-placeholder); padding: 0 0.3rem; }
+    .detail-close:hover { color: var(--color-danger); }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+    .detail-card {
+        border: 1px solid var(--color-border-light); border-radius: 6px; padding: 0.65rem 0.75rem;
+        background: var(--color-page-bg); font-size: 0.82rem;
+    }
+    .detail-card-header { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-primary); border-bottom: 1px solid var(--color-border-faint); padding-bottom: 0.3rem; }
+    .detail-stat { display: flex; justify-content: space-between; padding: 0.1rem 0; font-size: 0.78rem; color: var(--color-text-muted); }
+    .detail-stat .val { font-weight: 600; color: var(--color-primary); font-family: monospace; }
+</style>
+
+<h1>Mob Rankings</h1>
+<p class="subtitle">
+    Combat and loot rankings for all mob types, evaluated at level 25 against a level-matched baseline opponent.
+</p>
+
+<div id="statusBar" class="status-bar"></div>
+
+<div class="toolbar">
+    <button class="btn btn-primary" onclick="loadRankings()">Refresh</button>
+    <span id="lastUpdated" class="last-updated"></span>
+</div>
+
+<div class="view-tabs">
+    <button class="view-tab active" id="tab-threat" onclick="switchView('threat')">
+        <span class="tab-title">Threat</span>
+        <span class="tab-hint">DPS &times; eHP</span>
+    </button>
+    <button class="view-tab" id="tab-loot" onclick="switchView('loot')">
+        <span class="tab-title">Loot</span>
+        <span class="tab-hint">Expected value per kill</span>
+    </button>
+    <button class="view-tab" id="tab-defense" onclick="switchView('defense')">
+        <span class="tab-title">Defense</span>
+        <span class="tab-hint">Effective HP</span>
+    </button>
+</div>
+
+<div class="filter-bar">
+    <label for="filterZone">Zone:</label>
+    <select id="filterZone" onchange="renderTable()">
+        <option value="">All</option>
+    </select>
+    <label for="filterHostile">Hostile:</label>
+    <select id="filterHostile" onchange="renderTable()">
+        <option value="">All</option>
+        <option value="yes">Hostile</option>
+        <option value="no">Passive</option>
+    </select>
+    <label for="filterSearch">Search:</label>
+    <input type="text" id="filterSearch" placeholder="mob name&hellip;" oninput="renderTable()">
+</div>
+
+<div class="rank-table-wrap">
+    <table class="rank-table" id="rankTable">
+        <thead>
+            <tr>
+                <th class="sortable" style="width:4rem" data-key="MobId" onclick="sortBy('MobId')" data-tip="Numeric mob ID. Click the name to open it in the mob editor.">ID<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="Name" onclick="sortBy('Name')" data-tip="Mob display name.">Name<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="Zone" onclick="sortBy('Zone')" data-tip="Zone the mob belongs to.">Zone<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="Hostile" onclick="sortBy('Hostile')" data-tip="Whether the mob attacks players on sight.">Hostile<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="DPS" onclick="sortBy('DPS')" data-tip="Expected damage per round at level 25 against a level-matched baseline. Accounts for hit chance, dodge, crits, and defense.">DPS<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="EHP" onclick="sortBy('EHP')" data-tip="Effective HP at level 25: raw HP divided by the fraction of damage that gets through after expected defense reduction.">eHP<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="LootScore" onclick="sortBy('LootScore')" data-tip="Expected loot value per kill: Gold + (ItemDropChance% &times; total carried item value). Gold always drops; items drop at ItemDropChance%.">Loot<span class="sort-arrow"></span></th>
+                <th class="sortable" id="scoreHeader" data-key="ThreatScore" onclick="sortBy('ThreatScore')" data-tip=""><span id="scoreLabel">Score</span><span class="sort-arrow"></span></th>
+            </tr>
+        </thead>
+        <tbody id="rankBody">
+            <tr class="skeleton-row"><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:140px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:110px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skel" style="width:40px"></div></td><td><div class="skel" style="width:160px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:60px"></div></td><td><div class="skel" style="width:50px"></div></td><td><div class="skel" style="width:100px"></div></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="detailPanel" class="detail-panel">
+    <div class="detail-header">
+        <h2 id="detailTitle">Mob Detail</h2>
+        <button class="detail-close" onclick="closeDetail()" title="Close">&times;</button>
+    </div>
+    <div id="detailContent" class="detail-grid"></div>
+</div>
+
+<div id="tooltip" class="tip"></div>
+
+<script>
+(function() {
+    var allData = { by_threat: [], by_loot: [], by_defense: [] };
+    var view    = 'threat';
+    var sortKey = null;
+    var sortAsc = true;
+
+    window.loadRankings = loadRankings;
+    window.switchView   = switchView;
+    window.renderTable  = renderTable;
+    window.sortBy       = sortBy;
+    window.showDetail   = showDetail;
+    window.closeDetail  = closeDetail;
+
+    loadRankings();
+
+    async function loadRankings() {
+        var result = await AdminAPI.get('/admin/api/v1/mobs/ranks', true);
+        if (!result.ok || !result.data || !result.data.success) {
+            showError((result.data && result.data.error) || result.error || 'Unknown error');
+            return;
+        }
+        allData = result.data.data;
+        populateZoneFilter();
+        sortKey = null;
+        renderTable();
+        document.getElementById('lastUpdated').textContent =
+            'Updated ' + new Date().toLocaleTimeString();
+        hideError();
+    }
+
+    function populateZoneFilter() {
+        var zones = {};
+        (allData.by_threat || []).forEach(function(r) { if (r.Zone) zones[r.Zone] = true; });
+        var sel = document.getElementById('filterZone');
+        var current = sel.value;
+        while (sel.options.length > 1) sel.remove(1);
+        Object.keys(zones).sort().forEach(function(z) {
+            var opt = document.createElement('option');
+            opt.value = z; opt.textContent = z;
+            sel.appendChild(opt);
+        });
+        sel.value = current;
+    }
+
+    function switchView(v) {
+        view = v;
+        sortKey = null;
+        ['threat','loot','defense'].forEach(function(id) {
+            document.getElementById('tab-' + id).classList.toggle('active', id === v);
+        });
+        var header = document.getElementById('scoreHeader');
+        var keyMap   = { threat: 'ThreatScore', loot: 'LootScore', defense: 'DefenseScore' };
+        header.dataset.key = keyMap[v];
+        header.onclick = function() { sortBy(keyMap[v]); };
+        var labelMap = { threat: 'Threat', loot: 'Loot', defense: 'Defense' };
+        document.getElementById('scoreLabel').textContent = labelMap[v];
+        var tipMap = {
+            threat:  'DPS \u00d7 eHP at level 25. Mobs that deal high damage and are hard to kill score highest.',
+            loot:    'Expected loot value per kill: Gold + (ItemDropChance% \u00d7 total item value).',
+            defense: 'Effective HP at level 25: raw HP \u00f7 (1 \u2212 defense/200).'
+        };
+        header.dataset.tip = tipMap[v];
+        renderTable();
+    }
+
+    function sortBy(key) {
+        if (sortKey === key) { sortAsc = !sortAsc; }
+        else { sortKey = key; sortAsc = (key === 'Name' || key === 'Zone'); }
+        renderTable();
+    }
+
+    function renderTable() {
+        var rows = currentRows();
+        rows = applyFilters(rows);
+        if (sortKey) rows = applySort(rows, sortKey, sortAsc);
+        updateSortHeaders();
+
+        var scoreKey = { threat: 'ThreatScore', loot: 'LootScore', defense: 'DefenseScore' }[view];
+        var maxScore = 0;
+        rows.forEach(function(r) { if ((r[scoreKey] || 0) > maxScore) maxScore = r[scoreKey] || 0; });
+
+        var tbody = document.getElementById('rankBody');
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No mobs match the current filters.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map(function(r) {
+            var score = r[scoreKey] || 0;
+            var pct   = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
+            var isTop = pct > 85;
+
+            var dps  = (r.DPS  != null) ? r.DPS.toFixed(2)  : '&mdash;';
+            var ehp  = (r.EHP  != null) ? Math.round(r.EHP) : '&mdash;';
+            var loot = (r.LootScore > 0) ? r.LootScore.toFixed(1) : '<span class="muted">&mdash;</span>';
+
+            var scoreHtml = '<div class="score-cell">' +
+                '<span class="score-val num">' + score.toFixed(2) + '</span>' +
+                '<span class="score-bar-track"><span class="score-bar-fill' + (isTop ? ' top' : '') + '" style="width:' + pct + '%"></span></span>' +
+                '</div>';
+
+            return '<tr onclick="showDetail(' + r.MobId + ')" style="cursor:pointer">' +
+                '<td class="mob-id">' + r.MobId + '</td>' +
+                '<td class="mob-name"><a href="/admin/mobs#' + r.MobId + '" onclick="event.stopPropagation()">' + escHtml(r.Name) + '</a></td>' +
+                '<td>' + (r.Zone ? '<span class="zone-pill">' + escHtml(r.Zone) + '</span>' : '<span class="muted">&mdash;</span>') + '</td>' +
+                '<td>' + (r.Hostile ? '<span class="hostile-badge hostile-yes">hostile</span>' : '<span class="hostile-badge hostile-no">passive</span>') + '</td>' +
+                '<td class="num">' + dps + '</td>' +
+                '<td class="num">' + ehp + '</td>' +
+                '<td class="num">' + loot + '</td>' +
+                '<td>' + scoreHtml + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function showDetail(mobId) {
+        var rows = allData.by_threat || [];
+        var mob = null;
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].MobId === mobId) { mob = rows[i]; break; }
+        }
+        if (!mob) return;
+
+        document.getElementById('detailTitle').textContent = mob.Name + ' (ID ' + mob.MobId + ')';
+        var html = '';
+
+        html += '<div class="detail-card">';
+        html += '<div class="detail-card-header">Combat (Lv25)</div>';
+        html += ds('Dice',    mob.DiceRoll || '&mdash;');
+        html += ds('DPS',     mob.DPS  != null ? mob.DPS.toFixed(3)  : '&mdash;');
+        html += ds('Max Hit', mob.MaxDmg > 0   ? mob.MaxDmg          : '&mdash;');
+        html += ds('HP',      mob.HP   > 0     ? mob.HP              : '&mdash;');
+        html += ds('Defense', mob.Defense != null ? mob.Defense      : '&mdash;');
+        html += ds('eHP',     mob.EHP  != null ? Math.round(mob.EHP) : '&mdash;');
+        html += ds('Threat',  mob.Threat != null ? mob.Threat.toFixed(2) : '&mdash;');
+        html += '</div>';
+
+        html += '<div class="detail-card">';
+        html += '<div class="detail-card-header">Loot</div>';
+        html += ds('Gold',       mob.Gold || 0);
+        html += ds('Drop %',     (mob.ItemDropChance || 0) + '%');
+        html += ds('Item Value', mob.ItemValue || 0);
+        html += ds('Loot Score', mob.LootScore != null ? mob.LootScore.toFixed(1) : '0');
+        if (mob.ItemCount > 0) {
+            html += ds('Items', mob.ItemCount + ' carried');
+        }
+        html += '</div>';
+
+        html += '<div class="detail-card">';
+        html += '<div class="detail-card-header">Info</div>';
+        html += ds('Zone',    mob.Zone || '&mdash;');
+        html += ds('Hostile', mob.Hostile ? 'Yes' : 'No');
+        html += '</div>';
+
+        document.getElementById('detailContent').innerHTML = html;
+        var panel = document.getElementById('detailPanel');
+        panel.classList.add('open');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function ds(label, value) {
+        return '<div class="detail-stat"><span>' + label + '</span><span class="val">' + value + '</span></div>';
+    }
+
+    function closeDetail() {
+        document.getElementById('detailPanel').classList.remove('open');
+    }
+
+    function currentRows() {
+        var map = { threat: 'by_threat', loot: 'by_loot', defense: 'by_defense' };
+        return (allData[map[view]] || []).slice();
+    }
+
+    function applyFilters(rows) {
+        var zone    = document.getElementById('filterZone').value;
+        var hostile = document.getElementById('filterHostile').value;
+        var search  = document.getElementById('filterSearch').value.toLowerCase().trim();
+        return rows.filter(function(r) {
+            if (zone    && r.Zone !== zone) return false;
+            if (hostile === 'yes' && !r.Hostile) return false;
+            if (hostile === 'no'  &&  r.Hostile) return false;
+            if (search  && r.Name.toLowerCase().indexOf(search) === -1) return false;
+            return true;
+        });
+    }
+
+    function applySort(rows, key, asc) {
+        return rows.slice().sort(function(a, b) {
+            var av = a[key], bv = b[key];
+            if (av == null) av = 0;
+            if (bv == null) bv = 0;
+            if (typeof av === 'string') av = av.toLowerCase();
+            if (typeof bv === 'string') bv = bv.toLowerCase();
+            if (av < bv) return asc ? -1 :  1;
+            if (av > bv) return asc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    function updateSortHeaders() {
+        document.querySelectorAll('.rank-table th.sortable').forEach(function(th) {
+            var k = th.dataset.key;
+            th.classList.toggle('sorted-asc',  sortKey === k &&  sortAsc);
+            th.classList.toggle('sorted-desc', sortKey === k && !sortAsc);
+        });
+    }
+
+    function showError(msg) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar error';
+    }
+    function hideError() {
+        document.getElementById('statusBar').className = 'status-bar';
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // tooltip engine
+    (function() {
+        var tip = document.getElementById('tooltip');
+        var SCORE_TIPS = {
+            threat:  'DPS \u00d7 eHP at level 25.',
+            loot:    'Expected loot value per kill: Gold + (ItemDropChance% \u00d7 total item value).',
+            defense: 'Effective HP at level 25: raw HP \u00f7 (1 \u2212 defense/200).'
+        };
+        document.getElementById('scoreHeader').dataset.tip = SCORE_TIPS['threat'];
+
+        document.querySelectorAll('.rank-table th[data-tip]').forEach(function(th) {
+            th.addEventListener('mouseenter', function(e) {
+                var text = th.dataset.tip;
+                if (!text) return;
+                tip.textContent = text;
+                tip.style.display = 'block';
+                pos(e);
+            });
+            th.addEventListener('mousemove', pos);
+            th.addEventListener('mouseleave', function() { tip.style.display = 'none'; });
+        });
+
+        function pos(e) {
+            var pad = 12, tw = tip.offsetWidth, th2 = tip.offsetHeight;
+            var x = e.clientX + pad, y = e.clientY + pad;
+            if (x + tw  > window.innerWidth  - pad) x = e.clientX - tw  - pad;
+            if (y + th2 > window.innerHeight - pad) y = e.clientY - th2 - pad;
+            tip.style.left = x + 'px';
+            tip.style.top  = y + 'px';
+        }
+    })();
+})();
+</script>
+
+{{template "footer" .}}

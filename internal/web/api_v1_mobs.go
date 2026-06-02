@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 )
@@ -29,6 +30,19 @@ func apiV1GetMobs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, APIResponse[[]mobListEntry]{
 		Success: true,
 		Data:    result,
+	})
+}
+
+// GET /admin/api/v1/mobs/ranks
+func apiV1GetMobRanks(w http.ResponseWriter, r *http.Request) {
+	byThreat, byLoot, byDefense := combat.RankMobs()
+	writeJSON(w, http.StatusOK, APIResponse[map[string]any]{
+		Success: true,
+		Data: map[string]any{
+			"by_threat":  byThreat,
+			"by_loot":    byLoot,
+			"by_defense": byDefense,
+		},
 	})
 }
 

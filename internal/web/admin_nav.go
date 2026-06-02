@@ -23,6 +23,7 @@ func buildAdminNav() []WebNavItem {
 					Description: "Define and manage non-player character templates.",
 					Children: []WebNavItem{
 						{Label: "View / Edit", Target: "/admin/mobs", Description: "Browse, create, and edit mob definitions."},
+						{Label: "Rankings", Target: "/admin/mob-rankings", Description: "View mob power and loot rankings across all types."},
 						{Label: "API Docs", Target: "/admin/mobs-api", Description: "REST API reference for the mobs endpoint."},
 					},
 				},
