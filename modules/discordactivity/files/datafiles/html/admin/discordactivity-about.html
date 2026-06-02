@@ -1,0 +1,398 @@
+{{template "header" .}}
+
+<style>
+    .about-h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .about-subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+    .about-section {
+        background: var(--color-surface-white); border: 1px solid var(--color-border);
+        border-radius: 6px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+    }
+    .about-section h2 {
+        font-size: 1.05rem; margin: 0 0 0.75rem; color: var(--color-text-strong);
+        padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-light);
+    }
+    .about-section p {
+        font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 0.6rem;
+    }
+    .about-section p:last-child { margin-bottom: 0; }
+    .about-section a { color: var(--color-primary); }
+
+    /* Numbered step list */
+    .step-list { list-style: none; padding: 0; margin: 0; counter-reset: step-counter; }
+    .step-list > li {
+        counter-increment: step-counter;
+        display: flex; gap: 1rem; align-items: flex-start;
+        padding: 0.85rem 0; border-bottom: 1px solid var(--color-border-light);
+        font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.55;
+    }
+    .step-list > li:last-child { border-bottom: none; padding-bottom: 0; }
+    .step-num {
+        flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+        background: var(--color-primary); color: #fff;
+        font-size: 0.75rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 1px;
+    }
+    .step-body { flex: 1; }
+    .step-body strong { color: var(--color-text-strong); }
+    .step-body code {
+        background: var(--color-surface-alt); border: 1px solid var(--color-border);
+        border-radius: 3px; padding: 0.1rem 0.35rem; font-family: monospace; font-size: 0.85em;
+        color: var(--color-text-strong);
+    }
+    .step-body .note {
+        margin-top: 0.4rem; font-size: 0.8rem; color: var(--color-text-faint);
+        background: var(--color-surface-alt); border-left: 3px solid var(--color-border);
+        padding: 0.35rem 0.6rem; border-radius: 0 3px 3px 0;
+    }
+    .step-body .note strong { color: var(--color-text-secondary); }
+
+    /* Sub-steps */
+    .sub-steps { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+    .sub-steps li {
+        padding: 0.2rem 0 0.2rem 1rem;
+        font-size: 0.85rem; color: var(--color-text-secondary);
+        border-left: 2px solid var(--color-border-light);
+        margin-bottom: 0.2rem;
+    }
+    .sub-steps li::before { content: "→ "; color: var(--color-primary); font-weight: 600; }
+
+    /* Two-column table for URL mapping */
+    .mapping-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.85rem; }
+    .mapping-table th {
+        text-align: left; padding: 0.35rem 0.6rem;
+        background: var(--color-surface-alt); color: var(--color-text-muted);
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;
+        border: 1px solid var(--color-border);
+    }
+    .mapping-table td {
+        padding: 0.4rem 0.6rem; border: 1px solid var(--color-border);
+        font-family: monospace; color: var(--color-text-strong);
+    }
+
+    /* Section divider headings inside a section */
+    .sub-heading {
+        font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.06em; color: var(--color-text-muted);
+        margin: 1.1rem 0 0.5rem; padding-top: 0.8rem;
+        border-top: 1px solid var(--color-border-light);
+    }
+    .sub-heading:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .warning-box {
+        background: var(--color-warning-bg, #fff8e1); border: 1px solid var(--color-warning-border, #ffe082);
+        border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.85rem;
+        color: var(--color-warning-text, #795548); margin: 0.5rem 0 0.75rem;
+    }
+    .info-box {
+        background: var(--color-info-bg, #e3f2fd); border: 1px solid var(--color-info-border, #90caf9);
+        border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.85rem;
+        color: var(--color-info-text, #1565c0); margin: 0.5rem 0 0.75rem;
+    }
+
+    .no-tags { font-size: 0.875rem; color: var(--color-text-faint); font-style: italic; }
+</style>
+
+<h1 class="about-h1">Discord Activity</h1>
+<p class="about-subtitle">Version 1.0 &mdash; Embed GoMud as a playable Discord Activity inside voice channels.</p>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>What This Module Does</h2>
+    <p>The Discord Activity module serves the full GoMud web client as a Discord Embedded App. Players can connect to the MUD directly inside a Discord voice channel by clicking the rocket (Activities) icon, without leaving Discord.</p>
+    <p>The Activity is functionally identical to the standard web client: same WebSocket endpoint, same xterm.js terminal, GMCP, audio, triggers, and virtual window panels. Players log in with their normal MUD username and password &mdash; no Discord account linking is required.</p>
+    <p>Virtual window panels (character stats, map, gear, etc.) are hidden by default to make the best use of the compact Activity frame. They become visible automatically when the user expands the Activity to full-screen using Discord's expand button.</p>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Part 1 &mdash; Create the Discord Application</h2>
+    <p>These steps are done once in the Discord Developer Portal. You need a Discord account with Developer Mode enabled.</p>
+
+    <div class="sub-heading">Enable Developer Mode on Your Account</div>
+    <p>Discord's Activity shelf only appears for accounts that have Developer Mode enabled.</p>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                Open Discord and go to <strong>User Settings</strong> (the gear icon next to your username in the bottom-left).
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Click <strong>Advanced</strong> in the left sidebar and toggle <strong>Developer Mode</strong> on.
+                <div class="note">This setting is per-account. Each person who wants to test the Activity in Discord must enable it on their own account.</div>
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Create the Application</div>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                Go to <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">discord.com/developers/applications</a> and click <strong>New Application</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Give it a name (e.g. the name of your MUD). Accept the terms and click <strong>Create</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                On the <strong>General Information</strong> page, copy the <strong>Application ID</strong>. You will need this later.
+                <div class="note">The Application ID is a long number, e.g. <code>1234567890123456789</code>. It is public and safe to store in config.</div>
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Enable Activities and Configure URL Mapping</div>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                In the left sidebar of the Developer Portal, click <strong>Activities</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Click <strong>Enable Activities</strong> to turn on the Activities feature for this application.
+                <div class="note">This makes the application visible in Discord's Activity shelf and unlocks the URL Mapping settings.</div>
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Under <strong>URL Mappings</strong>, click <strong>Add a mapping</strong> and enter the following:
+                <table class="mapping-table" style="margin-top:0.5rem;">
+                    <tr><th>Prefix</th><th>Target</th></tr>
+                    <tr>
+                        <td>/</td>
+                        <td>your-server-domain.com:443</td>
+                    </tr>
+                </table>
+                Replace <code>your-server-domain.com:443</code> with the hostname and HTTPS port of your GoMud server. The exact value to use is shown on the <a href="/admin/discordactivity-config">Config page</a> under "Activity Host".
+                <div class="note"><strong>Do not include a protocol</strong> (<code>https://</code>) in the Target field. Discord adds the protocol automatically. Targets must point to a directory root, not a specific file.</div>
+            </div>
+        </li>
+        <li>
+            <span class="step-num">4</span>
+            <div class="step-body">
+                Save the URL mapping. Discord will now proxy all Activity requests through to your GoMud server.
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Set Up the Entry Point (Required to Appear in the Shelf)</div>
+    <p>Discord requires an "Entry Point Command" for the Activity to appear in the Activity shelf inside voice channels.</p>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                Still under <strong>Activities</strong> in the Developer Portal, scroll down to <strong>Default Entry Point Command</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Set the handler to <strong>Activity</strong> (not a slash command). This tells Discord to open your Activity URL directly when a user clicks the Activity in the shelf.
+                <div class="note">If this section is not visible, ensure you have clicked <strong>Enable Activities</strong> first.</div>
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Add a Redirect URI (Required for the SDK Handshake)</div>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                In the left sidebar, click <strong>OAuth2</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Under <strong>Redirects</strong>, click <strong>Add Redirect</strong> and enter <code>https://your-server-domain.com/discord-activity</code>.
+                <div class="note">Use the same domain as your GoMud server's HTTPS address. This is required by the Discord SDK handshake even though this module does not perform OAuth2 user login.</div>
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Click <strong>Save Changes</strong>.
+            </div>
+        </li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Part 2 &mdash; Configure GoMud</h2>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                Go to the <a href="/admin/discordactivity-config">Discord Activity Config page</a> in this admin panel.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Paste the <strong>Application ID</strong> you copied from the Developer Portal into the <strong>Application ID</strong> field and click <strong>Save</strong>.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Confirm that GoMud is running with HTTPS configured (<code>Network.HttpsPort</code> set in server config). Discord will refuse to load an Activity served over plain HTTP.
+                <div class="note">If the Config page shows a warning about HTTPS not being configured, set up TLS before proceeding. See the <strong>HTTPS</strong> section in the admin settings.</div>
+            </div>
+        </li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Part 3 &mdash; Add the Application to a Discord Server</h2>
+    <p>Before the Activity appears in a server's Activity shelf, the application must be installed into that server.</p>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                In the Developer Portal, go to <strong>Installation</strong> in the left sidebar.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Under <strong>Install Link</strong>, copy the generated OAuth2 install URL (or the Discord-provided install link).
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Open the install URL in a browser while logged into Discord. Select the server you want to add the Activity to and click <strong>Authorize</strong>.
+                <div class="note">You need <strong>Manage Server</strong> (or Administrator) permission in the target server to install an application.</div>
+            </div>
+        </li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Part 4 &mdash; Testing the Activity</h2>
+
+    <div class="sub-heading">Launching in Discord Desktop</div>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                Join any voice channel in a server where the application has been installed.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                In the voice channel controls (the panel that appears at the bottom or side), click the <strong>rocket icon</strong> to open the Activity shelf.
+                <div class="note">The rocket icon only appears when Developer Mode is enabled on your account and at least one Activity-capable application is installed in the server.</div>
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Find your MUD application in the shelf and click it. The Activity will load in an embedded panel showing the MUD terminal.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">4</span>
+            <div class="step-body">
+                Click the <strong>expand / full-screen button</strong> (the arrows icon in the Activity frame's top-right corner) to switch to full-screen mode. The virtual window panels (map, character stats, gear, etc.) will appear.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">5</span>
+            <div class="step-body">
+                Log in with your normal MUD username and password at the terminal prompt.
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Launching on Discord Mobile</div>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                From your User Profile, tap <strong>Appearance</strong> and toggle <strong>Developer Mode</strong> on.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Join a voice channel and tap the Activity button to open the shelf, then select your application.
+            </div>
+        </li>
+    </ol>
+
+    <div class="sub-heading">Viewing Debug Logs</div>
+    <p>If the Activity does not load or shows an error, use Discord's built-in developer tools to diagnose the problem.</p>
+    <ol class="step-list">
+        <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+                On desktop, open the Activity and press <strong>Ctrl+Shift+I</strong> (Windows/Linux) or <strong>Cmd+Option+I</strong> (Mac) to open the browser developer tools inside the Activity frame.
+                <div class="note">Alternatively, in Discord's top menu go to <strong>View &rarr; Developer &rarr; Toggle Developer Tools</strong>.</div>
+            </div>
+        </li>
+        <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+                Check the <strong>Console</strong> tab for errors. Activity-specific log messages are prefixed with <code>[RpcApplicationLogger]</code> followed by your Application ID.
+            </div>
+        </li>
+        <li>
+            <span class="step-num">3</span>
+            <div class="step-body">
+                Check the <strong>Network</strong> tab to confirm that requests to <code>/discord-activity</code> and <code>/ws</code> are succeeding. Failed requests here usually mean the URL Mapping target is incorrect or the server is not reachable over HTTPS.
+            </div>
+        </li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Troubleshooting</h2>
+    <p><strong>Activity does not appear in the rocket shelf.</strong><br>
+    Confirm Developer Mode is enabled on your account, the application is installed in the server, and the Entry Point Command handler is set to <strong>Activity</strong> in the Developer Portal.</p>
+
+    <p><strong>Activity loads but shows a blank page or "not configured" error.</strong><br>
+    The Application ID has not been saved in GoMud. Go to the <a href="/admin/discordactivity-config">Config page</a> and save the correct Application ID.</p>
+
+    <p><strong>Activity loads but the SDK handshake fails (console shows a ready() error).</strong><br>
+    The Application ID in GoMud config does not match the one registered in the Discord Developer Portal, or the Redirect URI has not been added under OAuth2 in the portal.</p>
+
+    <p><strong>Activity shows an error about HTTP / mixed content.</strong><br>
+    GoMud must be served over HTTPS. Configure <code>Network.HttpsPort</code> and ensure a valid TLS certificate is in place.</p>
+
+    <p><strong>WebSocket connection fails inside the Activity.</strong><br>
+    Verify the URL Mapping in the Developer Portal has the correct Target (no <code>https://</code> prefix, correct hostname and port). The target must resolve to your GoMud server's HTTPS address.</p>
+
+    <p><strong>Virtual window panels do not appear.</strong><br>
+    Panels are intentionally hidden in compact mode. Click the expand/full-screen button in the Activity frame's top-right corner to enter full-screen mode.</p>
+</div>
+
+<!-- ============================================================ -->
+<div class="about-section">
+    <h2>Technical Notes</h2>
+    <p>The Activity page is served at <code>/discord-activity</code> on the GoMud HTTPS server. It uses the Discord Embedded App SDK loaded from CDN &mdash; no Node.js, npm, or build step is required.</p>
+    <p>Discord proxies all HTTP and WebSocket traffic through its own proxy layer (<code>*.discordsays.com</code>). The SDK's <code>patchUrlMappings()</code> call rewrites outbound connections transparently, so the existing <code>/ws</code> WebSocket endpoint works without any server-side changes.</p>
+    <p>The Activity HTML is based on <code>webclient-pure.html</code>. If core webclient functionality changes in that file, the same changes should be applied to <code>discord-activity.html</code> in this module's <code>files/datafiles/html/public/</code> directory.</p>
+    <p>Room Tags: <span class="no-tags">This module does not use any room tags.</span></p>
+</div>
+
+{{template "footer" .}}

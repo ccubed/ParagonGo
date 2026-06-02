@@ -94,6 +94,50 @@ func TryRoomScriptEvent(eventName string, userId int, roomId int) (bool, error) 
 	return false, ErrEventNotFound
 }
 
+func TryRoomTryExitEvent(exitName string, userId int, roomId int) (bool, error) {
+
+	vmw, err := getRoomVM(roomId)
+	if err != nil {
+		return false, err
+	}
+
+	timestart := time.Now()
+	defer func() {
+		mudlog.Debug("TryRoomTryExitEvent()", "exitName", exitName, "roomId", roomId, "time", time.Since(timestart))
+	}()
+
+	if onTryExitFunc, ok := vmw.GetFunction(`onTryExit`); ok {
+
+		// Set forced ansi tag wrappers
+		userTextWrap.Set(`script-text`, ``, ``)
+		roomTextWrap.Set(`script-text`, ``, ``)
+
+		sUser := GetActor(userId, 0)
+		sRoom := GetRoom(roomId)
+
+		res, err := runCallable(vmw, scriptRoomTimeout, onTryExitFunc,
+			vmw.VM.ToValue(exitName),
+			vmw.VM.ToValue(sUser),
+			vmw.VM.ToValue(sRoom),
+		)
+
+		userTextWrap.Reset()
+		roomTextWrap.Reset()
+
+		if err != nil {
+			return false, fmt.Errorf("onTryExit(): %w", err)
+		}
+
+		if boolVal, ok := res.Export().(bool); ok && !boolVal {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	return false, ErrEventNotFound
+}
+
 func TryRoomIdleEvent(roomId int) (bool, error) {
 
 	vmw, err := getRoomVM(roomId)

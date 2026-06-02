@@ -11,6 +11,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/automission"
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
 	_ "github.com/GoMudEngine/GoMud/modules/clibridge"
+	_ "github.com/GoMudEngine/GoMud/modules/discordactivity"
 	_ "github.com/GoMudEngine/GoMud/modules/elections"
 	_ "github.com/GoMudEngine/GoMud/modules/fasttravel"
 	_ "github.com/GoMudEngine/GoMud/modules/fishing"

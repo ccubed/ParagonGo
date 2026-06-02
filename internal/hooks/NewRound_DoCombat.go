@@ -138,6 +138,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
+			if blocked, err := scripting.TryRoomTryExitEvent(exitName, user.UserId, user.Character.RoomId); err == nil && blocked {
+				user.SendText(`Something prevents you from fleeing!`)
+				continue
+			}
+
 			user.SendText(fmt.Sprintf(`You flee to the <ansi fg="exit">%s</ansi> exit!`, exitName))
 			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> flees to the <ansi fg="exit">%s</ansi> exit!`, user.Character.Name, exitName), user.UserId)
 

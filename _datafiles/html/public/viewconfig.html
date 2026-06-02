@@ -1,21 +1,107 @@
 {{template "header" .}}
 
-    <div class="overlay">
-        <h3>Server Config: </h3>
+<style>
+  .cfg-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    width: 100%;
+  }
 
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Value</th>
-            </tr>
-            {{range $name, $value := (.CONFIG.AllConfigData "bannednames" "*startroom*" "script*"  "onlogin*" "nextroomid*" "mob*" "*port" "seed*" "folder*" "file*" "seedint" "carefulsavefiles" "lootgoblin*" "maxcpucores" "*roommessagewrapper" "logintervalroundcount" ) }}
-            <tr>
-                <td>{{ $name }}</td>
-                <td>{{ $value }}</td>
-            </tr>
-            {{end}}
-        </table>
+  .cfg-row {
+    display: grid;
+    grid-template-columns: 38% 62%;
+    border-bottom: 1px solid var(--t-border-faint);
+    transition: background 0.1s;
+  }
+
+  .cfg-row:last-child {
+    border-bottom: none;
+  }
+
+  .cfg-row:hover {
+    background: var(--t-bg-hover);
+  }
+
+  .cfg-row:nth-child(even) {
+    background: var(--t-bg-surface);
+  }
+
+  .cfg-row:nth-child(even):hover {
+    background: var(--t-bg-hover);
+  }
+
+  .cfg-key {
+    padding: 10px 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65em;
+    color: var(--t-text-secondary);
+    border-left: 3px solid var(--t-border-accent);
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+  }
+
+  .cfg-val {
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 1.1em;
+    color: var(--t-text);
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+  }
+
+  .cfg-val.is-number  { color: var(--t-accent); }
+  .cfg-val.is-true    { color: var(--t-success); }
+  .cfg-val.is-false   { color: var(--t-text-dim); }
+
+  .cfg-section-title {
+    color: var(--t-accent);
+    font-size: 1em;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--t-border-accent);
+    text-align: left;
+  }
+
+  @media (max-width: 600px) {
+    .cfg-row {
+      grid-template-columns: 1fr;
+    }
+    .cfg-key {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+    .cfg-val {
+      padding-top: 4px;
+      padding-left: 17px;
+    }
+  }
+</style>
+
+<div class="overlay">
+  <h3 class="cfg-section-title">Server Configuration</h3>
+  <div class="cfg-grid">
+    {{range $name, $value := (.CONFIG.AllConfigData "bannednames" "*startroom*" "script*" "onlogin*" "nextroomid*" "mob*" "*port" "seed*" "folder*" "file*" "seedint" "carefulsavefiles" "lootgoblin*" "maxcpucores" "*roommessagewrapper" "logintervalroundcount")}}
+    <div class="cfg-row">
+      <div class="cfg-key">{{ $name }}</div>
+      <div class="cfg-val" data-cfgval="{{ $value }}">{{ $value }}</div>
     </div>
-        <p>&nbsp;</p>
+    {{end}}
+  </div>
+</div>
+<p>&nbsp;</p>
+
+<script>
+(function() {
+  document.querySelectorAll('.cfg-val[data-cfgval]').forEach(function(el) {
+    var v = el.getAttribute('data-cfgval').trim();
+    if (v === 'true')  { el.classList.add('is-true'); }
+    else if (v === 'false') { el.classList.add('is-false'); }
+    else if (/^-?\d+(\.\d+)?$/.test(v)) { el.classList.add('is-number'); }
+  });
+})();
+</script>
 
 {{template "footer" .}}

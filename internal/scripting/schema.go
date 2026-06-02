@@ -87,6 +87,17 @@ func roomScriptType() *ScriptTypeDef {
 				Stub:            "function onEnter(user, room) {\n\n}\n",
 			},
 			{
+				Name:        "onTryExit",
+				Description: "Called before a player leaves the room. Return false to prevent the movement.",
+				Params: []ScriptFuncParam{
+					{Name: "exitName", Type: "string", Description: "The exit direction or name the player is attempting to use."},
+					{Name: "user", Type: "ActorObject", Description: "The player attempting to leave."},
+					{Name: "room", Type: "RoomObject", Description: "The room being exited."},
+				},
+				ReturnSemantics: "Return false to block the movement. Any other return value (or none) allows it.",
+				Stub:            "function onTryExit(exitName, user, room) {\n\n    return true;\n}\n",
+			},
+			{
 				Name:        "onExit",
 				Description: "Called when a player leaves the room.",
 				Params: []ScriptFuncParam{

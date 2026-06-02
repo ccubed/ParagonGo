@@ -1,0 +1,668 @@
+{{template "header" .}}
+
+<style>
+/* ── shared doc layout ────────────────────────────────────────────── */
+.doc-layout { display: grid; grid-template-columns: 220px 1fr; gap: 2rem; align-items: start; }
+.doc-sidebar {
+    position: sticky; top: 1rem;
+    max-height: calc(100vh - 5rem); overflow-y: auto;
+    background: var(--color-surface-white); border: 1px solid var(--color-border);
+    border-radius: 8px; padding: 1rem 0;
+    scrollbar-width: thin;
+}
+.doc-sidebar h3 {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--color-text-subtle); padding: 0 1rem 0.4rem; margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.doc-sidebar a {
+    display: block; padding: 0.3rem 1rem; font-size: 0.85rem;
+    color: var(--color-text-secondary); text-decoration: none;
+    transition: background 0.1s, color 0.1s;
+}
+.doc-sidebar a:hover { background: var(--color-surface-alt); color: var(--color-primary); }
+.doc-sidebar a.active { background: var(--color-surface-alt); color: var(--color-primary); font-weight: 600; border-left: 3px solid var(--color-primary); padding-left: calc(1rem - 3px); }
+.doc-sidebar .sidebar-group { margin-bottom: 0.5rem; }
+.doc-sidebar .sidebar-section-label {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--color-text-faint); padding: 0.5rem 1rem 0.15rem; display: block;
+}
+
+/* ── page header ──────────────────────────────────────────────────── */
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.6rem; }
+.page-header .subtitle { color: var(--color-text-muted); font-size: 0.9rem; }
+.breadcrumb { font-size: 0.8rem; color: var(--color-text-faint); margin-bottom: 0.5rem; }
+.breadcrumb a { color: var(--color-text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--color-primary); }
+.breadcrumb span { margin: 0 0.3rem; }
+
+/* ── callout boxes ────────────────────────────────────────────────── */
+.callout {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1.5rem;
+    font-size: 0.875rem; line-height: 1.6;
+}
+.callout-info  { background: var(--color-info-bg,  #dbeafe); border: 1px solid var(--color-info-border,  #93c5fd); color: var(--color-info-text,  #1e40af); }
+.callout-warn  { background: var(--color-warn-bg,  #fef3c7); border: 1px solid var(--color-warn-border,  #fcd34d); color: var(--color-warn-text,  #92400e); }
+.callout-tip   { background: var(--color-tip-bg,   #d1fae5); border: 1px solid var(--color-tip-border,   #6ee7b7); color: var(--color-tip-text,   #065f46); }
+.callout-icon  { flex-shrink: 0; margin-top: 0.1rem; }
+.callout p     { margin: 0; }
+.callout code  { font-family: monospace; font-size: 0.85em; background: rgba(0,0,0,0.08); padding: 0.1em 0.3em; border-radius: 3px; }
+
+/* ── section headings ─────────────────────────────────────────────── */
+.doc-section { margin-bottom: 2.5rem; scroll-margin-top: 1rem; }
+.doc-section h2 {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;
+    padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-border-light);
+    color: var(--color-text);
+}
+.doc-section h3 { font-size: 0.95rem; font-weight: 700; margin: 1.5rem 0 0.6rem; color: var(--color-text); }
+.doc-section p  { font-size: 0.875rem; color: var(--color-text-tertiary); line-height: 1.7; margin-bottom: 0.75rem; }
+.doc-section ul { font-size: 0.875rem; color: var(--color-text-tertiary); line-height: 1.7; margin-bottom: 0.75rem; padding-left: 1.5rem; }
+.doc-section ul li { margin-bottom: 0.2rem; }
+
+/* ── reference tables ─────────────────────────────────────────────── */
+.ref-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-bottom: 1rem; }
+.ref-table thead tr { border-bottom: 2px solid var(--color-border); }
+.ref-table th { text-align: left; padding: 0.4rem 0.75rem; color: var(--color-text-secondary); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.ref-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border-faint); color: var(--color-text-tertiary); vertical-align: top; }
+.ref-table tr:last-child td { border-bottom: none; }
+.ref-table code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-alt); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+
+/* ── code blocks ──────────────────────────────────────────────────── */
+.code-block {
+    background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    border-radius: 6px; margin-bottom: 1.25rem; overflow: hidden;
+}
+.code-block-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.4rem 0.85rem; background: var(--color-border-faint);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.75rem; font-family: monospace; color: var(--color-text-muted);
+}
+.code-block pre { margin: 0; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; }
+.code-block code { background: none; padding: 0; border: none; color: var(--color-text); font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace; }
+
+/* ── hook cards ───────────────────────────────────────────────────── */
+.hook-card {
+    background: var(--color-surface-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+.hook-card-header {
+    display: flex; align-items: baseline; gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    background: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border);
+}
+.hook-card-name {
+    font-family: monospace; font-size: 1rem; font-weight: 700;
+    color: var(--color-primary);
+}
+.hook-card-pkg {
+    font-family: monospace; font-size: 0.78rem;
+    color: var(--color-text-faint);
+    background: var(--color-border-faint);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px; padding: 0.1em 0.45em;
+}
+.hook-card-body { padding: 1.25rem; }
+.hook-card-body > p { font-size: 0.875rem; color: var(--color-text-tertiary); line-height: 1.7; margin-bottom: 1rem; }
+.hook-card-body h4 {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--color-text-subtle); margin: 1.25rem 0 0.5rem;
+}
+.hook-card-body h4:first-child { margin-top: 0; }
+
+/* ── field table inside hook cards ───────────────────────────────── */
+.field-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 0; }
+.field-table thead tr { border-bottom: 1px solid var(--color-border); }
+.field-table th { text-align: left; padding: 0.35rem 0.65rem; color: var(--color-text-secondary); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.field-table td { padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--color-border-faint); color: var(--color-text-tertiary); vertical-align: top; }
+.field-table tr:last-child td { border-bottom: none; }
+.field-table code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-alt); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+.field-table .type-badge {
+    display: inline-block; font-family: monospace; font-size: 0.75em;
+    background: var(--color-info-bg, #dbeafe); color: var(--color-info-text, #1e40af);
+    border: 1px solid var(--color-info-border, #93c5fd);
+    border-radius: 3px; padding: 0.05em 0.4em; white-space: nowrap;
+}
+.field-table .rw-badge {
+    display: inline-block; font-size: 0.7em; font-weight: 700;
+    border-radius: 3px; padding: 0.05em 0.4em; white-space: nowrap;
+}
+.rw-rw { background: var(--color-tip-bg, #d1fae5); color: var(--color-tip-text, #065f46); border: 1px solid var(--color-tip-border, #6ee7b7); }
+.rw-ro { background: var(--color-surface-alt); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+
+/* ── fire-point callout ───────────────────────────────────────────── */
+.fire-point {
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    padding: 0.65rem 0.85rem; border-radius: 5px; margin-bottom: 0.75rem;
+    font-size: 0.82rem; line-height: 1.55;
+    background: var(--color-warn-bg, #fef3c7);
+    border: 1px solid var(--color-warn-border, #fcd34d);
+    color: var(--color-warn-text, #92400e);
+}
+.fire-point code { font-family: monospace; font-size: 0.85em; background: rgba(0,0,0,0.07); padding: 0.1em 0.3em; border-radius: 3px; }
+
+/* ── responsive ───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .doc-layout  { grid-template-columns: 1fr; }
+    .doc-sidebar { position: static; max-height: none; }
+}
+</style>
+
+<div class="doc-layout">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════════════ -->
+<aside class="doc-sidebar" id="doc-sidebar">
+    <h3>Coding Docs</h3>
+
+    <span class="sidebar-section-label">Hooks</span>
+    <div class="sidebar-group">
+        <a href="#hooks-overview">Overview</a>
+        <a href="#hooks-pattern">Usage Pattern</a>
+    </div>
+
+    <span class="sidebar-section-label">Hook Reference</span>
+    <div class="sidebar-group">
+        <a href="#hook-OnRoomLook">rooms.OnRoomLook</a>
+        <a href="#hook-OnGetFormattedName">characters.OnGetFormattedName</a>
+        <a href="#hook-OnShopList">usercommands.OnShopList</a>
+        <a href="#hook-OnShopListRendered">usercommands.OnShopListRendered</a>
+        <a href="#hook-OnInsufficientFunds">usercommands.OnInsufficientFunds</a>
+        <a href="#hook-OnAutoComplete">suggestions.OnAutoComplete</a>
+    </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════════════════════════ -->
+<div>
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="/admin/">Admin</a><span>/</span>
+        Docs<span>/</span>
+        Coding
+    </div>
+    <h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Coding Reference
+    </h1>
+    <p class="subtitle">Engine extension points and patterns for Go module authors.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     HOOKS OVERVIEW
+══════════════════════════════════════════════════════════════════ -->
+<section class="doc-section" id="hooks-overview">
+    <h2>Hooks</h2>
+
+    <p>A <strong>hook</strong> is a named extension point in the engine where modules can inject behavior without modifying core code. Hooks are typed, synchronous, and safe for concurrent registration from multiple modules.</p>
+
+    <p>Hooks use a <em>value-threading</em> model: each registered handler receives the current value, may modify any field, and returns the (possibly modified) value. Handlers are called in registration order. The final value after all handlers have run is returned to the engine.</p>
+
+    <div class="callout callout-info">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>If no handlers are registered, the hook is a no-op: the original value passes through unchanged. You never need to guard against a hook being unused.</p>
+    </div>
+
+    <p>The generic type is declared in <code>internal/util/hook.go</code>:</p>
+
+    <div class="code-block">
+        <div class="code-block-header">internal/util/hook.go</div>
+        <pre><code class="language-go">type Hook[T any] struct { ... }
+
+// Register adds a handler. Handlers are called in registration order.
+func (h *Hook[T]) Register(fn func(T) T)
+
+// Fire calls every registered handler in order and returns the final value.
+func (h *Hook[T]) Fire(data T) T</code></pre>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     USAGE PATTERN
+══════════════════════════════════════════════════════════════════ -->
+<section class="doc-section" id="hooks-pattern">
+    <h2>Usage Pattern</h2>
+
+    <p>All hooks follow the same three-step pattern: the engine <em>defines</em> the hook and its data type, the engine <em>fires</em> the hook at the right moment, and modules <em>register</em> handlers during their <code>init()</code> or setup phase.</p>
+
+    <h3>Defining a hook (engine side)</h3>
+    <div class="code-block">
+        <div class="code-block-header">internal/rooms/roomdetails.go</div>
+        <pre><code class="language-go">// Declare the hook as a package-level variable.
+var OnRoomLook util.Hook[RoomTemplateDetails]</code></pre>
+    </div>
+
+    <h3>Firing the hook (engine side)</h3>
+    <div class="code-block">
+        <div class="code-block-header">internal/rooms/roomdetails.go</div>
+        <pre><code class="language-go">// At the end of GetDetails, pass the fully-populated struct through the hook.
+return OnRoomLook.Fire(details)</code></pre>
+    </div>
+
+    <h3>Registering a handler (module side)</h3>
+    <div class="code-block">
+        <div class="code-block-header">modules/mymodule/mymodule.go</div>
+        <pre><code class="language-go">func (m *MyModule) setup() {
+    rooms.OnRoomLook.Register(m.onRoomLook)
+}
+
+func (m *MyModule) onRoomLook(d rooms.RoomTemplateDetails) rooms.RoomTemplateDetails {
+    // Only act on rooms that have the "fishing" tag.
+    for _, tag := range d.Tags {
+        if tag == "fishing" {
+            d.Alert(`You can fish here! Type <ansi fg="command">fish</ansi> to cast a line.`)
+            break
+        }
+    }
+    return d
+}</code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <p>Always return the value — even when your handler makes no changes. Failing to return causes the value to be zeroed out for every subsequent handler in the chain.</p>
+    </div>
+
+    <div class="callout callout-warn">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>Hooks fire on the main server goroutine under the MUD lock. Keep handlers fast. Never block, sleep, or perform I/O that could stall the round loop.</p>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     HOOK REFERENCE
+══════════════════════════════════════════════════════════════════ -->
+<section class="doc-section" id="hook-OnRoomLook">
+    <h2>rooms.OnRoomLook</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnRoomLook</span>
+            <span class="hook-card-pkg">internal/rooms</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired at the very end of <code>rooms.GetDetails</code>, after the engine has fully populated the room view for a specific player. Handlers can read or modify any field before the details are handed off to the template renderer. This is the primary hook for adding room-level UI — custom alerts, contextual descriptions, or additional visible entities.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Fires once per <code>look</code> command (or any system that calls <code>rooms.GetDetails</code>), once per viewing player.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Append alerts below the room description using <code>d.Alert(...)</code></li>
+                <li>Prepend, append, or replace <code>d.Title</code> or <code>d.Description</code></li>
+                <li>Add entries to <code>d.VisibleMobs</code> or <code>d.VisiblePlayers</code> for custom entities</li>
+                <li>Inspect <code>d.Tags</code> to conditionally activate behavior based on room tags</li>
+                <li>Read <code>d.Character</code> or <code>d.UserId</code> to personalize the view per player</li>
+            </ul>
+
+            <h4>Data type: <code>rooms.RoomTemplateDetails</code></h4>
+            <table class="field-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Access</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>UserId</code></td><td><span class="type-badge">int</span></td><td><span class="rw-badge rw-ro">read</span></td><td>ID of the player viewing the room.</td></tr>
+                    <tr><td><code>Character</code></td><td><span class="type-badge">*characters.Character</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The character record of the viewing player. Useful for personalizing output.</td></tr>
+                    <tr><td><code>Zone</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Zone name the room belongs to.</td></tr>
+                    <tr><td><code>Title</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Room title shown at the top of the look output. May contain ANSI tags.</td></tr>
+                    <tr><td><code>Description</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Room description body. May contain ANSI tags and newlines.</td></tr>
+                    <tr><td><code>Tags</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Room tags. Use these to opt in to module behavior (e.g. <code>"fishing"</code>, <code>"storage"</code>).</td></tr>
+                    <tr><td><code>RoomAlerts</code></td><td><span class="type-badge">[][]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Grouped alert lines rendered below the description. Use <code>d.Alert(...)</code> to append.</td></tr>
+                    <tr><td><code>VisiblePlayers</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Formatted player name strings visible in the room.</td></tr>
+                    <tr><td><code>VisibleMobs</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Formatted mob name strings visible in the room.</td></tr>
+                    <tr><td><code>VisibleCorpses</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Formatted corpse strings visible in the room.</td></tr>
+                    <tr><td><code>VisibleExits</code></td><td><span class="type-badge">map[string]exit.RoomExit</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Exits shown to the player. Keyed by direction/name.</td></tr>
+                    <tr><td><code>TemporaryExits</code></td><td><span class="type-badge">map[string]exit.TemporaryRoomExit</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Temporary exits (portals, etc.) visible to the player.</td></tr>
+                    <tr><td><code>IsDark</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Whether the room's biome is flagged as dark.</td></tr>
+                    <tr><td><code>IsNight</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Whether it is currently night in the game world.</td></tr>
+                    <tr><td><code>ShowPvp</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Whether a PvP indicator is shown for this room.</td></tr>
+                    <tr><td><code>TrackingString</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Tracking status line shown when the player is following a target.</td></tr>
+                    <tr><td><code>RoomSymbol</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Single-character map symbol for this room.</td></tr>
+                    <tr><td><code>RoomLegend</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Map legend label for this room.</td></tr>
+                    <tr><td><code>Nouns</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Interactable nouns defined on the room.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Helper method: <code>Alert</code></h4>
+            <p>Rather than appending to <code>RoomAlerts</code> directly, use the <code>Alert</code> helper. Each call creates one alert group (a bordered block). Multiple string arguments or a string containing <code>\n</code> become separate lines within the same group.</p>
+            <div class="code-block">
+                <div class="code-block-header">example</div>
+                <pre><code class="language-go">// Single-line alert
+d.Alert(`<ansi fg="yellow-bold">A chest is here!</ansi> Type <ansi fg="command">open chest</ansi> to loot it.`)
+
+// Multi-line alert (rendered as one bordered block)
+d.Alert(
+    `<ansi fg="yellow-bold">Auction House</ansi>`,
+    `Current lot: <ansi fg="item-name">Sword of Dawn</ansi>`,
+)</code></pre>
+            </div>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/mymodule/mymodule.go</div>
+                <pre><code class="language-go">rooms.OnRoomLook.Register(func(d rooms.RoomTemplateDetails) rooms.RoomTemplateDetails {
+    for _, tag := range d.Tags {
+        if tag == "fishing" {
+            d.Alert(`<ansi fg="cyan">Fishing spot.</ansi> Type <ansi fg="command">fish</ansi> to cast a line.`)
+            break
+        }
+    }
+    return d
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="doc-section" id="hook-OnGetFormattedName">
+    <h2>characters.OnGetFormattedName</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnGetFormattedName</span>
+            <span class="hook-card-pkg">internal/characters</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired at the end of the internal <code>getFormattedName</code> function, after the engine has assembled the full display name for a character (player or mob). Handlers can modify any part of the name before it is used in room descriptions, combat messages, or any other context where character names are rendered.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Fires every time a character name is rendered — which can be very frequent. Keep handlers extremely lightweight.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Set <code>f.Title</code> to append a title after the name (e.g. <code>"Mayor of Frostfang"</code>)</li>
+                <li>Append to <code>f.Adjectives</code> to add a visible status indicator</li>
+                <li>Set <code>f.QuestAlert</code> to show the quest star prefix</li>
+                <li>Inspect <code>f.Type</code> to distinguish mob names (<code>"mob"</code>) from player names (<code>"user"</code>)</li>
+            </ul>
+
+            <h4>Data type: <code>characters.FormattedName</code></h4>
+            <table class="field-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Access</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Name</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The raw character name.</td></tr>
+                    <tr><td><code>Type</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-ro">read</span></td><td><code>"mob"</code> or <code>"user"</code>. Determines the ANSI color alias used when rendering.</td></tr>
+                    <tr><td><code>Suffix</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Optional ANSI alias suffix (e.g. <code>"dead"</code>). Combined with <code>Type</code> to form the color alias.</td></tr>
+                    <tr><td><code>Title</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Optional title appended after the name, separated by a comma. Set this to add a role or rank.</td></tr>
+                    <tr><td><code>Adjectives</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Status indicators shown in parentheses after the name (e.g. <code>"sleeping"</code>, <code>"poisoned"</code>). Append to add custom states.</td></tr>
+                    <tr><td><code>UseShortAdjectives</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-ro">read</span></td><td>Whether to use short symbol forms for adjectives (player preference).</td></tr>
+                    <tr><td><code>QuestAlert</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>When true, a quest star <code>&#9733;</code> is prepended to the name.</td></tr>
+                    <tr><td><code>PetName</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>If set, rendered as <code>"[Name] and [PetName]"</code>.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/elections/elections.go</div>
+                <pre><code class="language-go">characters.OnGetFormattedName.Register(func(f characters.FormattedName) characters.FormattedName {
+    if f.Type != "user" {
+        return f
+    }
+    if title := m.getTitleForUser(f.Name); title != "" {
+        f.Title = title // e.g. "Mayor of Frostfang"
+    }
+    return f
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="doc-section" id="hook-OnShopList">
+    <h2>usercommands.OnShopList</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnShopList</span>
+            <span class="hook-card-pkg">internal/usercommands</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired once per seller, before the shop inventory is rendered (for the <code>list</code> command) or matched against a purchase (for the <code>buy</code> command). Handlers receive the effective stock for that seller and can add, remove, or reprice items before the player sees or acts on them.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Fires on both <code>list</code> and <code>buy</code>. Use <code>r.IsBuy</code> to distinguish the two if needed.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Append to <code>r.Stock</code> to inject additional items into any shop</li>
+                <li>Filter <code>r.Stock</code> to remove items from specific sellers</li>
+                <li>Modify <code>Price</code> on individual <code>ShopItem</code> entries to apply discounts or surcharges</li>
+                <li>Use <code>r.SellerMob</code> or <code>r.SellerUser</code> to target a specific NPC or player shop</li>
+            </ul>
+
+            <h4>Data type: <code>usercommands.ShopListRequest</code></h4>
+            <table class="field-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Access</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Stock</code></td><td><span class="type-badge">characters.Shop</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>The effective inventory for this seller. Add, remove, or modify entries here.</td></tr>
+                    <tr><td><code>Buyer</code></td><td><span class="type-badge">*users.UserRecord</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The player browsing or buying. Always non-nil.</td></tr>
+                    <tr><td><code>SellerMob</code></td><td><span class="type-badge">*mobs.Mob</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The NPC seller, or <code>nil</code> if the seller is a player.</td></tr>
+                    <tr><td><code>SellerUser</code></td><td><span class="type-badge">*users.UserRecord</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The player seller, or <code>nil</code> if the seller is an NPC.</td></tr>
+                    <tr><td><code>Room</code></td><td><span class="type-badge">*rooms.Room</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The room where the transaction is taking place. Always non-nil.</td></tr>
+                    <tr><td><code>IsBuy</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-ro">read</span></td><td><code>true</code> when called from the <code>buy</code> command, <code>false</code> from <code>list</code>.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/mymodule/mymodule.go</div>
+                <pre><code class="language-go">usercommands.OnShopList.Register(func(r usercommands.ShopListRequest) usercommands.ShopListRequest {
+    if r.SellerMob == nil || r.SellerMob.MobId != mySpecialVendorId {
+        return r
+    }
+    // Inject a limited-time item into this vendor's stock.
+    r.Stock = append(r.Stock, characters.ShopItem{ItemId: 42, Price: 500})
+    return r
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="doc-section" id="hook-OnShopListRendered">
+    <h2>usercommands.OnShopListRendered</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnShopListRendered</span>
+            <span class="hook-card-pkg">internal/usercommands</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired once per seller after all shop tables have been sent to the buyer, but only during the <code>list</code> command — it is <strong>not</strong> fired during <code>buy</code>. Use this hook to append supplementary text after the listing, such as zone tax notices, loyalty point balances, or promotional messages.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Only fires on <code>list</code>, never on <code>buy</code>. Use <code>OnShopList</code> if you also need to intercept purchases.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Call <code>r.Buyer.SendText(...)</code> to append custom text after the shop table</li>
+                <li>Display tax rates, membership discounts, or special offers</li>
+                <li>Show the buyer their current balance in a module-specific currency</li>
+            </ul>
+
+            <h4>Data type: <code>usercommands.ShopListRequest</code></h4>
+            <p>Same structure as <code>OnShopList</code>. <code>Stock</code> reflects the final inventory that was rendered. <code>IsBuy</code> is always <code>false</code> here.</p>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/elections/elections.go</div>
+                <pre><code class="language-go">usercommands.OnShopListRendered.Register(func(r usercommands.ShopListRequest) usercommands.ShopListRequest {
+    if !m.roomIsInElectionZone(r.Room) {
+        return r
+    }
+    taxRate := m.getTaxRate()
+    r.Buyer.SendText(fmt.Sprintf(
+        `<ansi fg="yellow">Zone tax: %d%%</ansi> — applied at checkout.`, taxRate,
+    ))
+    return r
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="doc-section" id="hook-OnInsufficientFunds">
+    <h2>usercommands.OnInsufficientFunds</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnInsufficientFunds</span>
+            <span class="hook-card-pkg">internal/usercommands</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired during the <code>buy</code> command when the buyer's gold is less than the purchase price. Handlers can send a custom message to the buyer and set <code>Handled</code> to <code>true</code> to suppress the default "You don't have enough gold" message. This is useful for modules that provide alternative currencies or financing mechanics.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Only fires when the buyer cannot afford the item. Setting <code>Handled = true</code> suppresses the default error message but does <em>not</em> complete the purchase.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Send a custom, context-aware "insufficient funds" message</li>
+                <li>Set <code>Handled = true</code> to replace the default engine message with your own</li>
+                <li>Suggest alternatives (e.g. "You need 50 more gold — try the bank on the west side")</li>
+            </ul>
+
+            <h4>Data type: <code>usercommands.InsufficientFundsRequest</code></h4>
+            <table class="field-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Access</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Buyer</code></td><td><span class="type-badge">*users.UserRecord</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The player attempting the purchase.</td></tr>
+                    <tr><td><code>SellerMob</code></td><td><span class="type-badge">*mobs.Mob</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The NPC seller, or <code>nil</code> if the seller is a player.</td></tr>
+                    <tr><td><code>SellerUser</code></td><td><span class="type-badge">*users.UserRecord</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The player seller, or <code>nil</code> if the seller is an NPC.</td></tr>
+                    <tr><td><code>Room</code></td><td><span class="type-badge">*rooms.Room</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The room where the failed purchase occurred.</td></tr>
+                    <tr><td><code>Gold</code></td><td><span class="type-badge">int</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The buyer's current gold at the time of the attempt.</td></tr>
+                    <tr><td><code>Price</code></td><td><span class="type-badge">int</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The full price required (may be tax-inclusive).</td></tr>
+                    <tr><td><code>Handled</code></td><td><span class="type-badge">bool</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Set to <code>true</code> to suppress the default "not enough gold" message from the engine.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/mymodule/mymodule.go</div>
+                <pre><code class="language-go">usercommands.OnInsufficientFunds.Register(func(r usercommands.InsufficientFundsRequest) usercommands.InsufficientFundsRequest {
+    shortfall := r.Price - r.Gold
+    r.Buyer.SendText(fmt.Sprintf(
+        `<ansi fg="red">You are %d gold short.</ansi> The nearest bank is to the <ansi fg="exit">east</ansi>.`,
+        shortfall,
+    ))
+    r.Handled = true
+    return r
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="doc-section" id="hook-OnAutoComplete">
+    <h2>suggestions.OnAutoComplete</h2>
+
+    <div class="hook-card">
+        <div class="hook-card-header">
+            <span class="hook-card-name">OnAutoComplete</span>
+            <span class="hook-card-pkg">internal/suggestions</span>
+        </div>
+        <div class="hook-card-body">
+            <p>Fired after the engine's built-in autocomplete logic has run. Modules register handlers here to contribute tab-completion suggestions for their own commands. Each handler receives the accumulated results from all previous handlers and should append to — not replace — <code>r.Results</code>.</p>
+
+            <div class="fire-point">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Fires on every tab-press when the player has typed at least one argument. Results are sorted shortest-first before being sent to the client.</span>
+            </div>
+
+            <h4>What you can do</h4>
+            <ul>
+                <li>Provide completions for module-added commands</li>
+                <li>Return early (without modifying <code>r.Results</code>) when <code>r.Cmd</code> is not your command</li>
+                <li>Use <code>r.Parts</code> for multi-word completions (e.g. sub-commands or named arguments)</li>
+                <li>Use <code>r.UserId</code> to personalize completions based on the player's state</li>
+            </ul>
+
+            <h4>Important: result format</h4>
+            <p>Each entry in <code>Results</code> is the <strong>suffix to append</strong> to the current input, not a full replacement string. If the player has typed <code>fish c</code> and you want to suggest <code>cast</code>, append <code>"ast"</code> — not <code>"cast"</code>.</p>
+
+            <h4>Data type: <code>suggestions.AutoCompleteRequest</code></h4>
+            <table class="field-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Access</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>UserId</code></td><td><span class="type-badge">int</span></td><td><span class="rw-badge rw-ro">read</span></td><td>ID of the player requesting completions.</td></tr>
+                    <tr><td><code>Cmd</code></td><td><span class="type-badge">string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The resolved command name after alias expansion (e.g. <code>"fish"</code>). Always check this first and return early if it is not your command.</td></tr>
+                    <tr><td><code>Parts</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-ro">read</span></td><td>The original input split on whitespace. <code>Parts[0]</code> is the raw command token (before alias expansion). <code>Parts[1:]</code> are the arguments typed so far.</td></tr>
+                    <tr><td><code>Results</code></td><td><span class="type-badge">[]string</span></td><td><span class="rw-badge rw-rw">read/write</span></td><td>Accumulated completion suffixes. Append your suggestions here; do not replace the slice.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Example registration</h4>
+            <div class="code-block">
+                <div class="code-block-header">modules/fishing/fishing.go</div>
+                <pre><code class="language-go">suggestions.OnAutoComplete.Register(func(r suggestions.AutoCompleteRequest) suggestions.AutoCompleteRequest {
+    if r.Cmd != "fish" {
+        return r // not our command — leave results untouched
+    }
+
+    subcommands := []string{"cast", "release", "inventory"}
+    typed := ""
+    if len(r.Parts) > 1 {
+        typed = strings.ToLower(r.Parts[1])
+    }
+
+    for _, sub := range subcommands {
+        if strings.HasPrefix(sub, typed) {
+            r.Results = append(r.Results, sub[len(typed):])
+        }
+    }
+    return r
+})</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+</div><!-- end main content column -->
+</div><!-- end doc-layout -->
+
+<script>
+(function () {
+    var sidebar = document.getElementById('doc-sidebar');
+    var links = sidebar ? sidebar.querySelectorAll('a[href^="#"]') : [];
+    var sections = [];
+    links.forEach(function (a) {
+        var id = a.getAttribute('href').slice(1);
+        var el = document.getElementById(id);
+        if (el) sections.push({ el: el, a: a });
+    });
+
+    function onScroll() {
+        var scrollY = window.scrollY + 80;
+        var active = null;
+        for (var i = 0; i < sections.length; i++) {
+            if (sections[i].el.offsetTop <= scrollY) active = sections[i].a;
+        }
+        links.forEach(function (a) { a.classList.remove('active'); });
+        if (active) active.classList.add('active');
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+})();
+</script>
+
+{{template "footer" .}}

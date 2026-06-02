@@ -180,6 +180,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			enterFromExit = fmt.Sprintf(`the <ansi fg="exit">%s</ansi>`, enterFromExit)
 		}
 
+		if blocked, err := scripting.TryRoomTryExitEvent(exitName, user.UserId, room.RoomId); err == nil && blocked {
+			return true, nil
+		}
+
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			user.SendText("Oops, couldn't move there!")
 		} else {

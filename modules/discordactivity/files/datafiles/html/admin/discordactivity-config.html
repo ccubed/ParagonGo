@@ -1,0 +1,177 @@
+{{template "header" .}}
+
+<style>
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+    #status-bar { display: none; padding: 0.6rem 1rem; border-radius: 4px; font-size: 0.875rem; margin-bottom: 1rem; }
+    #status-bar.success { background: var(--color-success-bg); color: var(--color-success-text); display: block; }
+    #status-bar.error   { background: var(--color-error-bg); color: var(--color-error-text); display: block; }
+
+    .btn { padding: 0.4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+
+    .section { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .section h2 { font-size: 1rem; margin: 0 0 0.15rem; color: var(--color-text-strong); }
+    .section .desc { font-size: 0.8rem; color: var(--color-text-faint); margin: 0 0 0.75rem; }
+
+    .field-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .field-row label { font-size: 0.875rem; color: var(--color-text-secondary); min-width: 130px; }
+    .field-row input[type="text"] {
+        flex: 1; min-width: 240px; padding: 0.35rem 0.6rem;
+        border: 1px solid var(--color-border); border-radius: 4px;
+        font-size: 0.875rem; font-family: monospace;
+        background: var(--color-surface-alt); color: var(--color-text-strong);
+    }
+
+    .url-display {
+        font-family: monospace; font-size: 0.875rem;
+        background: var(--color-surface-alt); border: 1px solid var(--color-border);
+        border-radius: 4px; padding: 0.35rem 0.6rem;
+        color: var(--color-primary); word-break: break-all;
+    }
+
+    .warning-box {
+        background: var(--color-warning-bg, #fff8e1); border: 1px solid var(--color-warning-border, #ffe082);
+        border-radius: 4px; padding: 0.75rem 1rem; font-size: 0.875rem;
+        color: var(--color-warning-text, #795548); margin-bottom: 1rem;
+    }
+
+    .save-bar { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+    /* Setup instructions */
+    details { margin-top: 0.5rem; }
+    details summary {
+        cursor: pointer; font-size: 0.9rem; font-weight: 600;
+        color: var(--color-primary); user-select: none;
+        padding: 0.4rem 0;
+    }
+    details summary:hover { text-decoration: underline; }
+    .instructions { margin-top: 0.75rem; }
+    .instructions ol { padding-left: 1.4rem; }
+    .instructions li { margin-bottom: 0.6rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-text-secondary); }
+    .instructions li strong { color: var(--color-text-strong); }
+    .instructions code {
+        background: var(--color-surface-alt); border: 1px solid var(--color-border);
+        border-radius: 3px; padding: 0.1rem 0.35rem; font-family: monospace; font-size: 0.85em;
+    }
+    .instructions pre {
+        background: var(--color-surface-alt); border: 1px solid var(--color-border);
+        border-radius: 4px; padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem;
+        overflow-x: auto; margin: 0.5rem 0;
+    }
+</style>
+
+<h1>Discord Activity - Config</h1>
+<p class="subtitle">Configure the Discord Embedded App Activity. Requires HTTPS to work inside Discord.</p>
+
+<div id="status-bar"></div>
+
+{{ if not .HasHTTPS }}
+<div class="warning-box">
+    HTTPS is not configured on this server. Discord Activities require HTTPS. Configure <strong>Network.HttpsPort</strong> in the server settings before using this module in production.
+</div>
+{{ end }}
+
+<div class="section">
+    <h2>Application ID</h2>
+    <p class="desc">The Discord Application ID for this Activity. Create an application at <strong>discord.com/developers/applications</strong> with the Activities feature enabled.</p>
+    <div class="field-row">
+        <label>Application ID</label>
+        <input type="text" id="f-app-id" placeholder="e.g. 1234567890123456789" value="{{ .ApplicationId }}">
+    </div>
+    <div class="save-bar">
+        <button class="btn btn-primary" id="save-btn" onclick="saveConfig()">Save</button>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Activity URL</h2>
+    <p class="desc">Paste this URL as the <strong>URL Mapping target</strong> in the Discord Developer Portal for this application. Also use it as the proxy target when configuring URL Mappings.</p>
+    <div class="field-row">
+        <label>Activity URL</label>
+        <span class="url-display" id="activity-url">{{ .ActivityURL }}</span>
+    </div>
+    <p class="desc" style="margin-top:0.5rem;">
+        In the Discord Developer Portal, under <strong>Activities &gt; URL Mappings</strong>, set:
+        <br>Prefix: <code>/</code> &nbsp; Target: <code>{{ .ActivityHost }}</code>
+    </p>
+</div>
+
+<div class="section">
+    <h2>Setup Instructions</h2>
+    <details>
+        <summary>Show step-by-step setup guide</summary>
+        <div class="instructions">
+            <ol>
+                <li>
+                    Go to <strong>discord.com/developers/applications</strong> and click <strong>New Application</strong>.
+                    Give it a name (e.g. "My MUD"). Note the <strong>Application ID</strong> shown on the General Information page.
+                </li>
+                <li>
+                    In the left sidebar, click <strong>Activities</strong> and enable the Activities feature for this application.
+                </li>
+                <li>
+                    Under <strong>Activities &gt; URL Mappings</strong>, click <strong>Add a mapping</strong> and enter:
+                    <pre>Prefix: /
+Target: {{ .ActivityHost }}</pre>
+                    This tells Discord to proxy all Activity requests to your GoMud server.
+                </li>
+                <li>
+                    Copy the <strong>Application ID</strong> from the General Information page and paste it into the <strong>Application ID</strong> field above, then click <strong>Save</strong>.
+                </li>
+                <li>
+                    Your Activity will appear in Discord voice channels under the rocket icon once the application has been added to a server.
+                    Use the OAuth2 install URL from the Developer Portal to add it to your Discord server.
+                </li>
+                <li>
+                    <strong>HTTPS is required.</strong> Discord will not load an Activity served over plain HTTP.
+                    Configure <code>Network.HttpsPort</code> in the GoMud server settings and ensure your domain has a valid TLS certificate.
+                </li>
+                <li>
+                    Players connect using their normal MUD username and password through the terminal inside the Activity.
+                    No Discord OAuth login is required.
+                </li>
+            </ol>
+        </div>
+    </details>
+</div>
+
+<script>
+    function saveConfig() {
+        var appId = document.getElementById('f-app-id').value.trim();
+        var btn   = document.getElementById('save-btn');
+        var bar   = document.getElementById('status-bar');
+        btn.disabled = true;
+        bar.className = '';
+        bar.style.display = 'none';
+
+        fetch('/admin/api/v1/discordactivity-config', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ApplicationId: appId }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            btn.disabled = false;
+            if (data.success) {
+                bar.textContent = 'Configuration saved.';
+                bar.className = 'success';
+            } else {
+                bar.textContent = 'Error: ' + (data.error || 'unknown error');
+                bar.className = 'error';
+            }
+            bar.style.display = 'block';
+        })
+        .catch(function (err) {
+            btn.disabled = false;
+            bar.textContent = 'Request failed: ' + err;
+            bar.className = 'error';
+            bar.style.display = 'block';
+        });
+    }
+</script>
+
+{{template "footer" .}}

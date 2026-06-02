@@ -131,6 +131,7 @@
             <a href="#hooks">Event Hooks</a>
             <a href="#hook-onLoad">onLoad</a>
             <a href="#hook-onEnter">onEnter</a>
+            <a href="#hook-onTryExit">onTryExit</a>
             <a href="#hook-onExit">onExit</a>
             <a href="#hook-onIdle">onIdle</a>
             <a href="#hook-onCommand">onCommand</a>
@@ -222,6 +223,37 @@
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                             <pre><code class="language-javascript">function onEnter(user, room) {
     user.SendText('A chill wind greets you as you step inside.');
+}</code></pre>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- onTryExit -->
+                <details class="hook-card" id="hook-onTryExit">
+                    <summary>
+                        <span class="hook-sig">
+                            <span class="fn-name">onTryExit</span><span class="fn-paren">(</span><span class="fn-param">exitName</span> <span class="fn-type">string</span>, <span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span>
+                        </span>
+                    </summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called before a player leaves the room, including during flee. Return <code>false</code> to prevent the movement entirely. The player remains in the room and no exit messages are sent.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> Return <code>false</code> to block the movement. Any other return value (or none) allows it.</div>
+                        <table class="arg-table">
+                            <thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="arg-name">exitName</td><td class="arg-type">string</td><td>The exit direction or name the player is attempting to use (e.g. <code>"north"</code>, <code>"gate"</code>).</td></tr>
+                                <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The player attempting to leave.</td></tr>
+                                <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room being exited.</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="code-wrap">
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            <pre><code class="language-javascript">function onTryExit(exitName, user, room) {
+    if (exitName === 'north') {
+        user.SendText('A magical barrier blocks the northern passage.');
+        return false; // block movement
+    }
+    return true;
 }</code></pre>
                         </div>
                     </div>
