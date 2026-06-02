@@ -20,6 +20,7 @@ Playable online demo: **<http://www.gomud.net>**
     - [Web Based Admin Tools](#web-based-admin-tools)
     - [ANSI Colors](#ansi-colors)
     - [Small Feature Demos](#small-feature-demos)
+  - [Quick Install](#quick-install)
   - [Setup](#setup)
     - [Requirements](#requirements)
     - [Quick Start](#quick-start)
@@ -76,6 +77,26 @@ Colorization is handled through extensive use of my [github.com/GoMudEngine/ansi
 - [Day/Night Cycles](https://www.youtube.com/watch?v=CiEbOp244cw)
 - [Web Socket "Virtual Terminal"](https://www.youtube.com/watch?v=L-qtybXO4aw)
 - [Alternate Characters](https://www.youtube.com/watch?v=VERF2l70W34)
+
+---
+
+## Quick Install
+
+The quickest way to get GoMud running. The script installs Go and Git if needed, clones the repo, and builds the server binary.
+
+**Linux / macOS:**
+
+```shell
+curl -fsSL https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.ps1 | iex
+```
+
+Both scripts install GoMud to `~/GoMud` by default. Set the `GOMUD_DIR` environment variable before running to choose a different location.
 
 ---
 
