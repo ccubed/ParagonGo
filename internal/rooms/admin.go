@@ -173,6 +173,16 @@ func GetRoomForAdmin(roomId int) *Room {
 	return LoadRoomTemplate(roomId)
 }
 
+// GetRoomTemplatePath returns the absolute path to the YAML template file for
+// the given room ID, or an empty string if the room is not known.
+func GetRoomTemplatePath(roomId int) string {
+	filePath := roomManager.GetFilePath(roomId)
+	if filePath == "" {
+		return ""
+	}
+	return util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms/`, filePath)
+}
+
 func SaveRoomForAdmin(room Room) error {
 	if room.RoomId < 1 {
 		return fmt.Errorf("invalid room id: %d", room.RoomId)

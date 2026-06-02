@@ -158,6 +158,7 @@
         <div id="editor-form" style="display:none;">
             <div class="editor-header">
                 <h2 id="editor-title">Buff Editor</h2>
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Buff YAML')">YAML</button>
             </div>
 
             <div class="form-grid">
@@ -364,6 +365,13 @@
     function fillForm(spec, script) {
         document.getElementById('editor-title').textContent = isNew ? 'New Buff' : spec.Name;
         document.getElementById('buff-id-display').textContent = isNew ? '' : 'ID: ' + spec.BuffId;
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && spec.BuffId != null) {
+            yamlBtn.dataset.url = '/admin/api/v1/buffs/' + spec.BuffId + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         setVal('f-name',         spec.Name        || '');
         setVal('f-description',  spec.Description || '');

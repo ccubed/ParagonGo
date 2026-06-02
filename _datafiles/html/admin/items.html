@@ -193,6 +193,7 @@
             <div class="editor-header">
                 <h2 id="editor-title">Item Editor</h2>
                 <span class="badge" id="editor-type-badge"></span>
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Item YAML')">YAML</button>
             </div>
 
             <div class="form-grid">
@@ -524,6 +525,13 @@
         document.getElementById('editor-title').textContent = isNew ? 'New Item' : item.Name;
         document.getElementById('editor-type-badge').textContent = item.Type || '';
         document.getElementById('item-id-display').textContent = isNew ? '' : 'ID: ' + item.ItemId;
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && item.ItemId) {
+            yamlBtn.dataset.url = '/admin/api/v1/items/' + item.ItemId + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         setVal('f-name', item.Name || '');
         setVal('f-namesimple', item.NameSimple || '');

@@ -191,6 +191,9 @@
         </div>
         <div id="editorContent" style="display:none">
             <div id="statusBar" class="status-bar"></div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+                <button class="yaml-badge" id="yaml-view-btn" onclick="showYamlModal(this.dataset.url,'Attack Messages YAML')">YAML</button>
+            </div>
 
             <details class="token-ref">
                 <summary>Available Tokens</summary>
@@ -325,6 +328,10 @@
         activeIntensity = activeIntensity || INTENSITIES[0];
         renderSubtypeList();
         renderEditor();
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (yamlBtn) {
+            yamlBtn.dataset.url = '/admin/api/v1/items/attack-messages/' + encodeURIComponent(st) + '/yaml';
+        }
     }
 
     function renderEditor() {

@@ -182,7 +182,10 @@
         <div id="editorPlaceholder" class="editor-placeholder">Select a biome to edit, or click <strong>+ New Biome</strong>.</div>
         <div id="editorForm" style="display:none">
             <div class="form-grid">
-                <p class="section-title" id="editorTitle">Edit Biome</p>
+                <div style="grid-column:1/-1;display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.25rem">
+                    <p class="section-title" id="editorTitle" style="margin:0;flex:1">Edit Biome</p>
+                    <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Biome YAML')">YAML</button>
+                </div>
 
                 <div class="field">
                     <label>Biome ID</label>
@@ -366,6 +369,13 @@
         document.getElementById('btnDelete').style.display = (isNew || isDefault) ? 'none' : '';
         document.getElementById('btnDelete').disabled      = isDefault;
         document.getElementById('editorTitle').textContent = isNew ? 'New Biome' : 'Edit: ' + (biome ? biome.Name || biome.BiomeId : '');
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && biome && biome.BiomeId) {
+            yamlBtn.dataset.url = '/admin/api/v1/biomes/' + encodeURIComponent(biome.BiomeId) + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         const b = biome || {};
         document.getElementById('fBiomeId').value         = b.BiomeId        || '';

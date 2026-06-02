@@ -44,10 +44,12 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1PutItemAttackMessage))))
 	mux.HandleFunc("PATCH /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}/{index}", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1PatchItemAttackMessage))))
 	mux.HandleFunc("DELETE /admin/api/v1/items/attack-messages/{subtype}/{intensity}/{proximity}/{target}/{index}", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1DeleteItemAttackMessage))))
+	mux.HandleFunc("GET /admin/api/v1/items/attack-messages/{subtype}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetAttackMessagesYAML)))
 	mux.HandleFunc("GET /admin/api/v1/items", doBasicAuth(RunWithMUDLocked(apiV1GetItems)))
 	mux.HandleFunc("POST /admin/api/v1/items", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1CreateItem))))
 	mux.HandleFunc("GET /admin/api/v1/items/{itemId}/script", doBasicAuth(RunWithMUDLocked(apiV1GetItemScript)))
 	mux.HandleFunc("PUT /admin/api/v1/items/{itemId}/script", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1PutItemScript))))
+	mux.HandleFunc("GET /admin/api/v1/items/{itemId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetItemYAML)))
 	mux.HandleFunc("GET /admin/api/v1/items/{itemId}", doBasicAuth(RunWithMUDLocked(apiV1GetItem)))
 	mux.HandleFunc("PATCH /admin/api/v1/items/{itemId}", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1PatchItem))))
 	mux.HandleFunc("DELETE /admin/api/v1/items/{itemId}", doBasicAuth(RequirePermission("items.write", RunWithMUDLocked(apiV1DeleteItem))))
@@ -56,12 +58,14 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/buffs", doBasicAuth(RunWithMUDLocked(apiV1GetBuffs)))
 	mux.HandleFunc("GET /admin/api/v1/buffs/{buffId}/script", doBasicAuth(RunWithMUDLocked(apiV1GetBuffScript)))
 	mux.HandleFunc("PUT /admin/api/v1/buffs/{buffId}/script", doBasicAuth(RequirePermission("buffs.write", RunWithMUDLocked(apiV1PutBuffScript))))
+	mux.HandleFunc("GET /admin/api/v1/buffs/{buffId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetBuffYAML)))
 	mux.HandleFunc("GET /admin/api/v1/buffs/{buffId}", doBasicAuth(RunWithMUDLocked(apiV1GetBuff)))
 	mux.HandleFunc("PATCH /admin/api/v1/buffs/{buffId}", doBasicAuth(RequirePermission("buffs.write", RunWithMUDLocked(apiV1PatchBuff))))
 	mux.HandleFunc("DELETE /admin/api/v1/buffs/{buffId}", doBasicAuth(RequirePermission("buffs.write", RunWithMUDLocked(apiV1DeleteBuff))))
 
 	// Quests
 	mux.HandleFunc("GET /admin/api/v1/quests", doBasicAuth(RunWithMUDLocked(apiV1GetQuests)))
+	mux.HandleFunc("GET /admin/api/v1/quests/{questId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetQuestYAML)))
 	mux.HandleFunc("PATCH /admin/api/v1/quests", doBasicAuth(RequirePermission("quests.write", RunWithMUDLocked(apiV1PatchQuest))))
 	mux.HandleFunc("DELETE /admin/api/v1/quests/{questId}", doBasicAuth(RequirePermission("quests.write", RunWithMUDLocked(apiV1DeleteQuest))))
 
@@ -70,6 +74,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/api/v1/users", doBasicAuth(RequirePermission("users.write", RunWithMUDLocked(apiV1CreateUser))))
 	mux.HandleFunc("GET /admin/api/v1/users/{userid}/permissions", doBasicAuth(RunWithMUDLocked(apiV1GetUserPermissions)))
 	mux.HandleFunc("PUT /admin/api/v1/users/{userid}/permissions", doBasicAuth(RequirePermission("users.write", RunWithMUDLocked(apiV1PutUserPermissions))))
+	mux.HandleFunc("GET /admin/api/v1/users/{userid}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetUserYAML)))
 	mux.HandleFunc("GET /admin/api/v1/users/{userid}", doBasicAuth(RunWithMUDLocked(apiV1GetUser)))
 	mux.HandleFunc("PATCH /admin/api/v1/users/{userid}", doBasicAuth(RequirePermission("users.write", RunWithMUDLocked(apiV1PatchUser))))
 
@@ -81,11 +86,13 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/characters/{characterName}", doBasicAuth(RunWithMUDLocked(apiV1GetCharacter)))
 
 	// Color Aliases
+	mux.HandleFunc("GET /admin/api/v1/color-aliases/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetColorAliasesYAML)))
 	mux.HandleFunc("GET /admin/api/v1/color-aliases", doBasicAuth(RunWithMUDLocked(apiV1GetColorAliases)))
 	mux.HandleFunc("PATCH /admin/api/v1/color-aliases", doBasicAuth(RequirePermission("color-aliases.write", RunWithMUDLocked(apiV1PatchColorAlias))))
 	mux.HandleFunc("DELETE /admin/api/v1/color-aliases/{alias}", doBasicAuth(RequirePermission("color-aliases.write", RunWithMUDLocked(apiV1DeleteColorAlias))))
 
 	// Color Patterns
+	mux.HandleFunc("GET /admin/api/v1/colorpatterns/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetColorPatternsYAML)))
 	mux.HandleFunc("GET /admin/api/v1/colorpatterns", doBasicAuth(RunWithMUDLocked(apiV1GetColorPatterns)))
 	mux.HandleFunc("POST /admin/api/v1/colorpatterns", doBasicAuth(RequirePermission("colorpatterns.write", RunWithMUDLocked(apiV1CreateColorPattern))))
 	mux.HandleFunc("PATCH /admin/api/v1/colorpatterns", doBasicAuth(RequirePermission("colorpatterns.write", RunWithMUDLocked(apiV1PatchColorPatterns))))
@@ -97,6 +104,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/mobs/{mobId}/script", doBasicAuth(RunWithMUDLocked(apiV1GetMobScript)))
 	mux.HandleFunc("PUT /admin/api/v1/mobs/{mobId}/script", doBasicAuth(RequirePermission("mobs.write", RunWithMUDLocked(apiV1PutMobScript))))
 	mux.HandleFunc("PUT /admin/api/v1/mobs/{mobId}/stock", doBasicAuth(RequirePermission("mobs.write", RunWithMUDLocked(apiV1PutMobStock))))
+	mux.HandleFunc("GET /admin/api/v1/mobs/{mobId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetMobYAML)))
 	mux.HandleFunc("GET /admin/api/v1/mobs/{mobId}", doBasicAuth(RunWithMUDLocked(apiV1GetMob)))
 	mux.HandleFunc("PATCH /admin/api/v1/mobs/{mobId}", doBasicAuth(RequirePermission("mobs.write", RunWithMUDLocked(apiV1PatchMob))))
 	mux.HandleFunc("DELETE /admin/api/v1/mobs/{mobId}", doBasicAuth(RequirePermission("mobs.write", RunWithMUDLocked(apiV1DeleteMob))))
@@ -111,6 +119,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	// Biomes
 	mux.HandleFunc("GET /admin/api/v1/biomes", doBasicAuth(RunWithMUDLocked(apiV1GetBiomesV2)))
 	mux.HandleFunc("POST /admin/api/v1/biomes", doBasicAuth(RequirePermission("biomes.write", RunWithMUDLocked(apiV1CreateBiome))))
+	mux.HandleFunc("GET /admin/api/v1/biomes/{biomeId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetBiomeYAML)))
 	mux.HandleFunc("PATCH /admin/api/v1/biomes/{biomeId}", doBasicAuth(RequirePermission("biomes.write", RunWithMUDLocked(apiV1PatchBiome))))
 	mux.HandleFunc("DELETE /admin/api/v1/biomes/{biomeId}", doBasicAuth(RequirePermission("biomes.write", RunWithMUDLocked(apiV1DeleteBiome))))
 
@@ -127,6 +136,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/rooms/{roomId}/instance", doBasicAuth(RunWithMUDLocked(apiV1GetRoomInstance)))
 	mux.HandleFunc("PUT /admin/api/v1/rooms/{roomId}/instance", doBasicAuth(RequirePermission("rooms.write", RunWithMUDLocked(apiV1PutRoomInstance))))
 	mux.HandleFunc("DELETE /admin/api/v1/rooms/{roomId}/instance", doBasicAuth(RequirePermission("rooms.write", RunWithMUDLocked(apiV1DeleteRoomInstance))))
+	mux.HandleFunc("GET /admin/api/v1/rooms/{roomId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetRoomYAML)))
 	mux.HandleFunc("GET /admin/api/v1/rooms/{roomId}", doBasicAuth(RunWithMUDLocked(apiV1GetRoom)))
 	mux.HandleFunc("PATCH /admin/api/v1/rooms/{roomId}", doBasicAuth(RequirePermission("rooms.write", RunWithMUDLocked(apiV1PatchRoom))))
 	mux.HandleFunc("DELETE /admin/api/v1/rooms/{roomId}", doBasicAuth(RequirePermission("rooms.write", RunWithMUDLocked(apiV1DeleteRoom))))
@@ -134,23 +144,27 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	// Mutators
 	mux.HandleFunc("GET /admin/api/v1/mutators", doBasicAuth(RunWithMUDLocked(apiV1GetMutators)))
 	mux.HandleFunc("POST /admin/api/v1/mutators", doBasicAuth(RequirePermission("mutators.write", RunWithMUDLocked(apiV1CreateMutator))))
+	mux.HandleFunc("GET /admin/api/v1/mutators/{mutatorId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetMutatorYAML)))
 	mux.HandleFunc("GET /admin/api/v1/mutators/{mutatorId}", doBasicAuth(RunWithMUDLocked(apiV1GetMutator)))
 	mux.HandleFunc("PATCH /admin/api/v1/mutators/{mutatorId}", doBasicAuth(RequirePermission("mutators.write", RunWithMUDLocked(apiV1PatchMutator))))
 	mux.HandleFunc("DELETE /admin/api/v1/mutators/{mutatorId}", doBasicAuth(RequirePermission("mutators.write", RunWithMUDLocked(apiV1DeleteMutator))))
 
 	// Audio
+	mux.HandleFunc("GET /admin/api/v1/audio/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetAudioYAML)))
 	mux.HandleFunc("GET /admin/api/v1/audio", doBasicAuth(RunWithMUDLocked(apiV1GetAudio)))
 	mux.HandleFunc("POST /admin/api/v1/audio", doBasicAuth(RequirePermission("audio.write", RunWithMUDLocked(apiV1CreateAudio))))
 	mux.HandleFunc("PATCH /admin/api/v1/audio", doBasicAuth(RequirePermission("audio.write", RunWithMUDLocked(apiV1PatchAudio))))
 	mux.HandleFunc("DELETE /admin/api/v1/audio/{identifier}", doBasicAuth(RequirePermission("audio.write", RunWithMUDLocked(apiV1DeleteAudio))))
 
 	// Keywords
+	mux.HandleFunc("GET /admin/api/v1/keywords/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetKeywordsYAML)))
 	mux.HandleFunc("GET /admin/api/v1/keywords", doBasicAuth(RunWithMUDLocked(apiV1GetKeywords)))
 	mux.HandleFunc("PATCH /admin/api/v1/keywords", doBasicAuth(RequirePermission("keywords.write", RunWithMUDLocked(apiV1PatchKeywords))))
 
 	// Races
 	mux.HandleFunc("GET /admin/api/v1/races", doBasicAuth(RunWithMUDLocked(apiV1GetRaces)))
 	mux.HandleFunc("POST /admin/api/v1/races", doBasicAuth(RequirePermission("races.write", RunWithMUDLocked(apiV1CreateRace))))
+	mux.HandleFunc("GET /admin/api/v1/races/{raceId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetRaceYAML)))
 	mux.HandleFunc("PATCH /admin/api/v1/races/{raceId}", doBasicAuth(RequirePermission("races.write", RunWithMUDLocked(apiV1PatchRace))))
 	mux.HandleFunc("DELETE /admin/api/v1/races/{raceId}", doBasicAuth(RequirePermission("races.write", RunWithMUDLocked(apiV1DeleteRace))))
 
@@ -160,11 +174,13 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/api/v1/pets", doBasicAuth(RequirePermission("pets.write", RunWithMUDLocked(apiV1CreatePet))))
 	mux.HandleFunc("GET /admin/api/v1/pets/{petname}/script", doBasicAuth(RunWithMUDLocked(apiV1GetPetScript)))
 	mux.HandleFunc("PUT /admin/api/v1/pets/{petname}/script", doBasicAuth(RequirePermission("pets.write", RunWithMUDLocked(apiV1PutPetScript))))
+	mux.HandleFunc("GET /admin/api/v1/pets/{petname}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetPetYAML)))
 	mux.HandleFunc("PATCH /admin/api/v1/pets/{petname}", doBasicAuth(RequirePermission("pets.write", RunWithMUDLocked(apiV1PatchPet))))
 	mux.HandleFunc("DELETE /admin/api/v1/pets/{petname}", doBasicAuth(RequirePermission("pets.write", RunWithMUDLocked(apiV1DeletePet))))
 
 	// Conversations
 	mux.HandleFunc("GET /admin/api/v1/conversations", doBasicAuth(RunWithMUDLocked(apiV1GetConversations)))
+	mux.HandleFunc("GET /admin/api/v1/conversations/{zone}/{mobId}/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetConversationYAML)))
 	mux.HandleFunc("GET /admin/api/v1/conversations/{zone}/{mobId}", doBasicAuth(RunWithMUDLocked(apiV1GetConversation)))
 	mux.HandleFunc("PUT /admin/api/v1/conversations/{zone}/{mobId}", doBasicAuth(RequirePermission("conversations.write", RunWithMUDLocked(apiV1PutConversation))))
 	mux.HandleFunc("DELETE /admin/api/v1/conversations/{zone}/{mobId}", doBasicAuth(RequirePermission("conversations.write", RunWithMUDLocked(apiV1DeleteConversation))))
@@ -172,6 +188,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	// GameTime
 	mux.HandleFunc("GET /admin/api/v1/gametime", doBasicAuth(RunWithMUDLocked(apiV1GetGameTime)))
 	mux.HandleFunc("POST /admin/api/v1/gametime", doBasicAuth(RequirePermission("gametime.write", RunWithMUDLocked(apiV1CreateGameTimeCalendar))))
+	mux.HandleFunc("GET /admin/api/v1/gametime/yaml", doBasicAuth(RunWithMUDLocked(apiV1GetGameTimeYAML)))
 	mux.HandleFunc("GET /admin/api/v1/gametime/{calendar}", doBasicAuth(RunWithMUDLocked(apiV1GetGameTimeCalendar)))
 	mux.HandleFunc("PATCH /admin/api/v1/gametime/{calendar}", doBasicAuth(RequirePermission("gametime.write", RunWithMUDLocked(apiV1PatchGameTimeCalendar))))
 	mux.HandleFunc("DELETE /admin/api/v1/gametime/{calendar}", doBasicAuth(RequirePermission("gametime.write", RunWithMUDLocked(apiV1DeleteGameTimeCalendar))))
@@ -190,6 +207,7 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/api/v2/spells", doBasicAuth(RequirePermission("spells.write", RunWithMUDLocked(apiV2CreateSpell))))
 	mux.HandleFunc("GET /admin/api/v2/spells/{spellId}/script", doBasicAuth(RunWithMUDLocked(apiV2GetSpellScript)))
 	mux.HandleFunc("PUT /admin/api/v2/spells/{spellId}/script", doBasicAuth(RequirePermission("spells.write", RunWithMUDLocked(apiV2PutSpellScript))))
+	mux.HandleFunc("GET /admin/api/v2/spells/{spellId}/yaml", doBasicAuth(RunWithMUDLocked(apiV2GetSpellYAML)))
 	mux.HandleFunc("GET /admin/api/v2/spells/{spellId}", doBasicAuth(RunWithMUDLocked(apiV2GetSpell)))
 	mux.HandleFunc("PATCH /admin/api/v2/spells/{spellId}", doBasicAuth(RequirePermission("spells.write", RunWithMUDLocked(apiV2PatchSpell))))
 	mux.HandleFunc("DELETE /admin/api/v2/spells/{spellId}", doBasicAuth(RequirePermission("spells.write", RunWithMUDLocked(apiV2DeleteSpell))))

@@ -103,7 +103,10 @@
         <div id="editorForm" style="display:none">
             <div id="statusBar" class="status-bar"></div>
             <div class="form-grid">
-                <p class="section-title" id="editorTitle">Edit Race</p>
+                <div style="grid-column:1/-1;display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.25rem">
+                    <p class="section-title" id="editorTitle" style="margin:0;flex:1">Edit Race</p>
+                    <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Race YAML')">YAML</button>
+                </div>
 
                 <div class="field">
                     <label for="fName">Name</label>
@@ -275,6 +278,13 @@ function populateForm(race) {
     document.getElementById('statusBar').textContent = '';
     document.getElementById('btnDelete').style.display = isNew ? 'none' : '';
     document.getElementById('editorTitle').textContent = isNew ? 'New Race' : `Edit: ${race ? race.Name : ''}`;
+    var yamlBtn = document.getElementById('yaml-view-btn');
+    if (!isNew && activeRaceId != null) {
+        yamlBtn.dataset.url = '/admin/api/v1/races/' + activeRaceId + '/yaml';
+        yamlBtn.style.display = '';
+    } else {
+        yamlBtn.style.display = 'none';
+    }
 
     const r = race || {};
     document.getElementById('fName').value = r.Name || '';

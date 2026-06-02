@@ -221,6 +221,9 @@
             Select a conversation file to edit, or click <strong>+ New Conversation File</strong>.
         </div>
         <div id="editorForm" style="display:none">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Conversation YAML')">YAML</button>
+            </div>
 
             <div class="info-callout">
                 <strong>How conversations work:</strong> Each file is tied to a specific mob (by its numeric ID) in a zone.
@@ -497,6 +500,13 @@
         document.getElementById('statusBar').className             = 'status-bar';
         document.getElementById('statusBar').textContent           = '';
         document.getElementById('btnDelete').style.display = isNew ? 'none' : '';
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && zone && mobId) {
+            yamlBtn.dataset.url = '/admin/api/v1/conversations/' + encodeURIComponent(zone) + '/' + mobId + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         if (isNew) {
             // Zone: dropdown, enabled

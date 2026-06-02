@@ -34,6 +34,12 @@ func convFilePath(zone string, mobId int) string {
 	return util.FilePath(convFolder() + `/` + fmt.Sprintf("%s/%d.yaml", zone, mobId))
 }
 
+// ConvFilePath returns the absolute path for a conversation file identified by
+// zone and mobId. The zone name is sanitized before constructing the path.
+func ConvFilePath(zone string, mobId int) string {
+	return convFilePath(zone, mobId)
+}
+
 // ListConversationFiles returns a sorted list of every conversation file on disk.
 func ListConversationFiles() ([]ConversationFile, error) {
 	root := convFolder()

@@ -471,6 +471,7 @@
             <div class="editor-header">
                 <h2 id="editor-title">Room Editor</h2>
                 <span class="badge" id="editor-zone-badge"></span>
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Room YAML')">YAML</button>
             </div>
 
             <div class="form-grid">
@@ -844,6 +845,13 @@
         document.getElementById('editor-title').textContent = isNew ? 'New Room' : r.Title;
         document.getElementById('editor-zone-badge').textContent = r.Zone || '';
         document.getElementById('room-id-display').textContent = isNew ? '' : 'ID: ' + r.RoomId;
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && r.RoomId) {
+            yamlBtn.dataset.url = '/admin/api/v1/rooms/' + r.RoomId + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         setVal('f-zone', r.Zone || '');
         setVal('f-title', r.Title || '');

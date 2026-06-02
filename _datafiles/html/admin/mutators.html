@@ -217,6 +217,7 @@
         <div id="editor-form" style="display:none;">
             <div class="editor-header">
                 <h2 id="editor-title">Mutator Editor</h2>
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Mutator YAML')">YAML</button>
             </div>
 
             <div class="form-grid">
@@ -487,6 +488,13 @@
     function fillForm(m) {
         document.getElementById('editor-title').textContent = isNew ? 'New Mutator' : m.MutatorId;
         document.getElementById('mut-id-display').textContent = isNew ? '' : m.MutatorId;
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && m.MutatorId) {
+            yamlBtn.dataset.url = '/admin/api/v1/mutators/' + encodeURIComponent(m.MutatorId) + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         const idField = document.getElementById('f-mutatorid');
         setVal('f-mutatorid', m.MutatorId || '');

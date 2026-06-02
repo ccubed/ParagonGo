@@ -267,6 +267,7 @@
             <div class="editor-header">
                 <h2 id="editor-title">Mob Editor</h2>
                 <span class="badge" id="editor-zone-badge"></span>
+                <button class="yaml-badge" id="yaml-view-btn" style="display:none" onclick="showYamlModal(this.dataset.url,'Mob YAML')">YAML</button>
             </div>
 
             <div class="form-grid">
@@ -801,6 +802,13 @@
         document.getElementById('editor-title').textContent = isNew ? 'New Mob' : (ch.Name || 'Mob');
         document.getElementById('editor-zone-badge').textContent = mob.Zone || '';
         document.getElementById('mob-id-display').textContent = isNew ? '' : 'ID: ' + mob.MobId;
+        var yamlBtn = document.getElementById('yaml-view-btn');
+        if (!isNew && mob.MobId) {
+            yamlBtn.dataset.url = '/admin/api/v1/mobs/' + mob.MobId + '/yaml';
+            yamlBtn.style.display = '';
+        } else {
+            yamlBtn.style.display = 'none';
+        }
 
         setVal('f-name', ch.Name || '');
         setVal('f-zone', mob.Zone || '');
