@@ -38,6 +38,7 @@ type MobRank struct {
 	ItemDropChance int
 	ItemValue      int
 	// LootScore = Gold + (ItemDropChance/100 * ItemValue)
+	// ItemValue includes carried items and worn items (excluding CanNeverBeRemoved).
 	LootScore float64
 
 	// Aggregate scores used for tab sorting.
@@ -110,6 +111,16 @@ func RankMobs() (byThreat, byLoot, byDefense []MobRank) {
 
 		// Loot: sum item spec values for all carried items.
 		for _, item := range spec.Character.Items {
+			if iSpec := items.GetItemSpec(item.ItemId); iSpec != nil {
+				rank.ItemValue += iSpec.Value
+				rank.ItemCount++
+			}
+		}
+		// Worn items also drop (subject to ItemDropChance), unless CanNeverBeRemoved.
+		for _, item := range spec.Character.Equipment.GetAllItems() {
+			if item.IsRemoveLocked() {
+				continue
+			}
 			if iSpec := items.GetItemSpec(item.ItemId); iSpec != nil {
 				rank.ItemValue += iSpec.Value
 				rank.ItemCount++

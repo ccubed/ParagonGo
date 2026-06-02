@@ -395,14 +395,23 @@ func (i *ItemSpec) AutoCalculateValue() {
 
 	val := 5 // base value of 5
 
-	// Weapon based damage valuation
-	val += (i.Damage.DiceCount * i.Damage.DiceCount) * (i.Damage.SideCount * i.Damage.SideCount * 2)
-	val += i.Damage.BonusDamage * 25
-	// Armor based damage valuation
-	val += (i.DamageReduction * i.DamageReduction) * 17
+	// Weapon damage valuation: expected damage per attack = DiceCount*(SideCount+1)/2 + BonusDamage
+	if i.Damage.DiceCount > 0 && i.Damage.SideCount > 0 {
+		expectedDmg := i.Damage.DiceCount*(i.Damage.SideCount+1)/2 + i.Damage.BonusDamage
+		val += expectedDmg * i.Damage.Attacks * 15
+	}
+	// Armor damage reduction valuation
+	val += i.DamageReduction * 17
 
-	// Get the value of any buff it applies
+	// Get the value of any buff it applies on use
 	for _, buffId := range i.BuffIds {
+		if buffSpec := buffs.GetBuffSpec(buffId); buffSpec != nil {
+			val += buffSpec.GetValue()
+		}
+	}
+
+	// Get the value of any buff applied while worn
+	for _, buffId := range i.WornBuffIds {
 		if buffSpec := buffs.GetBuffSpec(buffId); buffSpec != nil {
 			val += buffSpec.GetValue()
 		}
@@ -412,7 +421,7 @@ func (i *ItemSpec) AutoCalculateValue() {
 		val += statMod * 11
 	}
 
-	// Special considerations
+	// Consumables scale with number of uses
 	if i.Uses > 1 {
 		val *= i.Uses
 	}
@@ -426,7 +435,7 @@ func (i *ItemSpec) AutoCalculateValue() {
 	}
 
 	if i.Type == Ring {
-		// rings are atomatically worth more, since they are jewelry
+		// rings are automatically worth more, since they are jewelry
 		val *= 2
 	}
 
