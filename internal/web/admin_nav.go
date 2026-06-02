@@ -232,6 +232,14 @@ func buildAdminNav() []WebNavItem {
 					},
 				},
 				{
+					Name:        "Coding",
+					Target:      "/admin/docs-coding",
+					Description: "Reference documentation for engine extension points available to Go module authors.",
+					Children: []WebNavItem{
+						{Label: "Hooks", Target: "/admin/docs-coding", Description: "Complete reference for all util.Hook extension points in the engine."},
+					},
+				},
+				{
 					Name:        "Modules",
 					Target:      "/admin/docs-modules",
 					Description: "Reference documentation for building Go modules that extend the server.",

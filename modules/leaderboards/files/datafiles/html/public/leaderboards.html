@@ -1,38 +1,202 @@
 {{template "header" .}}
 
 <style>
-    table.leaderboard th:nth-child(1) { width:30%; }
-    table.leaderboard th:nth-child(2) { width:30%; }
-    table.leaderboard th:nth-child(3) { width:10%; }
-    table.leaderboard th:nth-child(4) { width:30%; }
+  .lb-page-title {
+    color: var(--t-accent);
+    font-size: 1em;
+    margin-bottom: 24px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--t-border-accent);
+    text-align: left;
+  }
+
+  .lb-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .lb-card {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--t-border-accent);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .lb-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--t-bg-col-header);
+    border-bottom: 2px solid var(--t-border-accent);
+  }
+
+  .lb-card-title {
+    font-size: 0.8em;
+    color: var(--t-text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .lb-table tr {
+    background: var(--t-bg-row);
+    border-bottom: 1px solid var(--t-border-faint);
+    transition: background 0.1s;
+  }
+
+  .lb-table tr:nth-child(even) {
+    background: var(--t-bg-surface);
+  }
+
+  .lb-table tr:hover {
+    background: var(--t-bg-hover);
+  }
+
+  .lb-table th {
+    background: transparent;
+    border-bottom: 1px solid var(--t-border);
+    color: var(--t-text-secondary);
+    font-size: 0.6em;
+    font-family: 'Press Start 2P', monospace;
+    padding: 6px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .lb-table td {
+    font-size: 1.2em;
+    padding: 8px 10px;
+    font-family: monospace;
+    color: var(--t-text);
+    border: none;
+    vertical-align: middle;
+  }
+
+  .lb-rank {
+    width: 44px;
+    text-align: center;
+    padding: 6px 4px !important;
+  }
+
+  .lb-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.85em;
+    font-weight: bold;
+    font-family: monospace;
+    border: 2px solid;
+  }
+
+  .lb-rank-badge[data-rank="1"] {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border-color: #ffd700;
+  }
+
+  .lb-rank-badge[data-rank="2"] {
+    background: rgba(192, 192, 192, 0.15);
+    color: #c0c0c0;
+    border-color: #c0c0c0;
+  }
+
+  .lb-rank-badge[data-rank="3"] {
+    background: rgba(205, 127, 50, 0.15);
+    color: #cd7f32;
+    border-color: #cd7f32;
+  }
+
+  .lb-rank-badge[data-rank="other"] {
+    background: transparent;
+    color: var(--t-text-dim);
+    border-color: var(--t-border);
+    font-size: 0.75em;
+  }
+
+  .lb-name  { color: var(--t-online-name); font-weight: bold; }
+  .lb-class { color: var(--t-online-prof); font-size: 1em !important; }
+  .lb-score { text-align: right; color: var(--t-accent); font-weight: bold; }
+
+  .lb-level-pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: var(--t-accent-bg);
+    color: var(--t-online-level);
+    border: 1px solid var(--t-border-accent);
+    font-size: 0.9em;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  .lb-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--t-text-dim);
+    font-family: monospace;
+    font-size: 1em;
+  }
+
+  @media (max-width: 600px) {
+    .lb-boards { grid-template-columns: 1fr; }
+    .lb-table td { font-size: 3vw; }
+  }
 </style>
 
 <div class="overlay">
+  <h3 class="lb-page-title">Leaderboards</h3>
 
+  {{ if gt (len .leaderboards) 0 }}
+  <div class="lb-boards">
     {{ range $idx, $lb := .leaderboards }}
-    <h3>{{ $lb.Name }} Leaderboard</h3>
-    <table class="leaderboard">
+    <div class="lb-card">
+      <div class="lb-card-header">
+        <span class="lb-card-title">{{ $lb.Name }}</span>
+      </div>
+      <table class="lb-table">
         <tr>
-            <th>Name</th>
-            <th>Class</th>
-            <th>Level</th>
-            <th>{{ $lb.Name }}</th>
+          <th class="lb-rank">#</th>
+          <th>Character</th>
+          <th>Class</th>
+          <th>Lvl</th>
+          <th style="text-align:right">Score</th>
         </tr>
-        {{ range $idx, $entry := $lb.Top }}
-            {{ if eq $entry.ScoreValue 0 }}
-            {{ continue }}
-            {{ end }}
-            <tr>
-                <td>{{ $entry.CharacterName }}</td>
-                <td>{{ $entry.CharacterClass }}</td>
-                <td>{{ $entry.Level }}</td>
-                <td>{{ $entry.ScoreValue }}</td>
-            </tr>
+        {{ range $rank, $entry := $lb.Top }}
+          {{ if eq $entry.ScoreValue 0 }}{{ continue }}{{ end }}
+          <tr>
+            <td class="lb-rank">
+              {{ if eq $rank 0 }}<span class="lb-rank-badge" data-rank="1">1</span>
+              {{ else if eq $rank 1 }}<span class="lb-rank-badge" data-rank="2">2</span>
+              {{ else if eq $rank 2 }}<span class="lb-rank-badge" data-rank="3">3</span>
+              {{ else }}<span class="lb-rank-badge" data-rank="other">{{ add $rank 1 }}</span>
+              {{ end }}
+            </td>
+            <td class="lb-name">{{ $entry.CharacterName }}</td>
+            <td class="lb-class">{{ $entry.CharacterClass }}</td>
+            <td><span class="lb-level-pill">{{ $entry.Level }}</span></td>
+            <td class="lb-score">{{ $entry.ScoreValue }}</td>
+          </tr>
         {{ end }}
-    </table>
+      </table>
+    </div>
     {{ end }}
-    
-
+  </div>
+  {{ else }}
+  <div class="lb-empty">No leaderboards are currently configured.</div>
+  {{ end }}
 </div>
+<p>&nbsp;</p>
 
 {{template "footer" .}}

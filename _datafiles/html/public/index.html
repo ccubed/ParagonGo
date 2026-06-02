@@ -9,13 +9,19 @@
   {{ $telnetPorts := activeTelnetPorts .CONFIG.Network.TelnetPort }}
   {{ if gt (len $telnetPorts) 0 }}
   <div class="underlay">
-    <h3>Telnet Port{{ if gt (len $telnetPorts) 1 }}s{{end}}: {{ join $telnetPorts ", " }}</h3>
+    <h3>Telnet Port{{ if gt (len $telnetPorts) 1 }}s{{end}}: <span class="port-value">{{ join $telnetPorts ", " }}</span></h3>
   </div>
   {{ end }}
   {{ if sshEnabled .CONFIG }}
   <div class="underlay">
-    <h3>SSH Port: {{ .CONFIG.Network.SSHPort }}</h3>
+    <h3>SSH Port: <span class="port-value">{{ .CONFIG.Network.SSHPort }}</span></h3>
   </div>
   {{ end }}
+
+<style>
+  .port-value {
+    color: var(--t-accent);
+  }
+</style>
 
 {{template "footer" .}}

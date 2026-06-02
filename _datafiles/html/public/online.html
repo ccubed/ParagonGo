@@ -1,37 +1,89 @@
 {{template "header" .}}
 
-    <div class="overlay">
-        <h3>Users Online: </h3>
+<style>
+  .online-table th:nth-child(1) { width: 5%; text-align: right; }
+  .online-table th:nth-child(2) { width: 20%; }
+  .online-table th:nth-child(3) { width: 8%; text-align: center; }
+  .online-table th:nth-child(4) { width: 12%; text-align: center; }
+  .online-table th:nth-child(5) { width: 18%; text-align: center; }
+  .online-table th:nth-child(6) { width: 15%; text-align: center; }
+  .online-table th:nth-child(7) { width: 10%; text-align: center; }
+  .online-table th:nth-child(8) { width: 12%; text-align: center; }
 
-        {{if gt (len .STATS.OnlineUsers) 0 }}
-        <table>
-            <tr>
-                <th>#</th>
-                <th>Character</th>
-                <th>Level</th>
-                <th>Alignment</th>
-                <th>Profession</th>
-                <th>Time Online</th>
-                <th>Role</th>
-                <th>Conn Type</th>
-            </tr>
-            {{range $index, $uInfo := .STATS.OnlineUsers}}
-            <tr>
-                <td align="right">{{ add $index 1 }}.</td>
-                <td align="center"><b>{{ $uInfo.CharacterName }}</b></td>
-                <td align="center">{{ $uInfo.Level }}</td>
-                <td align="center">{{ $uInfo.Alignment }}</td>
-                <td align="center">{{ $uInfo.Profession }}</td>
-                <td align="center">{{ $uInfo.OnlineTimeStr }}{{ if $uInfo.IsAFK }} (AFK){{end}}</td>
-                <td align="center">{{ $uInfo.Role }}</td>
-                <td align="center">{{ $uInfo.ConnType }}</td>
-            </tr>
-            {{end}}
-        </table>
-        {{else}}
-            None.
-        {{end}}
-    </div>
-        <p>&nbsp;</p>
+  .online-table td { text-align: left; }
+  .online-table td.col-rank     { text-align: right; color: var(--t-text-dim); }
+  .online-table td.col-name     { color: var(--t-online-name); font-weight: bold; }
+  .online-table td.col-level    { text-align: center; color: var(--t-online-level); }
+  .online-table td.col-align    { text-align: center; color: var(--t-online-align); }
+  .online-table td.col-prof     { text-align: center; color: var(--t-online-prof); }
+  .online-table td.col-time     { text-align: center; color: var(--t-online-time); }
+  .online-table td.col-role     { text-align: center; color: var(--t-online-role); }
+  .online-table td.col-conn     { text-align: center; color: var(--t-text-muted); }
+
+  .afk-tag {
+    display: inline-block;
+    font-size: 0.75em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--t-accent-bg);
+    color: var(--t-text-dim);
+    border: 1px solid var(--t-border);
+    margin-left: 5px;
+    font-family: monospace;
+    vertical-align: middle;
+  }
+
+  .online-empty {
+    padding: 32px 0;
+    color: var(--t-text-dim);
+    font-size: 0.9em;
+    text-align: center;
+  }
+
+  .online-count {
+    color: var(--t-text-secondary);
+    font-size: 0.75em;
+    margin-bottom: 12px;
+    text-align: right;
+  }
+</style>
+
+<div class="overlay">
+  <h3>Users Online</h3>
+
+  {{if gt (len .STATS.OnlineUsers) 0}}
+  <div class="online-count">{{ len .STATS.OnlineUsers }} connected</div>
+  <table class="online-table">
+    <tr>
+      <th>#</th>
+      <th>Character</th>
+      <th>Level</th>
+      <th>Alignment</th>
+      <th>Profession</th>
+      <th>Time Online</th>
+      <th>Role</th>
+      <th>Conn</th>
+    </tr>
+    {{range $index, $uInfo := .STATS.OnlineUsers}}
+    <tr>
+      <td class="col-rank">{{ add $index 1 }}.</td>
+      <td class="col-name">
+        {{ $uInfo.CharacterName }}
+        {{ if $uInfo.IsAFK }}<span class="afk-tag">AFK</span>{{ end }}
+      </td>
+      <td class="col-level">{{ $uInfo.Level }}</td>
+      <td class="col-align">{{ $uInfo.Alignment }}</td>
+      <td class="col-prof">{{ $uInfo.Profession }}</td>
+      <td class="col-time">{{ $uInfo.OnlineTimeStr }}</td>
+      <td class="col-role">{{ $uInfo.Role }}</td>
+      <td class="col-conn">{{ $uInfo.ConnType }}</td>
+    </tr>
+    {{end}}
+  </table>
+  {{else}}
+  <div class="online-empty">No adventurers are currently online.</div>
+  {{end}}
+</div>
+<p>&nbsp;</p>
 
 {{template "footer" .}}

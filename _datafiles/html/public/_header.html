@@ -5,34 +5,45 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome to {{ .CONFIG.Server.MudName }}</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ .ASSET_BASE_URL }}/static/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ .ASSET_BASE_URL }}/static/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ .ASSET_BASE_URL }}/static/images/favicon-16x16.png">
-    <link rel="manifest" href="{{ .ASSET_BASE_URL }}/static/images/site.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ .ASSET_BASE_URL }}/static/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ .ASSET_BASE_URL }}/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ .ASSET_BASE_URL }}/static/images/favicon-16x16.png">
+  <link rel="manifest" href="{{ .ASSET_BASE_URL }}/static/images/site.webmanifest">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" />
+  <link id="site-theme-css" rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/theme-brooding.css" />
+  <script>
+  (function() {
+    var t = localStorage.getItem('gomud-site-theme');
+    if (!t) {
+      t = 'brooding';
+      localStorage.setItem('gomud-site-theme', t);
+    }
+    if (t !== 'brooding') {
+      document.getElementById('site-theme-css').href =
+        document.getElementById('site-theme-css').href.replace(/theme-[\w-]+\.css/, 'theme-' + t + '.css');
+    }
+  })();
+  </script>
   <style>
     :root {
       --background-image: url('{{ .ASSET_BASE_URL }}/static/images/web_bg.png') center center / cover no-repeat fixed;
     }
   </style>
   <link rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/gomud.css">
-  <script type="text/javascript">
-    window.addEventListener("load", function(){
-      const link = document.getElementById('hide-header-footer');
-
-      // Add a click event listener
-      link.addEventListener('click', function(event) {
-        // Prevent the default link behavior (e.g., navigating to a new page)
-        event.preventDefault();
-
-        document.getElementsByTagName('header')[0].style.display = "none";
-        document.getElementsByTagName('nav')[0].style.display = "none";
-        document.getElementsByTagName('footer')[0].style.display = "none";
-        if ( resizeClientIFrame ) {
-          resizeClientIFrame();
-        }
+  <script src="{{ .ASSET_BASE_URL }}/static/js/site-settings.js"></script>
+  <script>
+  window.addEventListener('load', function() {
+    var link = document.getElementById('hide-header-footer');
+    if (link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementsByTagName('header')[0].style.display = 'none';
+        document.getElementsByTagName('nav')[0].style.display = 'none';
+        document.getElementsByTagName('footer')[0].style.display = 'none';
+        if (typeof resizeClientIFrame === 'function') { resizeClientIFrame(); }
       });
-    });
+    }
+  });
   </script>
 </head>
 <body>
@@ -40,10 +51,13 @@
     <div>
       <a class="gomud-btn" href="/">{{ .CONFIG.Server.MudName }}</a>
     </div>
-    <div class="nav-toggle" onclick="toggleMenu()">
-      <div></div>
-      <div></div>
-      <div></div>
+    <div class="header-right">
+      <button class="site-gear-btn" id="site-gear-btn" title="Settings">&#9881;</button>
+      <div class="nav-toggle" onclick="toggleMenu()">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
     </div>
   </header>
 
@@ -53,9 +67,376 @@
       {{ range $idx, $navDetails := .NAV }}
         <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}class="selected"{{end}}>{{ $navDetails.Name }}</a>
       {{ end }}
-      {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure">⛶</a>{{ end }}
+      {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure">&#9974;</a>{{ end }}
     </div>
   </nav>
+
+  <!-- Settings Modal -->
+  <div id="site-settings-backdrop">
+    <div id="site-floating-menu">
+      <div id="site-settings-header">
+        <span id="site-settings-title">Settings</span>
+        <button id="site-settings-close" aria-label="Close">&#x2715;</button>
+      </div>
+      <div id="site-settings-tab-bar">
+        <button class="site-settings-tab-btn active" data-tab="site-tab-theme">Theme</button>
+        <button class="site-settings-tab-btn" data-tab="site-tab-settings">Settings</button>
+      </div>
+      <div id="site-settings-tab-body">
+
+        <!-- Theme Tab -->
+        <div class="site-settings-tab-panel active" id="site-tab-theme">
+          <div class="site-settings-section">
+            <div class="site-settings-section-title">Color Theme</div>
+            <div class="site-theme-dropdown" id="site-theme-dropdown">
+              <div class="site-theme-dropdown-header" id="site-theme-dropdown-header">
+                <div class="site-theme-dropdown-header-left">
+                  <div class="site-theme-dropdown-swatches"></div>
+                  <span class="site-theme-dropdown-label">Brooding</span>
+                </div>
+                <span id="site-theme-dropdown-arrow">&#9660;</span>
+              </div>
+              <div id="site-theme-list">
+
+                <div class="site-theme-option selected" data-theme="brooding">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1e1e1e"></span>
+                    <span class="site-theme-swatch" style="background:#1c6b60"></span>
+                    <span class="site-theme-swatch" style="background:#3ad4b8"></span>
+                    <span class="site-theme-swatch" style="background:#7ab8a0"></span>
+                    <span class="site-theme-swatch" style="background:#dffbd1"></span>
+                  </div>
+                  <span class="site-theme-label">Brooding</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-muted">muted</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="notepad">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#f8fafc"></span>
+                    <span class="site-theme-swatch" style="background:#1d4ed8"></span>
+                    <span class="site-theme-swatch" style="background:#2563eb"></span>
+                    <span class="site-theme-swatch" style="background:#4a6080"></span>
+                    <span class="site-theme-swatch" style="background:#0f1729"></span>
+                  </div>
+                  <span class="site-theme-label">Notepad</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="sorcerers-dusk">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#18162a"></span>
+                    <span class="site-theme-swatch" style="background:#7c3aed"></span>
+                    <span class="site-theme-swatch" style="background:#a855f7"></span>
+                    <span class="site-theme-swatch" style="background:#9888c0"></span>
+                    <span class="site-theme-swatch" style="background:#e0d8f0"></span>
+                  </div>
+                  <span class="site-theme-label">Sorcerer's Dusk</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-fantasy">fantasy</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="ember-glow">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1c1814"></span>
+                    <span class="site-theme-swatch" style="background:#b06820"></span>
+                    <span class="site-theme-swatch" style="background:#e8882a"></span>
+                    <span class="site-theme-swatch" style="background:#b89870"></span>
+                    <span class="site-theme-swatch" style="background:#f0e4d0"></span>
+                  </div>
+                  <span class="site-theme-label">Ember Glow</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="circus">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#18080e"></span>
+                    <span class="site-theme-swatch" style="background:#b00820"></span>
+                    <span class="site-theme-swatch" style="background:#e01030"></span>
+                    <span class="site-theme-swatch" style="background:#e0b050"></span>
+                    <span class="site-theme-swatch" style="background:#f8f0e8"></span>
+                  </div>
+                  <span class="site-theme-label">Circus</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="grayscale">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1a1a1a"></span>
+                    <span class="site-theme-swatch" style="background:#505050"></span>
+                    <span class="site-theme-swatch" style="background:#909090"></span>
+                    <span class="site-theme-swatch" style="background:#c0c0c0"></span>
+                    <span class="site-theme-swatch" style="background:#e8e8e8"></span>
+                  </div>
+                  <span class="site-theme-label">Grayscale</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-muted">muted</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="aurora">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#08081a"></span>
+                    <span class="site-theme-swatch" style="background:#303860"></span>
+                    <span class="site-theme-swatch" style="background:#20c870"></span>
+                    <span class="site-theme-swatch" style="background:#40ff90"></span>
+                    <span class="site-theme-swatch" style="background:#80c8b8"></span>
+                  </div>
+                  <span class="site-theme-label">Aurora</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="heart">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1e1418"></span>
+                    <span class="site-theme-swatch" style="background:#db2777"></span>
+                    <span class="site-theme-swatch" style="background:#f472b6"></span>
+                    <span class="site-theme-swatch" style="background:#c088a0"></span>
+                    <span class="site-theme-swatch" style="background:#f0e0e8"></span>
+                  </div>
+                  <span class="site-theme-label">Heart</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="duran">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1e1a1a"></span>
+                    <span class="site-theme-swatch" style="background:#8a2a2a"></span>
+                    <span class="site-theme-swatch" style="background:#bf3f3e"></span>
+                    <span class="site-theme-swatch" style="background:#eec2a9"></span>
+                    <span class="site-theme-swatch" style="background:#f9f2f1"></span>
+                  </div>
+                  <span class="site-theme-label">Duran</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                    <span class="site-theme-badge site-theme-badge-muted">muted</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="midnight-ocean">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#0d1b2a"></span>
+                    <span class="site-theme-swatch" style="background:#0080b0"></span>
+                    <span class="site-theme-swatch" style="background:#00d4ff"></span>
+                    <span class="site-theme-swatch" style="background:#7ab8d8"></span>
+                    <span class="site-theme-swatch" style="background:#d4eef8"></span>
+                  </div>
+                  <span class="site-theme-label">Midnight Ocean</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="parchment">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#f5edd8"></span>
+                    <span class="site-theme-swatch" style="background:#7a3810"></span>
+                    <span class="site-theme-swatch" style="background:#b05820"></span>
+                    <span class="site-theme-swatch" style="background:#7a4a20"></span>
+                    <span class="site-theme-swatch" style="background:#2a1a08"></span>
+                  </div>
+                  <span class="site-theme-label">Parchment</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                    <span class="site-theme-badge site-theme-badge-fantasy">fantasy</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="neon-city">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#0e0e14"></span>
+                    <span class="site-theme-swatch" style="background:#c800e8"></span>
+                    <span class="site-theme-swatch" style="background:#00f0f8"></span>
+                    <span class="site-theme-swatch" style="background:#80a8e0"></span>
+                    <span class="site-theme-swatch" style="background:#e8f0ff"></span>
+                  </div>
+                  <span class="site-theme-label">Neon City</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-neon">neon</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="sakura">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#fdf6f8"></span>
+                    <span class="site-theme-swatch" style="background:#c03060"></span>
+                    <span class="site-theme-swatch" style="background:#e8608a"></span>
+                    <span class="site-theme-swatch" style="background:#a05878"></span>
+                    <span class="site-theme-swatch" style="background:#2a1020"></span>
+                  </div>
+                  <span class="site-theme-label">Sakura</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="deep-forest">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#0c1208"></span>
+                    <span class="site-theme-swatch" style="background:#4a7830"></span>
+                    <span class="site-theme-swatch" style="background:#d4c060"></span>
+                    <span class="site-theme-swatch" style="background:#a0c870"></span>
+                    <span class="site-theme-swatch" style="background:#e8f0d0"></span>
+                  </div>
+                  <span class="site-theme-label">Deep Forest</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-nature">nature</span>
+                    <span class="site-theme-badge site-theme-badge-muted">muted</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="lavender-mist">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#f4f0fc"></span>
+                    <span class="site-theme-swatch" style="background:#4828b0"></span>
+                    <span class="site-theme-swatch" style="background:#6848d8"></span>
+                    <span class="site-theme-swatch" style="background:#7060a8"></span>
+                    <span class="site-theme-swatch" style="background:#1e1630"></span>
+                  </div>
+                  <span class="site-theme-label">Lavender Mist</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                    <span class="site-theme-badge site-theme-badge-fantasy">fantasy</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="obsidian-gold">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#0e0e0e"></span>
+                    <span class="site-theme-swatch" style="background:#a07820"></span>
+                    <span class="site-theme-swatch" style="background:#f0c040"></span>
+                    <span class="site-theme-swatch" style="background:#c8a850"></span>
+                    <span class="site-theme-swatch" style="background:#f8f0d8"></span>
+                  </div>
+                  <span class="site-theme-label">Obsidian Gold</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="arctic">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#f0f4f8"></span>
+                    <span class="site-theme-swatch" style="background:#0660a0"></span>
+                    <span class="site-theme-swatch" style="background:#0890d8"></span>
+                    <span class="site-theme-swatch" style="background:#4878a0"></span>
+                    <span class="site-theme-swatch" style="background:#0c1e30"></span>
+                  </div>
+                  <span class="site-theme-label">Arctic</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                    <span class="site-theme-badge site-theme-badge-muted">muted</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="blood-moon">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#120608"></span>
+                    <span class="site-theme-swatch" style="background:#901010"></span>
+                    <span class="site-theme-swatch" style="background:#e02020"></span>
+                    <span class="site-theme-swatch" style="background:#c07070"></span>
+                    <span class="site-theme-swatch" style="background:#f0e8d8"></span>
+                  </div>
+                  <span class="site-theme-label">Blood Moon</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-gothic">gothic</span>
+                    <span class="site-theme-badge site-theme-badge-vibrant">vibrant</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="mint-fresh">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#f2faf6"></span>
+                    <span class="site-theme-swatch" style="background:#0a8050"></span>
+                    <span class="site-theme-swatch" style="background:#10b878"></span>
+                    <span class="site-theme-swatch" style="background:#3a8860"></span>
+                    <span class="site-theme-swatch" style="background:#0c2018"></span>
+                  </div>
+                  <span class="site-theme-label">Mint Fresh</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-light">light</span>
+                    <span class="site-theme-badge site-theme-badge-nature">nature</span>
+                    <span class="site-theme-badge site-theme-badge-cool">cool</span>
+                  </div>
+                </div>
+
+                <div class="site-theme-option" data-theme="steel-punk">
+                  <div class="site-theme-preview">
+                    <span class="site-theme-swatch" style="background:#1a1c1e"></span>
+                    <span class="site-theme-swatch" style="background:#a05020"></span>
+                    <span class="site-theme-swatch" style="background:#e87830"></span>
+                    <span class="site-theme-swatch" style="background:#c09060"></span>
+                    <span class="site-theme-swatch" style="background:#e0ddd8"></span>
+                  </div>
+                  <span class="site-theme-label">Steel Punk</span>
+                  <div class="site-theme-badges">
+                    <span class="site-theme-badge site-theme-badge-dark">dark</span>
+                    <span class="site-theme-badge site-theme-badge-warm">warm</span>
+                  </div>
+                </div>
+
+              </div><!-- #site-theme-list -->
+            </div><!-- .site-theme-dropdown -->
+          </div><!-- .site-settings-section -->
+        </div><!-- #site-tab-theme -->
+
+        <!-- Settings Tab -->
+        <div class="site-settings-tab-panel" id="site-tab-settings">
+          <div class="site-settings-section">
+            <div class="site-settings-section-title">Account</div>
+            <div class="site-toggle-row">
+              <div class="site-toggle-info">
+                <span class="site-toggle-label">Auto Login <span class="site-badge-soon">coming soon</span></span>
+                <span class="site-toggle-desc">Automatically log in when visiting the web client.</span>
+              </div>
+              <label class="site-toggle-switch">
+                <input type="checkbox" id="site-autologin-toggle" disabled />
+                <span class="site-toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div><!-- #site-tab-settings -->
+
+      </div><!-- #site-settings-tab-body -->
+    </div><!-- #site-floating-menu -->
+  </div><!-- #site-settings-backdrop -->
 
   <div id="content-container" class="content-container" data-path="{{ .PATH }}">
 {{end}}
