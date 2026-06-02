@@ -138,14 +138,16 @@
         return _canvasRect;
     }
 
-    // Invalidate the cached rect whenever the canvas is resized so the next
-    // event picks up the new position automatically.
+    // Invalidate the cached rect whenever the canvas is resized or the page
+    // is scrolled. getBoundingClientRect() is viewport-relative, so any scroll
+    // shifts the canvas position and the cached value becomes stale.
     (function() {
         var _origResizeCanvas = MapperRender.resizeCanvas;
         MapperRender.resizeCanvas = function() {
             _origResizeCanvas();
             _canvasRect = null;
         };
+        window.addEventListener('scroll', function() { _canvasRect = null; }, { passive: true, capture: true });
     })();
 
     // =====================================================================
