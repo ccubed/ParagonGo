@@ -149,6 +149,39 @@ func BenchmarkFindByUsername_Scale(b *testing.B) {
 	}
 }
 
+// benchIsUpToDateDir creates a temporary directory populated with n stub
+// .yaml files and returns the directory path and a cleanup function.
+func benchIsUpToDateDir(b *testing.B, n int) (string, func()) {
+	b.Helper()
+	dir, err := os.MkdirTemp("", "bench_users_dir_*")
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < n; i++ {
+		path := fmt.Sprintf("%s/%d.yaml", dir, i+1)
+		if err := os.WriteFile(path, []byte("username: user\n"), 0644); err != nil {
+			os.RemoveAll(dir)
+			b.Fatal(err)
+		}
+	}
+	return dir, func() { os.RemoveAll(dir) }
+}
+
+// BenchmarkIsUpToDate_Checksum benchmarks the IsUpToDate checksum path
+// (computeDirChecksum) at varying directory sizes.
+func BenchmarkIsUpToDate_Checksum(b *testing.B) {
+	for _, size := range []int{100, 1000, 10000} {
+		b.Run(fmt.Sprintf("files_%d", size), func(b *testing.B) {
+			dir, cleanup := benchIsUpToDateDir(b, size)
+			defer cleanup()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_, _ = computeDirChecksum(dir)
+			}
+		})
+	}
+}
+
 // createTestIndexFile creates an index file with a fixed-width header and multiple user records.
 // It uses the UserIndex receiver method formatFixedHeader so that the header is exactly 100 bytes long.
 func createTestIndexFile(t *testing.T, filename string) *UserIndex {

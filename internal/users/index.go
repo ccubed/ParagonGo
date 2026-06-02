@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"os"
 	"strings"
@@ -24,7 +25,7 @@ var (
 )
 
 const (
-	IndexVersion           = 1
+	IndexVersion           = 2
 	IndexLineTerminatorV1  = byte(10) // "\n"
 	IndexRecordSizeV1      = 89
 	FixedHeaderTotalLength = 100 // 99 bytes header content + 1 byte newline
@@ -36,6 +37,7 @@ type IndexMetaData struct {
 	IndexVersion uint64
 	RecordCount  uint64
 	RecordSize   uint64
+	Checksum     uint64 // FNV-64 fingerprint of user directory contents; 0 when IndexChecksumEnabled is false
 }
 
 // IndexUserRecord represents one fixed-width record.
@@ -168,8 +170,66 @@ func (idx *UserIndex) Create() error {
 	return nil
 }
 
+// computeDirChecksum returns a FNV-64 fingerprint over the name, mtime
+// (nanoseconds), and size of every qualifying user YAML file in basePath.
+// The file count is also folded in so that deletions change the checksum.
+func computeDirChecksum(basePath string) (uint64, error) {
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return 0, err
+	}
+
+	h := fnv.New64a()
+	var count uint64
+	var buf [24]byte
+
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if !strings.HasSuffix(name, `.yaml`) || strings.HasSuffix(name, `.alts.yaml`) {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			return 0, err
+		}
+		h.Write([]byte(name))
+		binary.LittleEndian.PutUint64(buf[0:8], uint64(info.ModTime().UnixNano()))
+		binary.LittleEndian.PutUint64(buf[8:16], uint64(info.Size()))
+		h.Write(buf[:16])
+		count++
+	}
+
+	binary.LittleEndian.PutUint64(buf[0:8], count)
+	h.Write(buf[:8])
+
+	return h.Sum64(), nil
+}
+
+// IsUpToDate returns true if the index file exists, has the current version,
+// and its stored FNV-64 checksum matches the current state of the user directory.
+func (idx *UserIndex) IsUpToDate() bool {
+	if !idx.Exists() {
+		return false
+	}
+	if idx.metaData.IndexVersion != IndexVersion {
+		return false
+	}
+
+	basePath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`)
+	current, err := computeDirChecksum(basePath)
+	if err != nil {
+		return false
+	}
+	return idx.metaData.Checksum == current
+}
+
 // Rebuild recreates the index from all offline user records.
 // It calls Create() internally so it is self-contained.
+// After building, it computes and persists a directory checksum so that
+// IsUpToDate can detect stale indexes on the next startup.
 func (idx *UserIndex) Rebuild() error {
 	if err := idx.Create(); err != nil {
 		return fmt.Errorf("index create failed: %w", err)
@@ -186,7 +246,48 @@ func (idx *UserIndex) Rebuild() error {
 		return true
 	})
 
-	return firstErr
+	if firstErr != nil {
+		return firstErr
+	}
+
+	basePath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`)
+	checksum, err := computeDirChecksum(basePath)
+	if err != nil {
+		return fmt.Errorf("checksum compute failed: %w", err)
+	}
+	if err := idx.writeChecksum(checksum); err != nil {
+		return fmt.Errorf("checksum write failed: %w", err)
+	}
+
+	return nil
+}
+
+// writeChecksum persists a new checksum value into the index header on disk
+// and updates the in-memory metadata.
+func (idx *UserIndex) writeChecksum(checksum uint64) error {
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
+	idx.metaData.Checksum = checksum
+
+	headerBytes, err := idx.metaData.Format()
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(idx.Filename, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+	if _, err := f.Write(headerBytes); err != nil {
+		return err
+	}
+	return f.Sync()
 }
 
 func (idx *UserIndex) GetMetaData() IndexMetaData {
@@ -257,8 +358,8 @@ func (idx *UserIndex) getMetaDataFromFile() IndexMetaData {
 	var meta IndexMetaData
 	meta.MetaDataSize = uint64(len(header))
 	headerContent := strings.TrimSpace(string(header[:FixedHeaderTotalLength-1]))
-	n, _ := fmt.Sscanf(headerContent, "VERSION=%d,RECORDCOUNT=%d,RECORDSIZE=%d", &meta.IndexVersion, &meta.RecordCount, &meta.RecordSize)
-	if n != 3 {
+	n, _ := fmt.Sscanf(headerContent, "VERSION=%d,RECORDCOUNT=%d,RECORDSIZE=%d,CHECKSUM=%d", &meta.IndexVersion, &meta.RecordCount, &meta.RecordSize, &meta.Checksum)
+	if n < 3 {
 		return IndexMetaData{}
 	}
 
@@ -366,7 +467,7 @@ func (idx *UserIndex) RemoveByUsername(username string) error {
 // Format formats the metadata header as a fixed-width string.
 // The header (without newline) is exactly 99 bytes.
 func (m IndexMetaData) Format() ([]byte, error) {
-	headerContent := fmt.Sprintf("VERSION=%d,RECORDCOUNT=%d,RECORDSIZE=%d", m.IndexVersion, m.RecordCount, m.RecordSize)
+	headerContent := fmt.Sprintf("VERSION=%d,RECORDCOUNT=%d,RECORDSIZE=%d,CHECKSUM=%d", m.IndexVersion, m.RecordCount, m.RecordSize, m.Checksum)
 	if len(headerContent) > FixedHeaderTotalLength-1 {
 		return nil, fmt.Errorf("header content too long: %d bytes", len(headerContent))
 	}
