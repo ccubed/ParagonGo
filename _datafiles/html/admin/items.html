@@ -84,6 +84,28 @@
     .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: transparent; }
     .field textarea { resize: vertical; min-height: 80px; }
     .field-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.2rem; }
+
+    /* toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 0.55rem; padding: 0.3rem 0; }
+    .toggle-wrap input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .toggle-switch {
+        position: relative; display: inline-block;
+        width: 2.4rem; height: 1.3rem; flex-shrink: 0; cursor: pointer;
+    }
+    .toggle-switch::before {
+        content: ''; position: absolute; inset: 0;
+        background: var(--color-border-medium); border-radius: 1rem; transition: background 0.18s;
+    }
+    .toggle-switch::after {
+        content: ''; position: absolute; top: 0.15rem; left: 0.15rem;
+        width: 1rem; height: 1rem; background: var(--color-surface-white);
+        border-radius: 50%; transition: transform 0.18s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    input[type="checkbox"]:checked + .toggle-switch::before { background: var(--color-primary); }
+    input[type="checkbox"]:checked + .toggle-switch::after { transform: translateX(1.1rem); }
+    input[type="checkbox"]:focus-visible + .toggle-switch { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: 1rem; }
+    .toggle-label-text { font-size: 0.85rem; color: var(--color-text-muted); }
+
     .field-with-btn { display: flex; gap: 0.4rem; align-items: center; }
     .field-with-btn input { flex: 1; }
     .btn-search {
@@ -314,10 +336,11 @@
                 </div>
                 <div class="field">
                     <label>Cursed</label>
-                    <select id="f-cursed">
-                        <option value="false">No</option>
-                        <option value="true">Yes - cannot be removed once equipped</option>
-                    </select>
+                    <div class="toggle-wrap">
+                        <input type="checkbox" id="f-cursed" />
+                        <label class="toggle-switch" for="f-cursed"></label>
+                        <span class="toggle-label-text">Cannot be removed once equipped</span>
+                    </div>
                 </div>
 
                 <div class="section-title">Stat Modifications</div>
@@ -555,7 +578,7 @@
             qtDisplay.style.color = 'var(--color-empty-text)';
             qtDisplay.style.fontStyle = 'italic';
         }
-        setVal('f-cursed', item.Cursed ? 'true' : 'false');
+        setVal('f-cursed', item.Cursed);
 
         // Weapon
         const dmg = item.Damage || {};
@@ -701,7 +724,7 @@
             DamageReduction: parseInt(document.getElementById('f-damagereduction').value, 10) || 0,
             BreakChance:     parseInt(document.getElementById('f-breakchance').value, 10) || 0,
             QuestToken:      document.getElementById('f-questtoken').value.trim(),
-            Cursed:          document.getElementById('f-cursed').value === 'true',
+            Cursed:          document.getElementById('f-cursed').checked,
             Hands:           parseInt(document.getElementById('f-hands').value, 10) || 1,
             WaitRounds:      parseInt(document.getElementById('f-waitrounds').value, 10) || 0,
             KeyLockId:       document.getElementById('f-keylockid').value.trim(),
@@ -812,7 +835,9 @@
     function setVal(id, val) {
         const el = document.getElementById(id);
         if (!el) return;
-        if (el.tagName === 'SELECT') {
+        if (el.type === 'checkbox') {
+            el.checked = (val === true || val === 'true');
+        } else if (el.tagName === 'SELECT') {
             el.value = String(val);
         } else {
             el.value = val;
