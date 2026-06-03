@@ -21,7 +21,7 @@ MIN_GO_MAJOR=1
 MIN_GO_MINOR=24
 
 GO_INSTALL_DIR="/usr/local/go"
-GO_DL_API="https://go.dev/dl/?mode=json"
+GO_DL_API="https://go.dev/dl/\?mode=json"
 
 # ---------------------------------------------------------------------------
 # Helpers
