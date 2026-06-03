@@ -710,13 +710,17 @@ func (m *Mob) GetScript() string {
 }
 
 func (m *Mob) GetScriptPath() string {
+	return m.GetScriptPathForTag(m.ScriptTag)
+}
+
+func (m *Mob) GetScriptPathForTag(tag string) string {
 	// Load any script for the room
 
 	mobFilePath := m.Filename()
 
 	newExt := `.js`
-	if m.ScriptTag != `` {
-		newExt = fmt.Sprintf(`-%s.js`, m.ScriptTag)
+	if tag != `` {
+		newExt = fmt.Sprintf(`-%s.js`, tag)
 	}
 
 	scriptFilePath := `scripts/` + strings.Replace(mobFilePath, `.yaml`, newExt, 1)
@@ -725,8 +729,43 @@ func (m *Mob) GetScriptPath() string {
 		scriptFilePath,
 		1)
 
-	//mudlog.Info("SCRIPT PATH", "path", util.FilePath(fullScriptPath))
 	return util.FilePath(fullScriptPath)
+}
+
+// GetAllScriptTags returns the tag (empty string for the base script) of every
+// .js script file that exists for this mob. The base (untagged) script is
+// always first when present; tagged scripts follow in sorted order.
+func (m *Mob) GetAllScriptTags() []string {
+	mobFilePath := m.Filename()
+	baseName := strings.TrimSuffix(mobFilePath, `.yaml`)
+
+	// Derive the scripts directory from the canonical script path so the logic
+	// stays in sync with GetScriptPathForTag.
+	baseScriptPath := m.GetScriptPathForTag(``)
+	scriptDir := strings.TrimSuffix(baseScriptPath, baseName+`.js`)
+
+	entries, err := os.ReadDir(scriptDir)
+	if err != nil {
+		return nil
+	}
+
+	var tags []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if name == baseName+`.js` {
+			tags = append([]string{``}, tags...)
+			continue
+		}
+		prefix := baseName + `-`
+		if strings.HasPrefix(name, prefix) && strings.HasSuffix(name, `.js`) {
+			tag := strings.TrimSuffix(strings.TrimPrefix(name, prefix), `.js`)
+			tags = append(tags, tag)
+		}
+	}
+	return tags
 }
 
 func ReduceHostility() {

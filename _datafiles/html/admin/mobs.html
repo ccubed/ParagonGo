@@ -302,12 +302,6 @@
                         <div class="field-hint">Zone folder for file storage</div>
                     </div>
                     <div class="field">
-                        <label>Script Tag</label>
-                        <input type="text" id="f-scripttag" placeholder="e.g. winterfire" />
-                        <div class="field-hint">Identifier used in the script filename</div>
-                    </div>
-
-                    <div class="field">
                         <label>Hostile</label>
                         <div class="toggle-wrap">
                             <input type="checkbox" id="f-hostile" />
@@ -516,12 +510,14 @@
             <div style="margin-top:1.25rem; border-top: 1px solid var(--color-border-light); padding-top: 1rem;">
                 <div class="script-toggle" id="script-toggle" onclick="toggleScript()">Script</div>
                 <div class="script-area" id="script-area">
-                    <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
+                    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;flex-wrap:wrap;">
+                        <select id="script-selector" style="flex:1;min-width:160px;padding:0.3rem 0.5rem;border:1px solid var(--color-border-medium);border-radius:4px;font-size:0.85rem;background:var(--color-surface-white);" onchange="switchScript(this.value)"></select>
+                        <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="promptNewInstanceScript()">+ New Instance Script</button>
                         <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
                     </div>
                     <textarea id="f-script" spellcheck="false" placeholder="// JavaScript for this mob's events (onAsk, onGive, onIdle, onShow)&#10;// Leave blank to delete the script file."></textarea>
                     <div id="script-error" class="script-error"></div>
-                    <div class="script-hint">Saved as a .js file alongside the mob's YAML. Clear the field and save to delete the script.</div>
+                    <div class="script-hint" id="script-hint">Saved as a .js file alongside the mob's YAML. Clear the field and save to delete the script.</div>
                 </div>
             </div>
 
@@ -546,6 +542,7 @@
     let currentMobId = null;
     let isNew = false;
     let scriptSync = null;
+    let currentScriptTag = null; // null = base script, string = instance script tag
 
     async function init() {
         const [mobsRes, racesRes, buffsRes, itemsRes, slotsRes] = await AdminAPI.all([
@@ -788,22 +785,31 @@
     // Load mob into editor
     // -------------------------------------------------------------------------
     async function loadMob(mobId) {
-        const [mobRes, scriptRes] = await AdminAPI.all([
+        const [mobRes, scriptsRes] = await AdminAPI.all([
             AdminAPI.get('/admin/api/v1/mobs/' + mobId),
-            AdminAPI.get('/admin/api/v1/mobs/' + mobId + '/script'),
+            AdminAPI.get('/admin/api/v1/mobs/' + mobId + '/scripts'),
         ]);
 
         if (!mobRes.ok) { showStatus('Failed to load mob: ' + mobRes.error, false); return; }
 
         const mob = mobRes.data.data;
-        const script = scriptRes.ok ? (scriptRes.data.data.script || '') : '';
+        const scriptTags = scriptsRes.ok ? (scriptsRes.data.data || []) : [];
 
         currentMobId = mobId;
         isNew = false;
         location.hash = mobId;
         setActiveRow(mobId);
         showEditor();
-        fillForm(mob, script);
+
+        // Default to base script (tag = '') if it exists, otherwise first available, otherwise none
+        let initialTag = null;
+        if (scriptTags.includes('')) {
+            initialTag = '';
+        } else if (scriptTags.length > 0) {
+            initialTag = scriptTags[0];
+        }
+
+        await fillForm(mob, scriptTags, initialTag);
     }
 
     function setActiveRow(mobId) {
@@ -818,7 +824,7 @@
         document.getElementById('delete-btn').style.display = isNew ? 'none' : '';
     }
 
-    function fillForm(mob, script) {
+    async function fillForm(mob, scriptTags, initialTag) {
         const ch = mob.Character || {};
 
         document.getElementById('editor-title').textContent = isNew ? 'New Mob' : (ch.Name || 'Mob');
@@ -869,7 +875,6 @@
         document.getElementById('f-alignment-val').textContent = align;
 
         setVal('f-gold', ch.Gold || 0);
-        setVal('f-scripttag', mob.ScriptTag || '');
 
         // Groups, Hates, QuestFlags
         renderTags('groups-list', mob.Groups || []);
@@ -911,10 +916,7 @@
         renderShopEntries(ch.Shop || []);
 
         // Script
-        setVal('f-script', script);
-        if (scriptSync) scriptSync();
-        document.getElementById('script-toggle').classList.toggle('open', script.length > 0);
-        document.getElementById('script-area').classList.toggle('open', script.length > 0);
+        await loadScriptForTag(initialTag, scriptTags);
     }
 
     function eqItemId(slot) {
@@ -925,12 +927,12 @@
     // -------------------------------------------------------------------------
     // New mob
     // -------------------------------------------------------------------------
-    window.newMob = function () {
+    window.newMob = async function () {
         currentMobId = null;
         isNew = true;
         document.querySelectorAll('.mob-row').forEach(r => r.classList.remove('active'));
         showEditor();
-        fillForm({}, '');
+        await fillForm({}, [], null);
         document.getElementById('editor-title').textContent = 'New Mob';
         document.getElementById('mob-id-display').textContent = '';
         document.getElementById('delete-btn').style.display = 'none';
@@ -1420,7 +1422,6 @@
             MaxWander:      parseInt(document.getElementById('f-maxwander').value, 10),
             ItemDropChance: parseInt(document.getElementById('f-itemdropchance').value, 10) || 0,
             EliteChance:    parseInt(document.getElementById('f-elitechance').value, 10) || 0,
-            ScriptTag:      document.getElementById('f-scripttag').value.trim(),
             Groups:         collectTags('groups-list'),
             Hates:          collectTags('hates-list'),
             QuestFlags:     collectTags('questflags-list'),
@@ -1484,15 +1485,21 @@
         const saved = mobRes.data.data;
         const savedId = saved.MobId;
 
-        const scriptRes = await AdminAPI.put('/admin/api/v1/mobs/' + savedId + '/script', { script: scriptContent });
+        // Save the currently-selected script (base or tagged)
+        const scriptUrl = (currentScriptTag === null || currentScriptTag === '')
+            ? '/admin/api/v1/mobs/' + savedId + '/script'
+            : '/admin/api/v1/mobs/' + savedId + '/scripts/' + encodeURIComponent(currentScriptTag);
+        const scriptRes = await AdminAPI.put(scriptUrl, { script: scriptContent });
         if (!scriptRes.ok) {
             showStatus('Mob saved but script update failed: ' + scriptRes.error, false);
         } else {
             showStatus('Mob saved successfully.', true);
         }
 
-        // Refresh list
-        const listEntry = Object.assign({}, saved, { HasScript: scriptContent.length > 0 });
+        // Refresh list - HasScript: true if there's any script content or existing scripts
+        const existingTags = getAllSelectorTags();
+        const hasAnyScript = scriptContent.length > 0 || existingTags.some(t => t !== currentScriptTag);
+        const listEntry = Object.assign({}, saved, { HasScript: hasAnyScript });
         if (isNew) {
             allMobs.push(listEntry);
             allMobs.sort((a, b) => a.MobId - b.MobId);
@@ -1539,6 +1546,98 @@
 
     window.openScriptWizard = function () {
         ScriptWizard.open({ scriptType: 'mob', textareaId: 'f-script', syncFn: scriptSync });
+    };
+
+    // -------------------------------------------------------------------------
+    // Script selector / instance scripts
+    // -------------------------------------------------------------------------
+    function buildScriptSelector(tags) {
+        const sel = document.getElementById('script-selector');
+        sel.innerHTML = '';
+        if (tags.length === 0) {
+            const o = document.createElement('option');
+            o.value = '';
+            o.textContent = 'Base script (no file yet)';
+            sel.appendChild(o);
+        } else {
+            for (const tag of tags) {
+                const o = document.createElement('option');
+                o.value = tag;
+                o.textContent = tag === '' ? 'Base script' : 'Instance: ' + tag;
+                sel.appendChild(o);
+            }
+        }
+    }
+
+    async function loadScriptForTag(tag, tags) {
+        currentScriptTag = tag;
+        const resolvedTags = tags !== undefined ? tags : getAllSelectorTags();
+        buildScriptSelector(resolvedTags);
+        const sel = document.getElementById('script-selector');
+        if (sel) sel.value = tag === null ? '' : tag;
+
+        let script = '';
+        if (!isNew && currentMobId !== null && tag !== null) {
+            const url = tag === ''
+                ? '/admin/api/v1/mobs/' + currentMobId + '/script'
+                : '/admin/api/v1/mobs/' + currentMobId + '/scripts/' + encodeURIComponent(tag);
+            const res = await AdminAPI.get(url);
+            if (res.ok) script = res.data.data.script || '';
+        }
+
+        setVal('f-script', script);
+        if (scriptSync) scriptSync();
+
+        // Open the section if there's any script content or any real script files exist
+        // Only auto-toggle on initial load (when tags list is explicitly provided)
+        if (tags !== undefined) {
+            const hasAnyScript = script.length > 0 || resolvedTags.length > 0;
+            document.getElementById('script-toggle').classList.toggle('open', hasAnyScript);
+            document.getElementById('script-area').classList.toggle('open', hasAnyScript);
+        }
+
+        const hint = document.getElementById('script-hint');
+        if (hint) {
+            hint.textContent = tag === '' || tag === null
+                ? 'Base script. Saved as a .js file alongside the mob YAML. Clear to delete.'
+                : 'Instance script for tag \"' + tag + '\". Used when a spawn sets scripttag: ' + tag + '. Clear to delete.';
+        }
+    }
+
+    function getAllSelectorTags() {
+        return Array.from(document.getElementById('script-selector').options).map(o => o.value);
+    }
+
+    window.switchScript = async function (tag) {
+        if (isNew) return;
+        await loadScriptForTag(tag);
+    };
+
+    window.promptNewInstanceScript = function () {
+        const tag = prompt('Enter a script tag name for the new instance script (e.g. "winterfire"):');
+        if (!tag || !tag.trim()) return;
+        const clean = tag.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+        if (!clean) { alert('Invalid tag name. Use letters, numbers, hyphens, or underscores.'); return; }
+
+        const existingTags = getAllSelectorTags();
+        if (existingTags.includes(clean)) {
+            // Already exists, just switch to it
+            document.getElementById('script-selector').value = clean;
+            switchScript(clean);
+            return;
+        }
+
+        // Add to selector and switch to it (content will be empty — user fills it in and saves)
+        const sel = document.getElementById('script-selector');
+        const o = document.createElement('option');
+        o.value = clean;
+        o.textContent = 'Instance: ' + clean;
+        sel.appendChild(o);
+        sel.value = clean;
+        // Ensure the script section is open
+        document.getElementById('script-toggle').classList.add('open');
+        document.getElementById('script-area').classList.add('open');
+        loadScriptForTag(clean);
     };
 
     // -------------------------------------------------------------------------

@@ -196,6 +196,81 @@ func apiV1PutMobScript(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, APIResponse[struct{}]{Success: true})
 }
 
+// GET /admin/api/v1/mobs/{mobId}/scripts
+func apiV1GetMobScripts(w http.ResponseWriter, r *http.Request) {
+	idOrName := r.PathValue("mobId")
+	mobId := resolveMobId(w, idOrName)
+	if mobId == 0 {
+		return
+	}
+
+	spec := mobs.GetMobSpec(mobId)
+	if spec == nil {
+		writeAPIError(w, http.StatusNotFound, "mob not found")
+		return
+	}
+
+	tags := spec.GetAllScriptTags()
+	if tags == nil {
+		tags = []string{}
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse[[]string]{
+		Success: true,
+		Data:    tags,
+	})
+}
+
+// GET /admin/api/v1/mobs/{mobId}/scripts/{tag}
+func apiV1GetMobScriptByTag(w http.ResponseWriter, r *http.Request) {
+	idOrName := r.PathValue("mobId")
+	mobId := resolveMobId(w, idOrName)
+	if mobId == 0 {
+		return
+	}
+
+	tag := r.PathValue("tag")
+
+	script, err := mobs.GetMobScriptForTag(mobId, tag)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse[map[string]string]{
+		Success: true,
+		Data:    map[string]string{"script": script, "tag": tag},
+	})
+}
+
+// PUT /admin/api/v1/mobs/{mobId}/scripts/{tag}
+func apiV1PutMobScriptByTag(w http.ResponseWriter, r *http.Request) {
+	idOrName := r.PathValue("mobId")
+	mobId := resolveMobId(w, idOrName)
+	if mobId == 0 {
+		return
+	}
+
+	tag := r.PathValue("tag")
+
+	var body struct {
+		Script string `json:"script"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
+		return
+	}
+
+	if err := mobs.SaveMobScriptForTag(mobId, tag, body.Script); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	scripting.InvalidateMobVMById(int(mobId))
+
+	writeJSON(w, http.StatusOK, APIResponse[struct{}]{Success: true})
+}
+
 // PUT /admin/api/v1/mobs/{mobId}/stock
 func apiV1PutMobStock(w http.ResponseWriter, r *http.Request) {
 	idOrName := r.PathValue("mobId")

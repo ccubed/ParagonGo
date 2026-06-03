@@ -88,12 +88,16 @@ func DeleteMobSpec(mobId MobId) error {
 }
 
 func SaveMobScript(mobId MobId, content string) error {
+	return SaveMobScriptForTag(mobId, "", content)
+}
+
+func SaveMobScriptForTag(mobId MobId, tag string, content string) error {
 	spec := GetMobSpec(mobId)
 	if spec == nil {
 		return fmt.Errorf("mob %d not found", mobId)
 	}
 
-	scriptPath := spec.GetScriptPath()
+	scriptPath := spec.GetScriptPathForTag(tag)
 
 	if content == "" {
 		if err := os.Remove(scriptPath); err != nil && !os.IsNotExist(err) {
@@ -104,6 +108,23 @@ func SaveMobScript(mobId MobId, content string) error {
 
 	os.MkdirAll(filepath.Dir(scriptPath), os.ModePerm)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
+}
+
+func GetMobScriptForTag(mobId MobId, tag string) (string, error) {
+	spec := GetMobSpec(mobId)
+	if spec == nil {
+		return "", fmt.Errorf("mob %d not found", mobId)
+	}
+
+	scriptPath := spec.GetScriptPathForTag(tag)
+	if _, err := os.Stat(scriptPath); err != nil {
+		return "", nil
+	}
+	bytes, err := util.ReadFile(scriptPath)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 func StockMobShop(mobId MobId, entry characters.ShopItem) error {
