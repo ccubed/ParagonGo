@@ -38,6 +38,10 @@ func adminScriptingFunctions(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "scripting-functions.html", nil)
 }
 
+func adminScriptingObjects(w http.ResponseWriter, r *http.Request) {
+	serveAdminTemplate(w, r, "scripting-objects.html", nil)
+}
+
 func adminDocsCoding(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "docs-coding.html", nil)
 }

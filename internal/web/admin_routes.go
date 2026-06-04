@@ -70,6 +70,7 @@ func registerAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/scripting-spells", doBasicAuth(RunWithMUDLocked(adminScriptingSpells)))
 	mux.HandleFunc("GET /admin/scripting-pets", doBasicAuth(RunWithMUDLocked(adminScriptingPets)))
 	mux.HandleFunc("GET /admin/scripting-functions", doBasicAuth(RunWithMUDLocked(adminScriptingFunctions)))
+	mux.HandleFunc("GET /admin/scripting-objects", doBasicAuth(RunWithMUDLocked(adminScriptingObjects)))
 	mux.HandleFunc("GET /admin/scripting-api", doBasicAuth(RunWithMUDLocked(adminScriptingAPI)))
 	mux.HandleFunc("GET /admin/docs-coding", doBasicAuth(RunWithMUDLocked(adminDocsCoding)))
 	mux.HandleFunc("GET /admin/docs-modules", doBasicAuth(RunWithMUDLocked(adminDocsModules)))
