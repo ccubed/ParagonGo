@@ -127,3 +127,146 @@ func CreateItem(itemId int) *ScriptItem {
 	sItm := newScriptItem(i)
 	return &sItm
 }
+
+// ////////////////////////////////////////////////////////
+//
+// New ScriptItem methods
+//
+// ////////////////////////////////////////////////////////
+
+func (i ScriptItem) GetType() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return string(i.itemRecord.GetSpec().Type)
+}
+
+func (i ScriptItem) GetSubtype() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return string(i.itemRecord.GetSpec().Subtype)
+}
+
+func (i ScriptItem) GetValue() int {
+	if i.itemRecord == nil {
+		return 0
+	}
+	return i.itemRecord.GetSpec().Value
+}
+
+func (i ScriptItem) GetDescription() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return i.itemRecord.GetSpec().Description
+}
+
+func (i ScriptItem) GetQuestToken() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return i.itemRecord.GetSpec().QuestToken
+}
+
+func (i ScriptItem) GetElement() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return string(i.itemRecord.GetSpec().Element)
+}
+
+func (i ScriptItem) GetBuffIds() []int {
+	if i.itemRecord == nil {
+		return []int{}
+	}
+	src := i.itemRecord.GetSpec().BuffIds
+	result := make([]int, len(src))
+	copy(result, src)
+	return result
+}
+
+func (i ScriptItem) GetWornBuffIds() []int {
+	if i.itemRecord == nil {
+		return []int{}
+	}
+	src := i.itemRecord.GetSpec().WornBuffIds
+	result := make([]int, len(src))
+	copy(result, src)
+	return result
+}
+
+func (i ScriptItem) GetStatMods() map[string]int {
+	result := make(map[string]int)
+	if i.itemRecord == nil {
+		return result
+	}
+	for k, v := range i.itemRecord.GetSpec().StatMods {
+		result[k] = v
+	}
+	return result
+}
+
+func (i ScriptItem) GetDamageReduction() int {
+	if i.itemRecord == nil {
+		return 0
+	}
+	return i.itemRecord.GetSpec().DamageReduction
+}
+
+func (i ScriptItem) GetDamage() map[string]any {
+	if i.itemRecord == nil {
+		return map[string]any{`attacks`: 0, `diceCount`: 0, `diceSides`: 0, `bonusDamage`: 0, `diceRoll`: ``}
+	}
+	d := i.itemRecord.GetSpec().Damage
+	return map[string]any{
+		`attacks`:     d.Attacks,
+		`diceCount`:   d.DiceCount,
+		`diceSides`:   d.SideCount,
+		`bonusDamage`: d.BonusDamage,
+		`diceRoll`:    d.DiceRoll,
+	}
+}
+
+func (i ScriptItem) GetBreakChance() int {
+	if i.itemRecord == nil {
+		return 0
+	}
+	return int(i.itemRecord.GetSpec().BreakChance)
+}
+
+func (i ScriptItem) GetKeyLockId() string {
+	if i.itemRecord == nil {
+		return ``
+	}
+	return i.itemRecord.GetSpec().KeyLockId
+}
+
+func (i ScriptItem) IsCursed() bool {
+	if i.itemRecord == nil {
+		return false
+	}
+	return i.itemRecord.IsCursed()
+}
+
+func (i ScriptItem) HasUses() bool {
+	if i.itemRecord == nil {
+		return false
+	}
+	return i.itemRecord.Uses > 0
+}
+
+func (i ScriptItem) IsWearable() bool {
+	if i.itemRecord == nil {
+		return false
+	}
+	spec := i.itemRecord.GetSpec()
+	return spec.Subtype == items.Wearable
+}
+
+func (i ScriptItem) IsWeapon() bool {
+	if i.itemRecord == nil {
+		return false
+	}
+	return i.itemRecord.GetSpec().Type == items.Weapon
+}

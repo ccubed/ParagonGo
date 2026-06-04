@@ -694,3 +694,169 @@ func GetMap(mapRoomId int, zoomLevel int, mapHeight int, mapWidth int, mapName s
 
 	return mapTxt
 }
+
+// ////////////////////////////////////////////////////////
+//
+// New ScriptRoom methods
+//
+// ////////////////////////////////////////////////////////
+
+func (r ScriptRoom) GetTitle() string {
+	return r.roomRecord.Title
+}
+
+func (r ScriptRoom) SetTitle(title string) {
+	r.roomRecord.Title = title
+}
+
+func (r ScriptRoom) GetDescription() string {
+	return r.roomRecord.GetDescription()
+}
+
+func (r ScriptRoom) SetDescription(desc string) {
+	r.roomRecord.Description = desc
+}
+
+func (r ScriptRoom) GetGold() int {
+	return r.roomRecord.Gold
+}
+
+func (r ScriptRoom) AddGold(amount int) {
+	if amount <= 0 {
+		return
+	}
+	r.roomRecord.Gold += amount
+}
+
+func (r ScriptRoom) RemoveGold(amount int) int {
+	if amount <= 0 {
+		return 0
+	}
+	if amount > r.roomRecord.Gold {
+		amount = r.roomRecord.Gold
+	}
+	r.roomRecord.Gold -= amount
+	return amount
+}
+
+func (r ScriptRoom) GetZone() string {
+	return r.roomRecord.Zone
+}
+
+func (r ScriptRoom) IsPvp() bool {
+	return r.roomRecord.Pvp
+}
+
+func (r ScriptRoom) IsBank() bool {
+	return r.roomRecord.IsBank
+}
+
+func (r ScriptRoom) GetContainer(name string) *ScriptContainer {
+	if r.roomRecord.Containers == nil {
+		return nil
+	}
+	if _, ok := r.roomRecord.Containers[name]; !ok {
+		return nil
+	}
+	return &ScriptContainer{name: name, roomRecord: r.roomRecord}
+}
+
+func (r ScriptRoom) SpawnTempContainer(name string, duration string, lockDifficulty int, trapBuffIds ...int) string {
+	return r.roomRecord.SpawnTempContainer(name, duration, lockDifficulty, trapBuffIds...)
+}
+
+func (r ScriptRoom) IsCalm() bool {
+	return r.roomRecord.IsCalm()
+}
+
+func (r ScriptRoom) AreMobsAttacking(userId int) bool {
+	return r.roomRecord.AreMobsAttacking(userId)
+}
+
+func (r ScriptRoom) ArePlayersAttacking(userId int) bool {
+	return r.roomRecord.ArePlayersAttacking(userId)
+}
+
+func (r ScriptRoom) MobCount() int {
+	return r.roomRecord.MobCt()
+}
+
+func (r ScriptRoom) PlayerCount() int {
+	return r.roomRecord.PlayerCt()
+}
+
+func (r ScriptRoom) GetVisibility() int {
+	return r.roomRecord.GetVisibility()
+}
+
+func (r ScriptRoom) GetNouns() map[string]string {
+	result := make(map[string]string, len(r.roomRecord.Nouns))
+	for k, v := range r.roomRecord.Nouns {
+		result[k] = v
+	}
+	return result
+}
+
+func (r ScriptRoom) AddNoun(noun string, description string) {
+	if r.roomRecord.Nouns == nil {
+		r.roomRecord.Nouns = make(map[string]string)
+	}
+	r.roomRecord.Nouns[noun] = description
+}
+
+func (r ScriptRoom) RemoveNoun(noun string) {
+	if r.roomRecord.Nouns != nil {
+		delete(r.roomRecord.Nouns, noun)
+	}
+}
+
+func (r ScriptRoom) GetSigns() []string {
+	signs := r.roomRecord.GetPublicSigns()
+	texts := make([]string, 0, len(signs))
+	for _, s := range signs {
+		texts = append(texts, s.DisplayText)
+	}
+	return texts
+}
+
+func (r ScriptRoom) AddSign(text string, userId int, days int) bool {
+	return r.roomRecord.AddSign(text, userId, days)
+}
+
+func (r ScriptRoom) HasRecentVisitors() bool {
+	return r.roomRecord.HasRecentVisitors()
+}
+
+// ////////////////////////////////////////////////////////
+//
+// New ScriptContainer methods
+//
+// ////////////////////////////////////////////////////////
+
+func (c ScriptContainer) GetLockDifficulty() int {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return int(container.Lock.Difficulty)
+	}
+	return 0
+}
+
+func (c ScriptContainer) GetTrapBuffIds() []int {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		result := make([]int, len(container.Lock.TrapBuffIds))
+		copy(result, container.Lock.TrapBuffIds)
+		return result
+	}
+	return []int{}
+}
+
+func (c ScriptContainer) GetDespawnRound() uint64 {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.DespawnRound
+	}
+	return 0
+}
+
+func (c ScriptContainer) Exists() bool {
+	_, ok := c.roomRecord.Containers[c.name]
+	return ok
+}

@@ -993,6 +993,254 @@ if (pet !== null) {
             </div>
         </details>
 
+        <!-- New methods: Identity / Description -->
+        <details class="fn-card" data-search="GetDescription description string character actor bio">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetDescription</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the actor's current description text. Respects active form changes.</p></div>
+        </details>
+
+        <!-- New methods: Gold / Economy -->
+        <details class="fn-card" data-search="GetGold gold int carried pocket money economy">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetGold</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the amount of gold the actor is currently carrying.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetBank bank gold int deposited economy">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetBank</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the amount of gold the actor has deposited in the bank.</p></div>
+        </details>
+
+        <!-- New methods: Items / Equipment -->
+        <details class="fn-card" data-search="GetWornItems worn equipped items array list ItemObject gear">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetWornItems</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]ItemObject</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an array of all items currently equipped on the actor's body. Does not include backpack items.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetWornItem worn item slot string ItemObject equipment">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetWornItem</span><span class="fn-p">(</span><span class="fn-a">slot</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ItemObject</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns the item equipped in the named slot, or <code>null</code> if the slot is empty or disabled. Valid slot names: <code>"weapon"</code>, <code>"offhand"</code>, <code>"head"</code>, <code>"neck"</code>, <code>"body"</code>, <code>"belt"</code>, <code>"gloves"</code>, <code>"ring"</code>, <code>"legs"</code>, <code>"feet"</code>.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">slot</td><td class="at">string</td><td>Equipment slot name (e.g. <code>"weapon"</code>, <code>"head"</code>).</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="FindInBackpack find item backpack name string ItemObject search">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.FindInBackpack</span><span class="fn-p">(</span><span class="fn-a">itemName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ItemObject</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Searches the actor's backpack for an item matching <code>itemName</code>. Returns the matching <a href="#item">ItemObject</a> or <code>null</code> if not found. Supports fuzzy matching.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">itemName</td><td class="at">string</td><td>Name or partial name to search for.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="FindOnBody find item worn body name string ItemObject search equipped">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.FindOnBody</span><span class="fn-p">(</span><span class="fn-a">itemName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ItemObject</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Searches all equipped slots for an item matching <code>itemName</code>. Returns the matching <a href="#item">ItemObject</a> or <code>null</code> if not found.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">itemName</td><td class="at">string</td><td>Name or partial name to search for.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Quests -->
+        <details class="fn-card" data-search="IsQuestDone quest done complete finished bool token">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.IsQuestDone</span><span class="fn-p">(</span><span class="fn-a">questToken</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns true if the actor has fully completed the quest identified by <code>questToken</code>. Unlike <code>HasQuest()</code>, this only returns true when the quest is at the <code>end</code> step.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">questToken</td><td class="at">string</td><td>Quest token string, e.g. <code>"1-end"</code>.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ClearQuestToken quest clear reset token progress">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.ClearQuestToken</span><span class="fn-p">(</span><span class="fn-a">questToken</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes all progress for the quest identified by <code>questToken</code>. The actor will no longer have any record of that quest.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">questToken</td><td class="at">string</td><td>Quest token string, e.g. <code>"1-start"</code>.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Skills / Spells -->
+        <details class="fn-card" data-search="GetAllSkills skills map all ranks int list">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetAllSkills</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">map[string]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an object mapping every skill name to its current rank (1–4). Skills not yet learned are absent from the map.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetSpells spells map all spellbook list string int">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetSpells</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">map[string]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an object mapping every spell ID the actor has learned to its cast count. Disabled spells have a negative cast count.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="UnLearnSpell unlearn forget spell remove spellbook">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.UnLearnSpell</span><span class="fn-p">(</span><span class="fn-a">spellId</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Permanently removes a spell from the actor's spellbook. Returns <code>true</code> if the spell was found and removed.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">spellId</td><td class="at">string</td><td>Spell identifier, e.g. <code>"fireball"</code>.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="DisableSpell disable spell suppress temporarily spellbook">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.DisableSpell</span><span class="fn-p">(</span><span class="fn-a">spellId</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Temporarily disables a spell the actor knows. The spell remains in the spellbook but cannot be cast until re-enabled. Returns <code>true</code> on success.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">spellId</td><td class="at">string</td><td>Spell identifier.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="EnableSpell enable restore spell re-enable spellbook">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.EnableSpell</span><span class="fn-p">(</span><span class="fn-a">spellId</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Re-enables a spell that was previously disabled with <code>DisableSpell()</code>. Returns <code>true</code> on success.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">spellId</td><td class="at">string</td><td>Spell identifier.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Cooldowns / Settings -->
+        <details class="fn-card" data-search="GetCooldown cooldown tag rounds remaining int">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetCooldown</span><span class="fn-p">(</span><span class="fn-a">tag</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns the number of rounds remaining on the named cooldown, or <code>0</code> if it has expired or was never set.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">tag</td><td class="at">string</td><td>Cooldown identifier.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="TryCooldown try cooldown tag period bool check set">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.TryCooldown</span><span class="fn-p">(</span><span class="fn-a">tag</span> <span class="fn-t">string</span>, <span class="fn-a">period</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Atomically checks and sets a cooldown. Returns <code>true</code> if the cooldown was ready (and sets it for <code>period</code>), or <code>false</code> if it is still active. Equivalent to: check if expired, then set if so.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">tag</td><td class="at">string</td><td>Cooldown identifier.</td></tr>
+                    <tr><td class="an">period</td><td class="at">string</td><td>Duration, e.g. <code>"30 rounds"</code>, <code>"1 real minute"</code>.</td></tr>
+                </tbody></table>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">// Only fire once per 5 real minutes
+if (actor.TryCooldown('my-ability', '5 real minutes')) {
+    actor.Command('cast fireball');
+}</code></pre></div>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="GetSetting setting name string value character preference">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetSetting</span><span class="fn-p">(</span><span class="fn-a">name</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns the value of a named character setting, or an empty string if not set. Settings are persistent string key-value pairs stored on the character.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">name</td><td class="at">string</td><td>Setting key name.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="SetSetting setting name value string character preference store">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.SetSetting</span><span class="fn-p">(</span><span class="fn-a">name</span> <span class="fn-t">string</span>, <span class="fn-a">value</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Stores a persistent string value under the named key on the character. Pass an empty string to delete the key.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">name</td><td class="at">string</td><td>Setting key name.</td></tr>
+                    <tr><td class="an">value</td><td class="at">string</td><td>Value to store. Empty string deletes the key.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Progression -->
+        <details class="fn-card" data-search="GetExperience experience xp int total">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetExperience</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the actor's total accumulated experience points.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetExtraLives extra lives int remaining permadeath">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetExtraLives</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the number of extra lives the actor has remaining. Only relevant when the permadeath system is enabled.</p></div>
+        </details>
+
+        <!-- New methods: Combat State -->
+        <details class="fn-card" data-search="IsInCombat in combat fighting bool aggro">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.IsInCombat</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the actor currently has an active aggro target (is in combat).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsDowned downed dead health zero bool">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.IsDowned</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the actor's health is below 1 (downed/dead).</p></div>
+        </details>
+
+        <!-- New methods: Gear / Defense -->
+        <details class="fn-card" data-search="GetDefense defense armor reduction int percent">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetDefense</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the actor's total damage reduction percentage (0–100) from all equipped armor.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetGearValue gear value int equipment total worth">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetGearValue</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the sum of the spec value of all currently equipped items.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetCarryCapacity carry capacity int backpack max items strength">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetCarryCapacity</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the maximum number of items the actor can carry in their backpack, based on their Strength stat.</p></div>
+        </details>
+
+        <!-- New methods: Zone Visit Progress -->
+        <details class="fn-card" data-search="GetZoneVisitProgress zone visit progress exploration percent">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetZoneVisitProgress</span><span class="fn-p">(</span><span class="fn-a">zoneName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">object</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns an object with zone exploration progress: <code>{visited, total, percent}</code>. Only applies to user actors.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">zoneName</td><td class="at">string</td><td>Zone name or partial match.</td></tr>
+                </tbody></table>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var prog = user.GetZoneVisitProgress('frostfang');
+if (prog.percent >= 100) {
+    user.SendText('You have fully explored this zone!');
+}</code></pre></div>
+            </div>
+        </details>
+
+        <!-- New methods: Adjectives -->
+        <details class="fn-card" data-search="GetAdjectives adjectives array list string actor state">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetAdjectives</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the full list of active adjectives on the actor (e.g. <code>"sleeping"</code>, <code>"poisoned"</code>, <code>"charmed"</code>). Includes both static and dynamic adjectives.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="HasAdjective has adjective string bool check state">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.HasAdjective</span><span class="fn-p">(</span><span class="fn-a">adj</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns <code>true</code> if the actor currently has the given adjective. Note: only checks the stored adjective list, not dynamic adjectives (use <code>HasBuffFlag()</code> for those).</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">adj</td><td class="at">string</td><td>Adjective string to check, e.g. <code>"sleeping"</code>.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Action Points -->
+        <details class="fn-card" data-search="GetActionPoints action points int ap current">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetActionPoints</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the actor's current action points (used for movement).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetActionPointsMax action points max maximum int ap">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetActionPointsMax</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the actor's maximum action points.</p></div>
+        </details>
+
+        <!-- New methods: Health Appearance -->
+        <details class="fn-card" data-search="GetHealthAppearance health appearance string description visual">
+            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetHealthAppearance</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns a formatted string describing the actor's apparent health, e.g. <code>"X looks to be in pretty bad shape."</code> Useful for NPC dialogue that reacts to player health without hard-coding thresholds.</p></div>
+        </details>
+
     </div><!-- /fn-list-actor -->
 </section>
 
@@ -1278,6 +1526,200 @@ if (pet !== null) {
             </div>
         </details>
 
+        <!-- New methods: Title / Description -->
+        <details class="fn-card" data-search="GetTitle title string room name header">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetTitle</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the room's current title string.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="SetTitle title string room name set rename">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.SetTitle</span><span class="fn-p">(</span><span class="fn-a">title</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Sets the room's title. Useful for dynamically named rooms in ephemeral instances.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">title</td><td class="at">string</td><td>New room title.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="GetDescription description string room text">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetDescription</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the room's current description text.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="SetDescription description string room text set change">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.SetDescription</span><span class="fn-p">(</span><span class="fn-a">desc</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Sets the room's description text.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">desc</td><td class="at">string</td><td>New description text.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Gold -->
+        <details class="fn-card" data-search="GetGold gold floor room int amount">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetGold</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the amount of gold currently on the room floor.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="AddGold add gold floor room int amount">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.AddGold</span><span class="fn-p">(</span><span class="fn-a">amount</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds gold to the room floor. Amount must be positive.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">amount</td><td class="at">int</td><td>Gold to add. Must be positive.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="RemoveGold remove gold floor room int amount">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.RemoveGold</span><span class="fn-p">(</span><span class="fn-a">amount</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes gold from the room floor. Returns the actual amount removed (may be less if the floor had less than requested).</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">amount</td><td class="at">int</td><td>Gold to remove.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Zone / Flags -->
+        <details class="fn-card" data-search="GetZone zone string room area name">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetZone</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the zone name this room belongs to.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsPvp pvp bool room player versus">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.IsPvp</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if PvP is enabled in this room (when the server config uses <code>limited</code> PvP mode).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsBank bank bool room deposit withdraw gold">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.IsBank</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if this room is a bank room.</p></div>
+        </details>
+
+        <!-- New methods: Container -->
+        <details class="fn-card" data-search="GetContainer container name string ScriptContainer get lookup">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetContainer</span><span class="fn-p">(</span><span class="fn-a">name</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ContainerObject</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns the named <a href="#container">ContainerObject</a>, or <code>null</code> if no container with that name exists in the room.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">name</td><td class="at">string</td><td>Exact container name, e.g. <code>"chest"</code>.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="SpawnTempContainer spawn temporary container name duration lock trap">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.SpawnTempContainer</span><span class="fn-p">(</span><span class="fn-a">name</span> <span class="fn-t">string</span>, <span class="fn-a">duration</span> <span class="fn-t">string</span>, <span class="fn-a">lockDifficulty</span> <span class="fn-t">int</span><span class="fn-p"> [, </span><span class="fn-a">trapBuffIds&hellip;</span><span class="fn-p">])</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Creates a temporary container in the room that despawns after <code>duration</code>. Returns the actual container name (may differ from <code>name</code> if a container with that name already exists). Use <code>GetContainer()</code> to access it afterwards.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">name</td><td class="at">string</td><td>Desired container name (auto-suffixed if taken).</td></tr>
+                    <tr><td class="an">duration</td><td class="at">string</td><td>How long before despawn, e.g. <code>"10 minutes"</code>.</td></tr>
+                    <tr><td class="an">lockDifficulty</td><td class="at">int</td><td>Lock difficulty (0 = no lock).</td></tr>
+                    <tr><td class="an">trapBuffIds</td><td class="at">int&hellip; (optional)</td><td>Buff IDs applied on failed lockpicking.</td></tr>
+                </tbody></table>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var cName = room.SpawnTempContainer('treasure', '5 minutes', 0);
+var c = room.GetContainer(cName);
+c.AddItem(CreateItem(501));</code></pre></div>
+            </div>
+        </details>
+
+        <!-- New methods: Combat State -->
+        <details class="fn-card" data-search="IsCalm calm bool room peaceful no combat">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.IsCalm</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if no players or mobs in the room are currently in combat.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="AreMobsAttacking mobs attacking userId bool combat">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.AreMobsAttacking</span><span class="fn-p">(</span><span class="fn-a">userId</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns <code>true</code> if any mob in the room is attacking the specified user. Pass <code>0</code> to check if any mob is attacking anyone.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">userId</td><td class="at">int</td><td>User ID to check, or 0 for any.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ArePlayersAttacking players attacking userId bool combat">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.ArePlayersAttacking</span><span class="fn-p">(</span><span class="fn-a">userId</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns <code>true</code> if any player in the room is attacking the specified user. Pass <code>0</code> to check if any player is attacking anyone.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">userId</td><td class="at">int</td><td>User ID to check, or 0 for any.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Counts -->
+        <details class="fn-card" data-search="MobCount mob count int room total number">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.MobCount</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the number of mobs currently in the room.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="PlayerCount player count int room total number">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.PlayerCount</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the number of players currently in the room.</p></div>
+        </details>
+
+        <!-- New methods: Visibility -->
+        <details class="fn-card" data-search="GetVisibility visibility int room light dark dim">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetVisibility</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the room's current visibility level: <code>0</code> = dark (blind), <code>1</code> = dim (see room, not exits), <code>2</code> = lit (full visibility). Accounts for biome, time of day, mutators, and light sources.</p></div>
+        </details>
+
+        <!-- New methods: Nouns -->
+        <details class="fn-card" data-search="GetNouns nouns map object room interactive">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetNouns</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">map[string]string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an object mapping each noun keyword to its description text.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="AddNoun add noun keyword description room interactive">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.AddNoun</span><span class="fn-p">(</span><span class="fn-a">noun</span> <span class="fn-t">string</span>, <span class="fn-a">description</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds or replaces a noun keyword in the room. Players can <code>look at &lt;noun&gt;</code> to see the description.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">noun</td><td class="at">string</td><td>Keyword players can look at.</td></tr>
+                    <tr><td class="an">description</td><td class="at">string</td><td>Text displayed when the noun is examined.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="RemoveNoun remove noun keyword room delete">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.RemoveNoun</span><span class="fn-p">(</span><span class="fn-a">noun</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes a noun keyword from the room.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">noun</td><td class="at">string</td><td>Keyword to remove.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Signs -->
+        <details class="fn-card" data-search="GetSigns signs array string room public messages">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetSigns</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an array of display text strings for all public signs currently in the room.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="AddSign add sign text string userId days room message">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.AddSign</span><span class="fn-p">(</span><span class="fn-a">text</span> <span class="fn-t">string</span>, <span class="fn-a">userId</span> <span class="fn-t">int</span>, <span class="fn-a">days</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds a sign to the room. If <code>userId</code> is 0, the sign is public. If a sign already exists for that user (or a public sign already exists when userId is 0), it is replaced. Returns <code>true</code> if a sign was replaced.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">text</td><td class="at">string</td><td>Sign display text.</td></tr>
+                    <tr><td class="an">userId</td><td class="at">int</td><td>Owner user ID, or 0 for a public sign.</td></tr>
+                    <tr><td class="an">days</td><td class="at">int</td><td>Days before the sign expires.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <!-- New methods: Visitors -->
+        <details class="fn-card" data-search="HasRecentVisitors recent visitors bool room activity">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.HasRecentVisitors</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the room has had any recent visitors (players or mobs) within the visitor tracking window.</p></div>
+        </details>
+
     </div>
 </section>
 
@@ -1365,6 +1807,92 @@ if (pet !== null) {
         <details class="fn-card" data-search="Redescribe redescribe description item string">
             <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.Redescribe</span><span class="fn-p">(</span><span class="fn-a">newDescription</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
             <div class="fn-body"><p class="fn-desc">Changes the item's description text.</p></div>
+        </details>
+
+        <!-- New methods: Item spec inspection -->
+        <details class="fn-card" data-search="GetType type string item weapon armor potion kind">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetType</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's type string, e.g. <code>"weapon"</code>, <code>"head"</code>, <code>"potion"</code>, <code>"key"</code>. See item type list for all values.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetSubtype subtype string item wearable stabbing edible">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetSubtype</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's subtype string, e.g. <code>"stabbing"</code>, <code>"wearable"</code>, <code>"edible"</code>, <code>"usable"</code>.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetValue value int item gold worth price">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetValue</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's gold value from its spec.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetDescription description string item text lore">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetDescription</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's description text from its spec.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetQuestToken quest token string item grant">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetQuestToken</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the quest token this item grants when picked up, or an empty string if none.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetElement element string item fire ice water">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetElement</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's elemental type, e.g. <code>"fire"</code>, <code>"ice"</code>, <code>"electricity"</code>, or empty string if none.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetBuffIds buff ids array int item use apply">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetBuffIds</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the buff IDs applied when this item is used (consumed). Empty array if none.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetWornBuffIds worn buff ids array int item passive">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetWornBuffIds</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the buff IDs applied passively while this item is equipped. Empty array if none.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetStatMods stat mods object map item bonuses">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetStatMods</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">map[string]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an object mapping each stat modifier name to its value, e.g. <code>{strength: 5, speed: 2}</code>.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetDamageReduction damage reduction int item armor defense">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetDamageReduction</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's damage reduction percentage (0–100). Only meaningful for armor and shields.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetDamage damage object item weapon dice attacks">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetDamage</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">object</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an object with weapon damage stats: <code>{attacks, diceCount, diceSides, bonusDamage, diceRoll}</code>. All values are 0 for non-weapons.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetBreakChance break chance int item fragile">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetBreakChance</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the item's break chance percentage (0–100). 0 means the item never breaks.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetKeyLockId key lock id string item door">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.GetKeyLockId</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the lock ID this key item opens, e.g. <code>"778-north"</code>. Empty string for non-key items.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsCursed cursed bool item cannot remove">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.IsCursed</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the item is cursed and cannot be removed once equipped. Accounts for the uncursed flag on the item instance.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="HasUses has uses bool item consumable charges">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.HasUses</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the item currently has at least one use remaining.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsWearable wearable bool item equip armor">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.IsWearable</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the item can be equipped (subtype is <code>wearable</code>).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="IsWeapon weapon bool item wield attack">
+            <summary><span class="fn-name-sig"><span class="fn-n">ItemObject.IsWeapon</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the item type is <code>weapon</code>.</p></div>
         </details>
 
     </div>
@@ -1467,6 +1995,47 @@ if (pet !== null) {
                     <tr><td class="an">rounds</td><td class="at">int</td><td>Rounds to be absent. 0 = return immediately.</td></tr>
                 </tbody></table>
             </div>
+        </details>
+
+        <!-- New methods: Pet inventory -->
+        <details class="fn-card" data-search="GetItems items array list pet inventory carry">
+            <summary><span class="fn-name-sig"><span class="fn-n">PetObject.GetItems</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]ItemObject</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns an array of all items currently in the pet's inventory.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="FindItem find item pet inventory name string">
+            <summary><span class="fn-name-sig"><span class="fn-n">PetObject.FindItem</span><span class="fn-p">(</span><span class="fn-a">itemName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ItemObject</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Searches the pet's inventory for an item matching <code>itemName</code>. Returns the matching <a href="#item">ItemObject</a> or <code>null</code> if not found.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">itemName</td><td class="at">string</td><td>Name or partial name to search for.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="StoreItem store item pet inventory add bool">
+            <summary><span class="fn-name-sig"><span class="fn-n">PetObject.StoreItem</span><span class="fn-p">(</span><span class="fn-a">item</span> <span class="fn-t">ItemObject</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds an item to the pet's inventory. Returns <code>false</code> if the pet is at capacity or the item is invalid.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">item</td><td class="at"><a href="#item">ItemObject</a></td><td>The item to store.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="RemoveItem remove item pet inventory bool">
+            <summary><span class="fn-name-sig"><span class="fn-n">PetObject.RemoveItem</span><span class="fn-p">(</span><span class="fn-a">item</span> <span class="fn-t">ItemObject</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes an item from the pet's inventory. Returns <code>true</code> if found and removed.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">item</td><td class="at"><a href="#item">ItemObject</a></td><td>The item to remove.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="GetBuffIds buff ids array int pet passive bonuses">
+            <summary><span class="fn-name-sig"><span class="fn-n">PetObject.GetBuffIds</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the buff IDs the pet grants to its owner at its current level. These buffs are applied passively while the pet is not missing.</p></div>
         </details>
 
     </div>
@@ -1720,6 +2289,22 @@ if (pet !== null) {
         <details class="fn-card" data-search="ContainerObject IsTemporary temporary despawn container">
             <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.IsTemporary</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
             <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if this container is temporary and will disappear over time.</p></div>
+        </details>
+
+        <!-- New methods: Container lock / despawn inspection -->
+        <details class="fn-card" data-search="GetLockDifficulty lock difficulty int container security">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.GetLockDifficulty</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the lock difficulty level (0 = no lock, higher = harder to pick).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetTrapBuffIds trap buff ids array int container lock">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.GetTrapBuffIds</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the buff IDs applied to a player who fails to pick this container's lock. Empty array if no trap is set.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="GetDespawnRound despawn round uint64 container temporary expires">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.GetDespawnRound</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the game round number when this temporary container will despawn. Returns <code>0</code> for permanent containers.</p></div>
         </details>
 
     </div>

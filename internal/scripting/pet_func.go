@@ -191,3 +191,53 @@ func GetPet(pet *pets.Pet, userId ...int) *ScriptPet {
 	}
 	return sp
 }
+
+// ////////////////////////////////////////////////////////
+//
+// New ScriptPet methods
+//
+// ////////////////////////////////////////////////////////
+
+func (p ScriptPet) GetItems() []ScriptItem {
+	if p.petRecord == nil {
+		return []ScriptItem{}
+	}
+	itms := make([]ScriptItem, 0, len(p.petRecord.Items))
+	for _, itm := range p.petRecord.Items {
+		itms = append(itms, newScriptItem(itm))
+	}
+	return itms
+}
+
+func (p ScriptPet) FindItem(itemName string) *ScriptItem {
+	if p.petRecord == nil {
+		return nil
+	}
+	itm, found := p.petRecord.FindItem(itemName)
+	if !found {
+		return nil
+	}
+	si := newScriptItem(itm)
+	return &si
+}
+
+func (p ScriptPet) StoreItem(itm ScriptItem) bool {
+	if p.petRecord == nil || itm.itemRecord == nil {
+		return false
+	}
+	return p.petRecord.StoreItem(*itm.itemRecord)
+}
+
+func (p ScriptPet) RemoveItem(itm ScriptItem) bool {
+	if p.petRecord == nil || itm.itemRecord == nil {
+		return false
+	}
+	return p.petRecord.RemoveItem(*itm.itemRecord)
+}
+
+func (p ScriptPet) GetBuffIds() []int {
+	if p.petRecord == nil {
+		return []int{}
+	}
+	return p.petRecord.GetBuffs()
+}

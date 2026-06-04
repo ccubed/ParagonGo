@@ -8,12 +8,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/dop251/goja"
 )
 
@@ -913,4 +915,187 @@ func ActorNames(actorList []*ScriptActor) string {
 	}
 
 	return sBuilder.String()
+}
+
+// ////////////////////////////////////////////////////////
+//
+// New ScriptActor methods
+//
+// ////////////////////////////////////////////////////////
+
+func (a ScriptActor) GetDescription() string {
+	return a.characterRecord.GetDescription()
+}
+
+func (a ScriptActor) GetGold() int {
+	return a.characterRecord.Gold
+}
+
+func (a ScriptActor) GetBank() int {
+	return a.characterRecord.Bank
+}
+
+func (a ScriptActor) GetWornItems() []ScriptItem {
+	itms := make([]ScriptItem, 0)
+	for _, itm := range a.characterRecord.GetAllWornItems() {
+		itms = append(itms, newScriptItem(itm))
+	}
+	return itms
+}
+
+func (a ScriptActor) GetWornItem(slot string) *ScriptItem {
+	itm := a.characterRecord.Equipment.Get(items.ItemType(slot))
+	if itm == nil || itm.ItemId <= 0 || itm.IsDisabled() {
+		return nil
+	}
+	si := newScriptItem(*itm)
+	return &si
+}
+
+func (a ScriptActor) FindInBackpack(itemName string) *ScriptItem {
+	itm, found := a.characterRecord.FindInBackpack(itemName)
+	if !found {
+		return nil
+	}
+	si := newScriptItem(itm)
+	return &si
+}
+
+func (a ScriptActor) FindOnBody(itemName string) *ScriptItem {
+	itm, found := a.characterRecord.FindOnBody(itemName)
+	if !found {
+		return nil
+	}
+	si := newScriptItem(itm)
+	return &si
+}
+
+func (a ScriptActor) IsQuestDone(questToken string) bool {
+	return a.characterRecord.IsQuestDone(questToken)
+}
+
+func (a ScriptActor) ClearQuestToken(questToken string) {
+	a.characterRecord.ClearQuestToken(questToken)
+}
+
+func (a ScriptActor) GetAllSkills() map[string]int {
+	return a.characterRecord.GetAllSkillRanks()
+}
+
+func (a ScriptActor) GetSpells() map[string]int {
+	return a.characterRecord.GetSpells()
+}
+
+func (a ScriptActor) UnLearnSpell(spellId string) bool {
+	return a.characterRecord.UnLearnSpell(spellId)
+}
+
+func (a ScriptActor) DisableSpell(spellId string) bool {
+	return a.characterRecord.DisableSpell(spellId)
+}
+
+func (a ScriptActor) EnableSpell(spellId string) bool {
+	return a.characterRecord.EnableSpell(spellId)
+}
+
+func (a ScriptActor) GetCooldown(tag string) int {
+	return a.characterRecord.GetCooldown(tag)
+}
+
+func (a ScriptActor) TryCooldown(tag string, period string) bool {
+	return a.characterRecord.TryCooldown(tag, period)
+}
+
+func (a ScriptActor) GetSetting(name string) string {
+	return a.characterRecord.GetSetting(name)
+}
+
+func (a ScriptActor) SetSetting(name string, value string) {
+	a.characterRecord.SetSetting(name, value)
+}
+
+func (a ScriptActor) GetExperience() int {
+	return a.characterRecord.Experience
+}
+
+func (a ScriptActor) GetExtraLives() int {
+	return a.characterRecord.ExtraLives
+}
+
+func (a ScriptActor) IsInCombat() bool {
+	return a.characterRecord.Aggro != nil
+}
+
+func (a ScriptActor) IsDowned() bool {
+	return a.characterRecord.Health < 1
+}
+
+func (a ScriptActor) GetDefense() int {
+	return a.characterRecord.GetDefense()
+}
+
+func (a ScriptActor) GetGearValue() int {
+	return a.characterRecord.GetGearValue()
+}
+
+func (a ScriptActor) GetCarryCapacity() int {
+	return a.characterRecord.CarryCapacity()
+}
+
+func (a ScriptActor) GetZoneVisitProgress(zoneName string) map[string]any {
+	resolvedZone := rooms.FindZoneName(zoneName)
+	if resolvedZone == `` {
+		return map[string]any{`visited`: 0, `total`: 0, `percent`: 0}
+	}
+	zCfg := rooms.GetZoneConfig(resolvedZone)
+	var validRoomIds map[int]struct{}
+	if zCfg != nil {
+		validRoomIds = zCfg.RoomIds
+	}
+	visited, total := a.characterRecord.ZoneVisitProgress(resolvedZone, validRoomIds)
+	percent := 0
+	if total > 0 {
+		percent = int(float64(visited) / float64(total) * 100)
+	}
+	return map[string]any{`visited`: visited, `total`: total, `percent`: percent}
+}
+
+func (a ScriptActor) GetAdjectives() []string {
+	return a.characterRecord.GetAdjectives()
+}
+
+func (a ScriptActor) HasAdjective(adj string) bool {
+	return a.characterRecord.HasAdjective(adj)
+}
+
+func (a ScriptActor) GetActionPoints() int {
+	return a.characterRecord.ActionPoints
+}
+
+func (a ScriptActor) GetActionPointsMax() int {
+	return a.characterRecord.ActionPointsMax.Value
+}
+
+func (a ScriptActor) GetHealthAppearance() string {
+	if a.characterRecord.HealthMax.Value < 1 {
+		return a.GetCharacterName(true) + ` is in perfect health.`
+	}
+	nameTag := `username`
+	if a.mobRecord != nil {
+		nameTag = `mobname`
+	}
+	pct := int(float64(a.characterRecord.Health) / float64(a.characterRecord.HealthMax.Value) * 100)
+	className := util.HealthClass(a.characterRecord.Health, a.characterRecord.HealthMax.Value)
+	name := `<ansi fg="` + nameTag + `">` + a.characterRecord.Name + `</ansi>`
+	switch {
+	case pct < 15:
+		return name + ` looks like they're <ansi fg="` + className + `">about to die!</ansi>`
+	case pct < 50:
+		return name + ` looks to be in <ansi fg="` + className + `">pretty bad shape.</ansi>`
+	case pct < 80:
+		return name + ` has some <ansi fg="` + className + `">cuts and bruises.</ansi>`
+	case pct < 100:
+		return name + ` has <ansi fg="` + className + `">a few scratches.</ansi>`
+	}
+	return name + ` is in <ansi fg="` + className + `">perfect health.</ansi>`
 }
