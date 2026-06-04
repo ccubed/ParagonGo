@@ -93,6 +93,7 @@
             <a href="#hook-onCommand">onCommand</a>
             <a href="#hook-onCommand_x">onCommand_{cmd}</a>
             <a href="#hook-onPurchase">onPurchase</a>
+            <a href="#hook-onTryPurchase">onTryPurchase</a>
         </div>
     </aside>
 
@@ -206,6 +207,27 @@ function onCommand_sleep(user, item, room) {
     user.MoveRoom(500);
     user.SendText('The ferryman nods and you board the boat.');
     return false; // don't give the item
+}</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onTryPurchase">
+                    <summary><span class="hook-sig"><span class="fn-name">onTryPurchase</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">item</span> <span class="fn-type">ItemObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called after the player has been confirmed to have enough gold, but before any gold is deducted or stock removed. Return <code>false</code> to block the purchase entirely — no gold is spent and the item is not removed from the shop.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> <code>false</code> = block the purchase. Any other return value (or none) = allow it.</div>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The player attempting the purchase.</td></tr>
+                            <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item being purchased.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The shop room.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onTryPurchase(user, item, room) {
+    // Only allow purchase during daytime
+    if (UtilGetTime().Night) {
+        user.SendText('The shop is closed at night.');
+        return false;
+    }
+    return true;
 }</code></pre></div>
                     </div>
                 </details>

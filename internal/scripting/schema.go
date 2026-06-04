@@ -60,12 +60,13 @@ func GetScriptFunctionsSchema() *ScriptFunctionsSchema {
 	return &ScriptFunctionsSchema{
 		Version: 2,
 		ScriptTypes: map[string]*ScriptTypeDef{
-			"room":  roomScriptType(),
-			"mob":   mobScriptType(),
-			"item":  itemScriptType(),
-			"pet":   petScriptType(),
-			"spell": spellScriptType(),
-			"buff":  buffScriptType(),
+			"room":      roomScriptType(),
+			"mob":       mobScriptType(),
+			"item":      itemScriptType(),
+			"pet":       petScriptType(),
+			"spell":     spellScriptType(),
+			"buff":      buffScriptType(),
+			"container": containerObjectType(),
 		},
 		EngineFunctions: engineGlobalFunctions(),
 	}
@@ -427,6 +428,16 @@ func roomScriptType() *ScriptTypeDef {
 				Stub:            "function onTryExit(exitName, user, room) {\n\n    return true;\n}\n",
 			},
 			{
+				Name:        "onTryEnter",
+				Description: "Called on this room before a player enters it. Return false to prevent the movement.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The player attempting to enter."},
+					{Name: "room", Type: "RoomObject", Description: "The room being entered."},
+				},
+				ReturnSemantics: "Return false to block the movement. Any other return value (or none) allows it.",
+				Stub:            "function onTryEnter(user, room) {\n\n    return true;\n}\n",
+			},
+			{
 				Name:        "onExit",
 				Description: "Called when a player leaves the room.",
 				Params: []ScriptFuncParam{
@@ -667,6 +678,17 @@ func itemScriptType() *ScriptTypeDef {
 				ReturnSemantics: "Return false to prevent giving the item to the player (useful for tickets, passes, etc.).",
 				Stub:            "function onPurchase(user, item, room) {\n\n    return true;\n}\n",
 			},
+			{
+				Name:        "onTryPurchase",
+				Description: "Called after the player has enough gold but before the purchase is committed. Return false to block the purchase entirely (no gold is deducted).",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The player attempting to purchase the item."},
+					{Name: "item", Type: "ItemObject", Description: "The item being purchased."},
+					{Name: "room", Type: "RoomObject", Description: "The room where the purchase is occurring."},
+				},
+				ReturnSemantics: "Return false to block the purchase. Any other return value (or none) allows it.",
+				Stub:            "function onTryPurchase(user, item, room) {\n\n    return true;\n}\n",
+			},
 		},
 	}
 }
@@ -855,6 +877,111 @@ func buffScriptType() *ScriptTypeDef {
 				ReturnSemantics: "Return true to halt further command processing.",
 				Dynamic:         commandDynamic,
 				Stub:            "function onCommand_{command}(rest, actor, room) {\n\n    return true;\n}\n",
+			},
+		},
+	}
+}
+
+func containerObjectType() *ScriptTypeDef {
+	return &ScriptTypeDef{
+		Label:       "ContainerObject",
+		Description: "Represents a named container inside a room. Returned by RoomObject.GetContainers(). Provides access to container contents, lock state, and gold.",
+		Functions: []ScriptFuncDef{
+			{
+				Name:            "Name",
+				Description:     "Returns the name of the container (its key in the room's container map).",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "The container name string.",
+			},
+			{
+				Name:            "HasLock",
+				Description:     "Returns true if the container has a lock (difficulty > 0), regardless of whether it is currently locked or unlocked.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "true if a lock is configured on this container.",
+			},
+			{
+				Name:            "IsLocked",
+				Description:     "Returns true if the container is currently locked.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "true if locked, false if unlocked or no lock.",
+			},
+			{
+				Name:            "Lock",
+				Description:     "Locks the container. Has no effect if the container has no lock configured.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "Return value is ignored.",
+			},
+			{
+				Name:            "Unlock",
+				Description:     "Unlocks the container. Has no effect if the container has no lock configured.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "Return value is ignored.",
+			},
+			{
+				Name:            "GetItems",
+				Description:     "Returns all items currently inside the container.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "Array of ItemObject.",
+			},
+			{
+				Name:        "FindItem",
+				Description: "Searches the container for an item matching the given name. Supports fuzzy matching.",
+				Params: []ScriptFuncParam{
+					{Name: "itemName", Type: "string", Description: "The name to search for."},
+				},
+				ReturnSemantics: "The matching ItemObject, or null if not found.",
+			},
+			{
+				Name:        "AddItem",
+				Description: "Adds an item to the container.",
+				Params: []ScriptFuncParam{
+					{Name: "item", Type: "ItemObject", Description: "The item to add."},
+				},
+				ReturnSemantics: "true if the item was added successfully, false if the item was invalid.",
+			},
+			{
+				Name:        "RemoveItem",
+				Description: "Removes an item from the container.",
+				Params: []ScriptFuncParam{
+					{Name: "item", Type: "ItemObject", Description: "The item to remove."},
+				},
+				ReturnSemantics: "true if the item was found and removed, false otherwise.",
+			},
+			{
+				Name:            "GetGold",
+				Description:     "Returns the amount of gold currently in the container.",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "Gold amount as a number.",
+			},
+			{
+				Name:        "AddGold",
+				Description: "Adds gold to the container.",
+				Params: []ScriptFuncParam{
+					{Name: "amount", Type: "number", Description: "Amount of gold to add. Must be positive."},
+				},
+				ReturnSemantics: "Return value is ignored.",
+			},
+			{
+				Name:        "RemoveGold",
+				Description: "Removes gold from the container. Removes at most the amount currently present.",
+				Params: []ScriptFuncParam{
+					{Name: "amount", Type: "number", Description: "Amount of gold to remove."},
+				},
+				ReturnSemantics: "The actual amount removed (may be less than requested if the container had insufficient gold).",
+			},
+			{
+				Name:        "Count",
+				Description: "Returns the number of items with the given item spec ID currently in the container.",
+				Params: []ScriptFuncParam{
+					{Name: "itemId", Type: "number", Description: "The item spec ID to count."},
+				},
+				ReturnSemantics: "Count of matching items.",
+			},
+			{
+				Name:            "IsTemporary",
+				Description:     "Returns true if this container is temporary (it has a despawn round set and will disappear over time).",
+				Params:          []ScriptFuncParam{},
+				ReturnSemantics: "true if the container has a despawn round configured.",
 			},
 		},
 	}

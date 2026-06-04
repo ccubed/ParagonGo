@@ -138,6 +138,7 @@
         <a href="#item">ItemObject</a>
         <a href="#pet">PetObject</a>
         <a href="#party">PartyObject</a>
+        <a href="#container">ContainerObject</a>
         <a href="#util">Utility Functions</a>
         <a href="#messaging">Messaging Functions</a>
         <a href="#panels">Panel Layout Functions</a>
@@ -1149,9 +1150,9 @@ if (pet !== null) {
             </div>
         </details>
 
-        <details class="fn-card" data-search="GetContainers containers array string room">
-            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetContainers</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]string</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns the names of all containers in the room.</p></div>
+        <details class="fn-card" data-search="GetContainers containers array room">
+            <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetContainers</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]ContainerObject</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns all containers in the room as <a href="#container">ContainerObject</a> instances. Each object exposes the container's name, lock state, items, and gold.</p></div>
         </details>
 
         <details class="fn-card" data-search="GetExits exits array object room direction lock secret">
@@ -1611,6 +1612,121 @@ if (pet !== null) {
         <details class="fn-card" data-search="MarkVisitedZone visited zone party all members string">
             <summary><span class="fn-name-sig"><span class="fn-n">PartyObject.MarkVisitedZone</span><span class="fn-p">(</span><span class="fn-a">zoneName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
             <div class="fn-body"><p class="fn-desc">Marks all rooms in the named zone as visited for all user members.</p></div>
+        </details>
+
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CONTAINER OBJECT
+════════════════════════════════════════════════════════════════════ -->
+<section class="fn-group" id="container">
+    <div class="fn-group-header">
+        <h2>ContainerObject</h2>
+        <span class="fn-group-badge">Rooms</span>
+    </div>
+    <p class="fn-group-desc">Returned by <a href="#room">RoomObject</a>.GetContainers(). Represents a named container inside a room and provides access to its contents, lock state, and gold.</p>
+    <div class="fn-list">
+
+        <details class="fn-card" data-search="ContainerObject Name name string container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.Name</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-string">string</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the container's name (its key in the room's container map).</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject HasLock has lock bool container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.HasLock</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the container has a lock configured (difficulty &gt; 0), regardless of whether it is currently locked or unlocked.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject IsLocked locked bool container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.IsLocked</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if the container is currently locked.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject Lock lock container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.Lock</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body"><p class="fn-desc">Locks the container. Has no effect if the container has no lock configured.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject Unlock unlock container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.Unlock</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body"><p class="fn-desc">Unlocks the container. Has no effect if the container has no lock configured.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject GetItems items array container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.GetItems</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-array">[]ItemObject</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns all items currently inside the container as an array of <a href="#item">ItemObject</a>.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject FindItem find item search container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.FindItem</span><span class="fn-p">(</span><span class="fn-a">itemName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">ItemObject|null</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Searches the container for an item matching the given name. Supports fuzzy matching.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">itemName</td><td class="at">string</td><td>The name to search for.</td></tr>
+                </tbody></table>
+                <p class="fn-note">Returns the matching ItemObject, or <code>null</code> if not found.</p>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject AddItem add item container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.AddItem</span><span class="fn-p">(</span><span class="fn-a">item</span> <span class="fn-t">ItemObject</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds an item to the container. Returns <code>false</code> if the item is invalid.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">item</td><td class="at"><a href="#item">ItemObject</a></td><td>The item to add.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject RemoveItem remove item container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.RemoveItem</span><span class="fn-p">(</span><span class="fn-a">item</span> <span class="fn-t">ItemObject</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes an item from the container. Returns <code>true</code> if the item was found and removed.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">item</td><td class="at"><a href="#item">ItemObject</a></td><td>The item to remove.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject GetGold gold amount container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.GetGold</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns the amount of gold currently in the container.</p></div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject AddGold add gold container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.AddGold</span><span class="fn-p">(</span><span class="fn-a">amount</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Adds the specified amount of gold to the container. Amount must be positive.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">amount</td><td class="at">int</td><td>Amount of gold to add.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject RemoveGold remove gold container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.RemoveGold</span><span class="fn-p">(</span><span class="fn-a">amount</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Removes gold from the container. Removes at most the amount currently present. Returns the actual amount removed.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">amount</td><td class="at">int</td><td>Amount of gold to remove.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject Count count items itemId container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.Count</span><span class="fn-p">(</span><span class="fn-a">itemId</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
+            <div class="fn-body">
+                <p class="fn-desc">Returns the number of items with the given item spec ID currently in the container.</p>
+                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                    <tr><td class="an">itemId</td><td class="at">int</td><td>The item spec ID to count.</td></tr>
+                </tbody></table>
+            </div>
+        </details>
+
+        <details class="fn-card" data-search="ContainerObject IsTemporary temporary despawn container">
+            <summary><span class="fn-name-sig"><span class="fn-n">ContainerObject.IsTemporary</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
+            <div class="fn-body"><p class="fn-desc">Returns <code>true</code> if this container is temporary (it has a despawn round set and will disappear over time).</p></div>
         </details>
 
     </div>

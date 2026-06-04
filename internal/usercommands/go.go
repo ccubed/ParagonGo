@@ -184,6 +184,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		}
 
+		if blocked, err := scripting.TryRoomTryEnterEvent(user.UserId, destRoom.RoomId); err == nil && blocked {
+			return true, nil
+		}
+
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			user.SendText("Oops, couldn't move there!")
 		} else {

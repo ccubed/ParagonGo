@@ -94,6 +94,49 @@ func TryRoomScriptEvent(eventName string, userId int, roomId int) (bool, error) 
 	return false, ErrEventNotFound
 }
 
+func TryRoomTryEnterEvent(userId int, destRoomId int) (bool, error) {
+
+	vmw, err := getRoomVM(destRoomId)
+	if err != nil {
+		return false, err
+	}
+
+	timestart := time.Now()
+	defer func() {
+		mudlog.Debug("TryRoomTryEnterEvent()", "destRoomId", destRoomId, "time", time.Since(timestart))
+	}()
+
+	if onTryEnterFunc, ok := vmw.GetFunction(`onTryEnter`); ok {
+
+		// Set forced ansi tag wrappers
+		userTextWrap.Set(`script-text`, ``, ``)
+		roomTextWrap.Set(`script-text`, ``, ``)
+
+		sUser := GetActor(userId, 0)
+		sRoom := GetRoom(destRoomId)
+
+		res, err := runCallable(vmw, scriptRoomTimeout, onTryEnterFunc,
+			vmw.VM.ToValue(sUser),
+			vmw.VM.ToValue(sRoom),
+		)
+
+		userTextWrap.Reset()
+		roomTextWrap.Reset()
+
+		if err != nil {
+			return false, fmt.Errorf("onTryEnter(): %w", err)
+		}
+
+		if boolVal, ok := res.Export().(bool); ok && !boolVal {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	return false, ErrEventNotFound
+}
+
 func TryRoomTryExitEvent(exitName string, userId int, roomId int) (bool, error) {
 
 	vmw, err := getRoomVM(roomId)

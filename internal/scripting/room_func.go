@@ -151,12 +151,143 @@ func (r ScriptRoom) GetAllActors() []*ScriptActor {
 	return actorList
 }
 
-func (r ScriptRoom) GetContainers() []string {
-	keys := []string{}
-	for key, _ := range r.roomRecord.Containers {
-		keys = append(keys, key)
+func (r ScriptRoom) GetContainers() []ScriptContainer {
+	containers := make([]ScriptContainer, 0, len(r.roomRecord.Containers))
+	for key := range r.roomRecord.Containers {
+		containers = append(containers, ScriptContainer{name: key, roomRecord: r.roomRecord})
 	}
-	return keys
+	return containers
+}
+
+// ScriptContainer wraps a named container in a room, providing scripting
+// access to its contents, lock state, and gold.
+type ScriptContainer struct {
+	name       string
+	roomRecord *rooms.Room
+}
+
+func (c ScriptContainer) Name() string {
+	return c.name
+}
+
+func (c ScriptContainer) IsLocked() bool {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.Lock.IsLocked()
+	}
+	return false
+}
+
+func (c ScriptContainer) HasLock() bool {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.HasLock()
+	}
+	return false
+}
+
+func (c ScriptContainer) Lock() {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		container.Lock.SetLocked()
+		c.roomRecord.Containers[c.name] = container
+	}
+}
+
+func (c ScriptContainer) Unlock() {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		container.Lock.SetUnlocked()
+		c.roomRecord.Containers[c.name] = container
+	}
+}
+
+func (c ScriptContainer) GetItems() []ScriptItem {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		itms := make([]ScriptItem, 0, len(container.Items))
+		for _, item := range container.Items {
+			itms = append(itms, newScriptItem(item))
+		}
+		return itms
+	}
+	return []ScriptItem{}
+}
+
+func (c ScriptContainer) FindItem(itemName string) *ScriptItem {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		if item, found := container.FindItem(itemName); found {
+			si := newScriptItem(item)
+			return &si
+		}
+	}
+	return nil
+}
+
+func (c ScriptContainer) AddItem(itm ScriptItem) bool {
+	if itm.itemRecord == nil || itm.itemRecord.ItemId == 0 {
+		return false
+	}
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		container.AddItem(*itm.itemRecord)
+		c.roomRecord.Containers[c.name] = container
+		return true
+	}
+	return false
+}
+
+func (c ScriptContainer) RemoveItem(itm ScriptItem) bool {
+	if itm.itemRecord == nil || itm.itemRecord.ItemId == 0 {
+		return false
+	}
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		before := len(container.Items)
+		container.RemoveItem(*itm.itemRecord)
+		c.roomRecord.Containers[c.name] = container
+		return len(container.Items) < before
+	}
+	return false
+}
+
+func (c ScriptContainer) GetGold() int {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.Gold
+	}
+	return 0
+}
+
+func (c ScriptContainer) AddGold(amount int) {
+	if amount <= 0 {
+		return
+	}
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		container.Gold += amount
+		c.roomRecord.Containers[c.name] = container
+	}
+}
+
+func (c ScriptContainer) RemoveGold(amount int) int {
+	if amount <= 0 {
+		return 0
+	}
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		if amount > container.Gold {
+			amount = container.Gold
+		}
+		container.Gold -= amount
+		c.roomRecord.Containers[c.name] = container
+		return amount
+	}
+	return 0
+}
+
+func (c ScriptContainer) Count(itemId int) int {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.Count(itemId)
+	}
+	return 0
+}
+
+func (c ScriptContainer) IsTemporary() bool {
+	if container, ok := c.roomRecord.Containers[c.name]; ok {
+		return container.DespawnRound > 0
+	}
+	return false
 }
 
 func (r ScriptRoom) GetExits() []map[string]any {

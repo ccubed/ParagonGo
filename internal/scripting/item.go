@@ -135,6 +135,44 @@ func TryItemCommand(cmd string, item items.Item, userId int) (bool, error) {
 	return false, ErrEventNotFound
 }
 
+func TryItemTryPurchaseEvent(item items.Item, userId int) (bool, error) {
+
+	sItem := GetItem(item)
+
+	timestart := time.Now()
+	defer func() {
+		mudlog.Debug("TryItemTryPurchaseEvent()", "itemId", item.ItemId, "userId", userId, "time", time.Since(timestart))
+	}()
+
+	vmw, err := getItemVM(sItem)
+	if err != nil {
+		return false, err
+	}
+
+	if onTryPurchaseFunc, ok := vmw.GetFunction(`onTryPurchase`); ok {
+
+		sUser := GetActor(userId, 0)
+		sRoom := GetRoom(sUser.GetRoomId())
+
+		res, err := runCallable(vmw, scriptItemTimeout, onTryPurchaseFunc,
+			vmw.VM.ToValue(sUser),
+			vmw.VM.ToValue(sItem),
+			vmw.VM.ToValue(sRoom),
+		)
+		if err != nil {
+			return false, fmt.Errorf("onTryPurchase(): %w", err)
+		}
+
+		if boolVal, ok := res.Export().(bool); ok && !boolVal {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	return false, ErrEventNotFound
+}
+
 func getItemVM(sItem *ScriptItem) (*VMWrapper, error) {
 
 	scriptId := strconv.Itoa(sItem.ItemId())

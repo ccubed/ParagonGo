@@ -132,6 +132,7 @@
             <a href="#hook-onLoad">onLoad</a>
             <a href="#hook-onEnter">onEnter</a>
             <a href="#hook-onTryExit">onTryExit</a>
+            <a href="#hook-onTryEnter">onTryEnter</a>
             <a href="#hook-onExit">onExit</a>
             <a href="#hook-onIdle">onIdle</a>
             <a href="#hook-onCommand">onCommand</a>
@@ -252,6 +253,37 @@
     if (exitName === 'north') {
         user.SendText('A magical barrier blocks the northern passage.');
         return false; // block movement
+    }
+    return true;
+}</code></pre>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- onTryEnter -->
+                <details class="hook-card" id="hook-onTryEnter">
+                    <summary>
+                        <span class="hook-sig">
+                            <span class="fn-name">onTryEnter</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span>
+                        </span>
+                    </summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called on the <strong>destination</strong> room before a player enters it. Return <code>false</code> to block the movement. This fires for both normal movement and combat fleeing. It is not called for admin teleports, spawns, or script-driven <code>MoveRoom</code> calls.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> <code>false</code> = block the movement. Any other return value (or none) allows it.</div>
+                        <table class="arg-table">
+                            <thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The player attempting to enter.</td></tr>
+                                <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room being entered (this room).</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="code-wrap">
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            <pre><code class="language-javascript">function onTryEnter(user, room) {
+    // Require a specific quest to enter
+    if (!user.HasQuest('dungeon-key:start')) {
+        user.SendText('The dungeon gate is sealed. You need a key.');
+        return false;
     }
     return true;
 }</code></pre>

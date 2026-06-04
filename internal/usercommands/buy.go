@@ -317,6 +317,12 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 
 	}
 
+	if matchedShopItem.ItemId > 0 {
+		if blocked, err := scripting.TryItemTryPurchaseEvent(items.New(matchedShopItem.ItemId), user.UserId); err == nil && blocked {
+			return false
+		}
+	}
+
 	if shopMob != nil {
 
 		if !shopMob.Character.Shop.Destock(matchedShopItem) {
