@@ -93,11 +93,67 @@
 .feature-card-title { font-size: 0.95rem; font-weight: 700; color: var(--color-text); margin-bottom: 0.2rem; }
 .feature-card-desc { font-size: 0.82rem; color: var(--color-text-muted); }
 
+/* ── concept callout ──────────────────────────────────────────────── */
+.concept-box {
+    background: var(--color-surface-white); border: 1px solid var(--color-border);
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+}
+.concept-box h3 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); margin-bottom: 0.75rem; }
+.concept-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.concept-col {}
+.concept-col-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+.concept-col-label.scripts { color: #7c3aed; }
+.concept-col-label.objects { color: #0369a1; }
+.concept-col p { font-size: 0.85rem; color: var(--color-text-tertiary); line-height: 1.6; margin: 0; }
+.concept-col code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-alt); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+
+/* ── object overview grid ─────────────────────────────────────────── */
+.obj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.obj-card {
+    background: var(--color-surface-white); border: 1px solid var(--color-border);
+    border-radius: 8px; padding: 1.25rem 1.1rem; text-decoration: none;
+    display: flex; flex-direction: column; gap: 0;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.obj-card:hover { border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateY(-1px); }
+.obj-card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem; }
+.obj-card-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+.obj-card-name { font-size: 0.95rem; font-weight: 700; color: var(--color-text); font-family: monospace; }
+.obj-card-badge { font-size: 0.68rem; padding: 0.1rem 0.4rem; border-radius: 3px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+.badge-actor   { background: #ede9fe; color: #5b21b6; }
+.badge-room    { background: #dbeafe; color: #1e40af; }
+.badge-item    { background: #fef3c7; color: #92400e; }
+.badge-pet     { background: #d1fae5; color: #065f46; }
+.badge-group   { background: #fce7f3; color: #9d174d; }
+.badge-container { background: #f0fdf4; color: #166534; }
+.obj-card-desc { font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 0.65rem; }
+.obj-card-how { font-size: 0.75rem; color: var(--color-text-faint); font-family: monospace; border-top: 1px solid var(--color-border-faint); padding-top: 0.5rem; margin-top: auto; }
+.obj-card-how strong { font-weight: 600; color: var(--color-text-subtle); font-family: system-ui, sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.2rem; }
+.obj-card-availability { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.6rem; }
+.avail-tag { font-size: 0.68rem; padding: 0.1rem 0.4rem; border-radius: 3px; background: var(--color-surface-alt); color: var(--color-text-muted); border: 1px solid var(--color-border-faint); }
+
+/* ── availability matrix ──────────────────────────────────────────── */
+.matrix-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+.matrix-table { border-collapse: collapse; font-size: 0.8rem; min-width: 480px; }
+.matrix-table th, .matrix-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--color-border-faint); text-align: center; }
+.matrix-table thead th { background: var(--color-surface-alt); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-secondary); }
+.matrix-table thead th:first-child { text-align: left; }
+.matrix-table tbody th { text-align: left; font-weight: 600; font-family: monospace; font-size: 0.8rem; color: var(--color-text); background: var(--color-surface-white); }
+.matrix-table tbody td { color: var(--color-text-faint); }
+.matrix-yes { color: #16a34a; font-weight: 700; font-size: 1rem; }
+.matrix-no  { color: var(--color-border-medium); font-size: 0.9rem; }
+.matrix-ctx { color: #d97706; font-weight: 700; font-size: 0.85rem; }
+.matrix-note { font-size: 0.72rem; color: var(--color-text-faint); margin-top: 0.5rem; }
+.matrix-legend { display: flex; gap: 1.25rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.matrix-legend span { font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.3rem; }
+
 /* ── responsive ───────────────────────────────────────────────────── */
 @media (max-width: 860px) {
     .doc-layout { grid-template-columns: 1fr; }
     .doc-sidebar { position: static; max-height: none; }
     .feature-row { grid-template-columns: 1fr; }
+    .concept-row { grid-template-columns: 1fr; }
+    .obj-grid { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -127,6 +183,7 @@
         <span class="sidebar-section-label">On This Page</span>
         <div class="sidebar-group">
             <a href="#script-types">Script Types</a>
+            <a href="#script-objects">Script Objects</a>
             <a href="#time-periods">Time Periods</a>
             <a href="#targeting-symbols">Targeting Symbols</a>
             <a href="#quick-links">Quick Links</a>
@@ -188,6 +245,221 @@
                     <div class="script-card-desc">Animate companion pets with periodic actions, command interception, and departure/return events.</div>
                     <div class="script-card-tag">PetAct · onCommand · PetLeave · PetReturn</div>
                 </a>
+            </div>
+        </section>
+
+        <!-- ── Script Objects Overview ── -->
+        <section class="doc-section" id="script-objects">
+            <h2>Script Objects Overview</h2>
+
+            <div class="concept-box">
+                <h3>Scripts vs. Objects &mdash; What is the difference?</h3>
+                <div class="concept-row">
+                    <div class="concept-col">
+                        <div class="concept-col-label scripts">Scripts</div>
+                        <p>A <strong>script</strong> is a JavaScript file attached to a game entity &mdash; a room, mob, item, buff, spell, or pet. It defines <em>event hooks</em> (functions like <code>onEnter</code> or <code>onIdle</code>) that the server calls when something happens. Scripts are the <em>where and when</em>: which entity reacts, and to which event.</p>
+                    </div>
+                    <div class="concept-col">
+                        <div class="concept-col-label objects">Objects</div>
+                        <p>An <strong>object</strong> is a live handle to a game entity passed into your script as an argument. It exposes methods you call to inspect or manipulate that entity &mdash; move it, send it messages, give it items, and more. Objects are the <em>what and how</em>: what you can touch, and how you interact with it.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="obj-grid">
+
+                <a class="obj-card" href="/admin/scripting-objects#actor">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x1F464;</span>
+                        <span class="obj-card-name">ActorObject</span>
+                        <span class="obj-card-badge badge-actor">Users &amp; Mobs</span>
+                    </div>
+                    <p class="obj-card-desc">The most-used object. Represents any living entity &mdash; a player character or an NPC. Lets you read stats, send messages, run commands, give or take items, apply buffs, and much more.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Passed as a hook argument, or via <code>GetUser(userId)</code> / <code>GetMob(instanceId)</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                            <span class="avail-tag">Item</span>
+                            <span class="avail-tag">Buff</span>
+                            <span class="avail-tag">Spell</span>
+                            <span class="avail-tag">Pet</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a class="obj-card" href="/admin/scripting-objects#room">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x1F3DB;&#xFE0F;</span>
+                        <span class="obj-card-name">RoomObject</span>
+                        <span class="obj-card-badge badge-room">Rooms</span>
+                    </div>
+                    <p class="obj-card-desc">Represents a room in the world. Lets you inspect and modify room properties, manage exits and containers, spawn mobs and items, send messages to everyone present, and create temporary rooms.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Passed as a hook argument, or via <code>GetRoom(roomId)</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                            <span class="avail-tag">Item</span>
+                            <span class="avail-tag">Buff</span>
+                            <span class="avail-tag">Spell</span>
+                            <span class="avail-tag">Pet</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a class="obj-card" href="/admin/scripting-objects#item">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x2694;&#xFE0F;</span>
+                        <span class="obj-card-name">ItemObject</span>
+                        <span class="obj-card-badge badge-item">Items</span>
+                    </div>
+                    <p class="obj-card-desc">Represents a single item instance. Lets you read item properties, inspect enchantments, and is passed to item script hooks when the item is found, lost, purchased, or targeted by a command.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Passed as a hook argument, or via <code>CreateItem(itemId)</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Item</span>
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a class="obj-card" href="/admin/scripting-objects#pet">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x1F43E;</span>
+                        <span class="obj-card-name">PetObject</span>
+                        <span class="obj-card-badge badge-pet">Pets</span>
+                    </div>
+                    <p class="obj-card-desc">Represents a player&rsquo;s companion pet. Lets you read pet type and name, manage the pet&rsquo;s inventory, and is the primary object in pet script hooks. Returns <code>null</code> if the actor has no pet.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Via <code>ActorObject.GetPet()</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Pet</span>
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a class="obj-card" href="/admin/scripting-objects#party">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x1F465;</span>
+                        <span class="obj-card-name">PartyObject</span>
+                        <span class="obj-card-badge badge-group">Groups</span>
+                    </div>
+                    <p class="obj-card-desc">Represents a collection of actors (a player&rsquo;s party). Most methods mirror <code>ActorObject</code> but apply to every member simultaneously &mdash; useful for broadcasting messages or granting rewards to a whole group at once.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Via <code>ActorObject.GetParty()</code>, <code>GetPartyPresent()</code>, or <code>GetPartyMissing()</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                            <span class="avail-tag">Spell</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a class="obj-card" href="/admin/scripting-objects#container">
+                    <div class="obj-card-header">
+                        <span class="obj-card-icon">&#x1F4E6;</span>
+                        <span class="obj-card-name">ContainerObject</span>
+                        <span class="obj-card-badge badge-container">Rooms</span>
+                    </div>
+                    <p class="obj-card-desc">Represents a named container inside a room (a chest, barrel, crate, etc.). Lets you inspect and modify its contents, check or change its lock state, and manage gold stored inside.</p>
+                    <div class="obj-card-how">
+                        <strong>How to get one</strong>
+                        Via <code>RoomObject.GetContainers()</code>
+                        <div class="obj-card-availability">
+                            <span class="avail-tag">Room</span>
+                            <span class="avail-tag">Mob</span>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+
+            <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:0.6rem;color:var(--color-text-secondary);">Object availability by script type</h3>
+            <p style="font-size:0.82rem;color:var(--color-text-faint);margin-bottom:0.75rem;">Which objects are available (either as hook arguments or via global constructor functions) in each script type.</p>
+            <div class="matrix-wrap">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Object</th>
+                            <th>Room</th>
+                            <th>Mob</th>
+                            <th>Item</th>
+                            <th>Buff</th>
+                            <th>Spell</th>
+                            <th>Pet</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>ActorObject</th>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <th>RoomObject</th>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                            <td><span class="matrix-yes" title="Available">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <th>ItemObject</th>
+                            <td><span class="matrix-ctx" title="Via actor backpack or room floor">ctx</span></td>
+                            <td><span class="matrix-ctx" title="Via actor backpack or room floor">ctx</span></td>
+                            <td><span class="matrix-yes" title="Passed as hook argument">&#10003;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                        </tr>
+                        <tr>
+                            <th>PetObject</th>
+                            <td><span class="matrix-ctx" title="Via ActorObject.GetPet()">ctx</span></td>
+                            <td><span class="matrix-ctx" title="Via ActorObject.GetPet()">ctx</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-yes" title="Passed as hook argument">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <th>PartyObject</th>
+                            <td><span class="matrix-ctx" title="Via ActorObject.GetParty()">ctx</span></td>
+                            <td><span class="matrix-ctx" title="Via ActorObject.GetParty()">ctx</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-ctx" title="Via ActorObject.GetParty()">ctx</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                        </tr>
+                        <tr>
+                            <th>ContainerObject</th>
+                            <td><span class="matrix-ctx" title="Via RoomObject.GetContainers()">ctx</span></td>
+                            <td><span class="matrix-ctx" title="Via RoomObject.GetContainers()">ctx</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                            <td><span class="matrix-no" title="Not available">&mdash;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="matrix-legend">
+                <span><strong class="matrix-yes">&#10003;</strong> &mdash; directly available (hook argument or global constructor)</span>
+                <span><strong class="matrix-ctx">ctx</strong> &mdash; obtainable from another object in context</span>
+                <span><strong class="matrix-no">&mdash;</strong> &mdash; not available in this script type</span>
             </div>
         </section>
 
