@@ -1,4 +1,4 @@
-package main
+package modmanager
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func cmdRemove(name string) error {
 
 	if lf.findLocked(name) == nil {
 		return fmt.Errorf("module %q is not managed by the module manager\n"+
-			"(only modules installed via 'modmanager install' can be removed this way)", name)
+			"(only modules installed via 'module install' can be removed this way)", name)
 	}
 
 	destDir := filepath.Join("modules", name)

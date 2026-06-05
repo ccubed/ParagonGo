@@ -45,37 +45,47 @@ Extract any modules into this folder.
 
 # Community Module Manager
 
-The module manager lets you install, remove, and update community-contributed
-modules from the GoMud module registry without manually copying files.
+The module manager is built into the server binary. Run it via the `module`
+subcommand:
 
 ## Commands
 
 ```sh
-# List all available modules (fetched live from the registry)
-go run ./cmd/modmanager list
-
-# Show full details for a module
-go run ./cmd/modmanager info <name>
-
-# Install a module
-go run ./cmd/modmanager install <name>
-
-# Remove an installed module
-go run ./cmd/modmanager remove <name>
-
-# Check for updates (all installed modules)
-go run ./cmd/modmanager update
-
-# Update a specific module
-go run ./cmd/modmanager update <name>
+# Run the module manager interactively
+go run . module 
 ```
 
-A `make module` shortcut is also available:
+Or run commands individually:
 
 ```sh
-make module list
-make module install <name>
+
+# List all available modules (fetched live from the registry)
+go run . module list
+
+# Show full details for a module
+go run . module info <name>
+
+# Install a module
+go run . module install <name>
+
+# Remove an installed module
+go run . module remove <name>
+
+# Check for updates (all installed modules)
+go run . module update
+
+# Update a specific module
+go run . module update <name>
 ```
+
+With a built binary:
+
+```sh
+./go-mud-server module list
+./go-mud-server module install <name>
+```
+
+A `make module` shortcut is also available.
 
 ## After installing or removing a module
 

@@ -1,4 +1,4 @@
-package main
+package modmanager
 
 import (
 	"crypto/sha256"

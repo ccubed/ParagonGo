@@ -1,4 +1,4 @@
-package main
+package modmanager
 
 import (
 	"fmt"
@@ -132,7 +132,7 @@ func cmdUpdate(name string) error {
 	} else {
 		fmt.Println()
 		fmt.Println(bold("To update a module, run:"))
-		fmt.Println(codeSnippet("modmanager install <name>"))
+		fmt.Println(codeSnippet("go-mud-server module install <name>"))
 	}
 	return nil
 }
@@ -162,7 +162,7 @@ func printRegistryTable(reg *Registry, lf *LockFile) {
 
 	type row struct {
 		name, version, author, status, description string
-		official                                    bool
+		official                                   bool
 	}
 	rows := make([]row, 0, len(reg.Modules))
 	for _, e := range reg.Modules {

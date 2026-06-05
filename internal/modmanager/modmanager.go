@@ -1,4 +1,6 @@
-package main
+// Package modmanager implements the GoMud community module manager.
+// It is invoked via the main binary with: go-mud-server module [subcommand] [args]
+package modmanager
 
 import (
 	"fmt"
@@ -8,8 +10,10 @@ import (
 
 var validName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
-func main() {
-	if len(os.Args) < 2 {
+// Run is the entry point for the module manager subcommand. args should be
+// os.Args[2:] (everything after "module").
+func Run(args []string) {
+	if len(args) == 0 {
 		if isInteractiveTerminal() {
 			runInteractive()
 			return
@@ -19,43 +23,43 @@ func main() {
 	}
 
 	var err error
-	switch os.Args[1] {
+	switch args[0] {
 	case "list":
 		err = cmdList()
 
 	case "info":
-		if len(os.Args) < 3 {
-			fatalf("usage: modmanager info <name>\n")
+		if len(args) < 2 {
+			fatalf("usage: module info <name>\n")
 		}
-		err = cmdInfo(os.Args[2])
+		err = cmdInfo(args[1])
 
 	case "install":
-		if len(os.Args) < 3 {
-			fatalf("usage: modmanager install <name|all-official>\n")
+		if len(args) < 2 {
+			fatalf("usage: module install <name|all-official>\n")
 		}
-		err = cmdInstall(os.Args[2])
+		err = cmdInstall(args[1])
 
 	case "remove":
-		if len(os.Args) < 3 {
-			fatalf("usage: modmanager remove <name>\n")
+		if len(args) < 2 {
+			fatalf("usage: module remove <name>\n")
 		}
-		err = cmdRemove(os.Args[2])
+		err = cmdRemove(args[1])
 
 	case "update":
 		name := ""
-		if len(os.Args) >= 3 {
-			name = os.Args[2]
+		if len(args) >= 2 {
+			name = args[1]
 		}
 		err = cmdUpdate(name)
 
 	case "package":
-		if len(os.Args) < 3 {
-			fatalf("usage: modmanager package <name>\n")
+		if len(args) < 2 {
+			fatalf("usage: module package <name>\n")
 		}
-		err = cmdPackage(os.Args[2])
+		err = cmdPackage(args[1])
 
 	default:
-		printError("unknown subcommand: %q", os.Args[1])
+		printError("unknown subcommand: %q", args[0])
 		printUsage()
 		os.Exit(1)
 	}
@@ -84,7 +88,7 @@ func printUsage() {
 	fmt.Println(cyan("GoMud Module Manager"))
 	fmt.Println()
 	fmt.Println(bold("Usage:"))
-	fmt.Println("  modmanager " + yellow("<subcommand>") + " [arguments]")
+	fmt.Println("  go-mud-server module " + yellow("<subcommand>") + " [arguments]")
 	fmt.Println()
 	fmt.Println(bold("Subcommands:"))
 	type entry struct{ cmd, desc string }

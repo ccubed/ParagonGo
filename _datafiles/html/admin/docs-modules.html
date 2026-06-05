@@ -237,7 +237,7 @@
 <section class="doc-section" id="installing-modules">
     <h2>Installing Community Modules</h2>
 
-    <p>GoMud ships with an interactive module manager tool (<code>modmanager</code>) that downloads, verifies, and installs modules from the community registry. After installation you must regenerate the module import file and rebuild the server binary before the new module takes effect.</p>
+    <p>GoMud includes a built-in module manager accessible via the <code>module</code> subcommand. It downloads, verifies, and installs modules from the community registry. After installation you must regenerate the module import file and rebuild the server binary before the new module takes effect.</p>
 
     <div class="callout callout-info">
         <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -245,29 +245,34 @@
     </div>
 
     <h3>Step 1 &mdash; Start the module manager</h3>
-    <p>Launch the interactive module manager from the project root:</p>
+    <p>Run the interactive module manager directly</p>
     <div class="code-block">
         <div class="code-block-header">terminal</div>
-        <pre><code>go run ./cmd/modmanager</code></pre>
+        <pre><code>go run . module</code></pre>
     </div>
-    <p>You will see a <code>&gt;</code> prompt. Type <code>help</code> at any time to see available commands, and <code>quit</code> to exit.</p>
+    <p>Or with a built binary:</p>
+    <div class="code-block">
+        <div class="code-block-header">terminal</div>
+        <pre><code>./go-mud-server module</code></pre>
+    </div>
+    <p>Running <code>go run . module</code> with no subcommand and an interactive terminal launches an interactive REPL. You will see a <code>&gt;</code> prompt. Type <code>help</code> at any time to see available commands, and <code>quit</code> to exit.</p>
 
     <h3>Step 2 &mdash; Browse available modules</h3>
-    <p>List every module in the community registry along with its current version and whether it is already installed:</p>
+    <p>From module manager, list every module in the community registry along with its current version and whether it is already installed:</p>
     <div class="code-block">
-        <div class="code-block-header">modmanager</div>
+        <div class="code-block-header">terminal</div>
         <pre><code>&gt; list</code></pre>
     </div>
     <p>To read a full description and metadata for a specific module before installing it:</p>
     <div class="code-block">
-        <div class="code-block-header">modmanager</div>
+        <div class="code-block-header">terminal</div>
         <pre><code>&gt; info &lt;name&gt;</code></pre>
     </div>
 
     <h3>Step 3 &mdash; Install the module</h3>
     <p>Download, verify the SHA256 checksum, and extract the module into <code>modules/&lt;name&gt;/</code>:</p>
     <div class="code-block">
-        <div class="code-block-header">modmanager</div>
+        <div class="code-block-header">terminal</div>
         <pre><code>&gt; install &lt;name&gt;</code></pre>
     </div>
     <p>If the module introduces new Go package dependencies, exit the manager and run <code>go mod tidy</code> afterwards to fetch them before building.</p>
@@ -297,10 +302,10 @@
             <div class="step-num">1</div>
             <div class="step-body">
                 <strong>Start the module manager</strong>
-                <p>From the project root, launch the interactive manager:</p>
+                <p>From the project root, run the remove subcommand:</p>
                 <div class="code-block" style="margin-top:0.5rem">
                     <div class="code-block-header">terminal</div>
-                    <pre><code>go run ./cmd/modmanager</code></pre>
+                    <pre><code>&gt; remove &lt;name&gt;</code></pre>
                 </div>
             </div>
         </li>
@@ -308,11 +313,7 @@
             <div class="step-num">2</div>
             <div class="step-body">
                 <strong>Remove the module</strong>
-                <p>This deletes the <code>modules/&lt;name&gt;/</code> directory and updates the lock file:</p>
-                <div class="code-block" style="margin-top:0.5rem">
-                    <div class="code-block-header">modmanager</div>
-                    <pre><code>&gt; remove &lt;name&gt;</code></pre>
-                </div>
+                <p>This deletes the <code>modules/&lt;name&gt;/</code> directory and updates the lock file.</p>
             </div>
         </li>
         <li>
@@ -338,18 +339,14 @@ make run</code></pre>
 <section class="doc-section" id="updating-modules">
     <h2>Updating Installed Modules</h2>
 
-    <p>Start the module manager from the project root, then check whether any installed modules have newer versions available in the registry:</p>
+    <p>Check whether any installed modules have newer versions available in the registry:</p>
     <div class="code-block">
         <div class="code-block-header">terminal</div>
-        <pre><code>go run ./cmd/modmanager</code></pre>
-    </div>
-    <div class="code-block">
-        <div class="code-block-header">modmanager</div>
-        <pre><code>&gt; update</code></pre>
+        <pre><code>&gt; module update</code></pre>
     </div>
     <p>To update a specific module to the latest registry version:</p>
     <div class="code-block">
-        <div class="code-block-header">modmanager</div>
+        <div class="code-block-header">terminal</div>
         <pre><code>&gt; update &lt;name&gt;</code></pre>
     </div>
     <p>After updating, exit the manager and rebuild exactly as you would after a fresh install:</p>
@@ -1610,14 +1607,10 @@ func (f *FollowModule) idleMobHandler(e events.Event) events.ListenerReturn {
     <p>The community module registry lives in a separate GitHub repository: <a href="https://github.com/GoMudEngine/GoMud-Modules" target="_blank" rel="noopener noreferrer">github.com/GoMudEngine/GoMud-Modules</a>. Adding your module there makes it discoverable and installable by anyone using the module manager. The process is a standard GitHub pull request.</p>
 
     <h3>Step 1 &mdash; Package your module</h3>
-    <p>The registry requires a <code>.tar.gz</code> archive of your module directory and its SHA256 checksum. Start the module manager and use the <code>package</code> command:</p>
+    <p>The registry requires a <code>.tar.gz</code> archive of your module directory and its SHA256 checksum. Use the <code>package</code> subcommand:</p>
     <div class="code-block">
         <div class="code-block-header">terminal</div>
-        <pre><code>go run ./cmd/modmanager</code></pre>
-    </div>
-    <div class="code-block">
-        <div class="code-block-header">modmanager</div>
-        <pre><code>&gt; package &lt;your-module-name&gt;</code></pre>
+        <pre><code>go run . module package &lt;your-module-name&gt;</code></pre>
     </div>
     <p>This creates <code>&lt;your-module-name&gt;.tar.gz</code> in the current directory and prints its SHA256 hash. Keep both — you will need them in the next steps.</p>
 
@@ -1644,18 +1637,18 @@ func (f *FollowModule) idleMobHandler(e events.Event) events.ListenerReturn {
     version: "1.0.0"
     author: YourGitHubUsername
     url: https://github.com/you/your-module/releases/download/v1.0.0/your-module-name.tar.gz
-    sha256: &lt;paste the SHA256 printed by modmanager package&gt;</code></pre>
+    sha256: &lt;paste the SHA256 printed by module package&gt;</code></pre>
     </div>
 
     <table class="ref-table">
         <thead><tr><th>Field</th><th>Description</th></tr></thead>
         <tbody>
             <tr><td><code>name</code></td><td>Lowercase letters, digits, and hyphens only (e.g. <code>my-module</code>). Must match the module's directory name under <code>modules/</code>.</td></tr>
-            <tr><td><code>description</code></td><td>One concise sentence shown in <code>modmanager list</code> output.</td></tr>
+            <tr><td><code>description</code></td><td>One concise sentence shown in <code>module list</code> output.</td></tr>
             <tr><td><code>version</code></td><td>Semantic version string (e.g. <code>"1.0.0"</code>). Increment this on each update.</td></tr>
             <tr><td><code>author</code></td><td>Your name or GitHub username.</td></tr>
             <tr><td><code>url</code></td><td>Direct HTTPS URL to the <code>.tar.gz</code> archive. Must be stable and publicly accessible.</td></tr>
-            <tr><td><code>sha256</code></td><td>Lowercase hex SHA256 of the archive file. Produced by <code>modmanager package</code>.</td></tr>
+            <tr><td><code>sha256</code></td><td>Lowercase hex SHA256 of the archive file. Produced by <code>module package</code>.</td></tr>
         </tbody>
     </table>
 

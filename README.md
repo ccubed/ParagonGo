@@ -168,10 +168,11 @@ GoMud supports optional community modules that add new gameplay features, comman
 
 ### Module Manager
 
-The module manager is a built-in tool for browsing and installing community modules from the GoMud module registry. You can run it directly without any extra setup:
+The module manager is built into the server binary. Run it via the `module`
+subcommand — no separate tool needed:
 
 ```shell
-go run ./cmd/modmanager
+go run . module
 ```
 
 Running it with no arguments and an interactive terminal launches an interactive menu. You can also pass subcommands directly (see below).
@@ -187,12 +188,14 @@ make module install <name>
 
 | Command | Description |
 |---|---|
-| `go run ./cmd/modmanager list` | List all modules available in the registry |
-| `go run ./cmd/modmanager info <name>` | Show full details for a specific module |
-| `go run ./cmd/modmanager install <name>` | Download, verify, and install a module |
-| `go run ./cmd/modmanager remove <name>` | Remove an installed module |
-| `go run ./cmd/modmanager update` | Check for updates to all installed modules |
-| `go run ./cmd/modmanager update <name>` | Update a specific installed module |
+| `go run . module list` | List all modules available in the registry |
+| `go run . module info <name>` | Show full details for a specific module |
+| `go run . module install <name>` | Download, verify, and install a module |
+| `go run . module remove <name>` | Remove an installed module |
+| `go run . module update` | Check for updates to all installed modules |
+| `go run . module update <name>` | Update a specific installed module |
+
+With a built binary, replace `go run .` with `./go-mud-server`.
 
 ### After Installing or Removing a Module
 

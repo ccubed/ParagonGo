@@ -16,6 +16,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/modmanager"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -78,6 +79,12 @@ var (
 )
 
 func main() {
+
+	// Dispatch the module manager subcommand before any server initialisation.
+	if len(os.Args) >= 2 && os.Args[1] == "module" {
+		modmanager.Run(os.Args[2:])
+		return
+	}
 
 	serverStartTime := time.Now()
 

@@ -1,4 +1,4 @@
-package main
+package modmanager
 
 import (
 	"archive/tar"
@@ -358,7 +358,7 @@ func cmdInstallAllOfficial() error {
 
 	var failed []string
 	for _, e := range official {
-		fmt.Printf("  %s %s\n", dimStr("["+e.Name+"]"), dimStr("─────────────────────────────────")[:max(0, 35-len(e.Name))])
+		fmt.Printf("  %s %s\n", dimStr("["+e.Name+"]"), dimStr("─────────────────────────────────")[:maxInt(0, 35-len(e.Name))])
 		if err := cmdInstall(e.Name); err != nil {
 			printError("%s: %v", e.Name, err)
 			failed = append(failed, e.Name)
@@ -383,8 +383,8 @@ func cmdInstallAllOfficial() error {
 	return nil
 }
 
-// max returns the larger of a and b.
-func max(a, b int) int {
+// maxInt returns the larger of a and b.
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}

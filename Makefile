@@ -126,12 +126,8 @@ generate: ### Generates include directives for modules
 	go generate
 
 .PHONY: module
-module: ### Manage community modules (usage: modmanager <subcommand>)
-	@go run ./cmd/modmanager $(filter-out module,$(MAKECMDGOALS))
-
-.PHONY: build-modmanager
-build-modmanager: ### Build the modmanager binary.
-	CGO_ENABLED=0 go build -trimpath -o modmanager ./cmd/modmanager
+module: ### Manage community modules (usage: go run . module <subcommand>)
+	@go run . module $(filter-out module,$(MAKECMDGOALS))
 
 
 # Clean both development and production containers
