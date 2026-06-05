@@ -31,7 +31,7 @@ func main() {
 
 	case "install":
 		if len(os.Args) < 3 {
-			fatalf("usage: modmanager install <name>\n")
+			fatalf("usage: modmanager install <name|all-official>\n")
 		}
 		err = cmdInstall(os.Args[2])
 
@@ -92,6 +92,7 @@ func printUsage() {
 		{green("list"), "List available modules from the registry"},
 		{green("info") + " <name>", "Show details for a module"},
 		{green("install") + " <name>", "Download, verify, and install a module"},
+		{green("install") + " all-official", "Install all official GoMud modules at once"},
 		{green("remove") + " <name>", "Remove an installed module"},
 		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
 		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},

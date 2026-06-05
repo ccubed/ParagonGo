@@ -227,6 +227,11 @@ func printRegistryTable(reg *Registry, lf *LockFile) {
 		}
 	}
 	fmt.Println()
+	fmt.Printf("  %s  %s\n",
+		magenta("Tip:"),
+		"To install all "+bold("official GoMud")+" modules at once: "+cyan("install all-official"),
+	)
+	fmt.Println()
 }
 
 // wrapText splits text into lines of at most width characters, breaking on

@@ -13,7 +13,12 @@ import (
 )
 
 // cmdInstall installs a module by name from the registry.
+// The special name "all-official" installs every module published by the GoMud team.
 func cmdInstall(name string) error {
+	if name == "all-official" {
+		return cmdInstallAllOfficial()
+	}
+
 	if err := validateName(name); err != nil {
 		return err
 	}
@@ -321,4 +326,59 @@ func printInstallNextSteps(name string) {
 	fmt.Println()
 	fmt.Println(gray("If the module requires new Go dependencies, run first:"))
 	fmt.Println(codeSnippet("go mod tidy"))
+}
+
+// cmdInstallAllOfficial installs every module in the registry published by the
+// GoMud team (author == officialAuthor). Modules already at the current version
+// are skipped. Installation continues on a per-module error so a single failure
+// does not abort the rest of the batch.
+func cmdInstallAllOfficial() error {
+	reg, err := fetchRegistry()
+	if err != nil {
+		return err
+	}
+
+	official := reg.officialModules()
+	if len(official) == 0 {
+		fmt.Println(dimStr("No official modules found in the registry."))
+		return nil
+	}
+
+	fmt.Println()
+	fmt.Printf("%s Installing %s official module(s)...\n", cyan("*"), bold(fmt.Sprintf("%d", len(official))))
+	fmt.Println()
+
+	var failed []string
+	for _, e := range official {
+		fmt.Printf("  %s %s\n", dimStr("["+e.Name+"]"), dimStr("─────────────────────────────────")[:max(0, 35-len(e.Name))])
+		if err := cmdInstall(e.Name); err != nil {
+			printError("%s: %v", e.Name, err)
+			failed = append(failed, e.Name)
+		}
+		fmt.Println()
+	}
+
+	if len(failed) > 0 {
+		fmt.Printf("%s %d module(s) failed to install: %s\n",
+			red("!"), len(failed), yellow(strings.Join(failed, ", ")))
+		return fmt.Errorf("%d module(s) failed to install", len(failed))
+	}
+
+	fmt.Println(bold("All official modules installed."))
+	fmt.Println()
+	fmt.Println(bold("To activate, rebuild the server:"))
+	fmt.Println(codeSnippet("make build"))
+	fmt.Println(codeSnippet("(or: go generate && go build -o go-mud-server)"))
+	fmt.Println()
+	fmt.Println(gray("If any modules added new Go dependencies, run first:"))
+	fmt.Println(codeSnippet("go mod tidy"))
+	return nil
+}
+
+// max returns the larger of a and b.
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

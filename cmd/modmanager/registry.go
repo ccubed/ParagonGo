@@ -13,6 +13,9 @@ import (
 
 const registryURL = "https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules/refs/heads/master/module-registry.yaml"
 
+// officialAuthor is the author value used for modules published by the GoMud team.
+const officialAuthor = "GoMud"
+
 // RegistryEntry is a single module entry from the central registry.
 type RegistryEntry struct {
 	Name        string `yaml:"name"`
@@ -55,6 +58,17 @@ func parseRegistry(data []byte) (*Registry, error) {
 		return nil, fmt.Errorf("parsing registry YAML: %w", err)
 	}
 	return &reg, nil
+}
+
+// officialModules returns the subset of registry entries authored by the GoMud team.
+func (r *Registry) officialModules() []RegistryEntry {
+	var out []RegistryEntry
+	for _, e := range r.Modules {
+		if e.Author == officialAuthor {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // findEntry returns the registry entry for the given module name, or an error

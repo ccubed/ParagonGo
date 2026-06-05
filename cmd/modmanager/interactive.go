@@ -58,7 +58,7 @@ func runInteractive() {
 
 		case "install":
 			if len(args) < 1 {
-				printError("usage: install <name>")
+				printError("usage: install <name|all-official>")
 				continue
 			}
 			if err := cmdInstall(args[0]); err != nil {
@@ -111,6 +111,7 @@ func printInteractiveHelp() {
 		{green("list"), "List available modules from the registry"},
 		{green("info") + " <name>", "Show details for a module"},
 		{green("install") + " <name>", "Download, verify, and install a module"},
+		{green("install") + " all-official", "Install all official GoMud modules at once"},
 		{green("remove") + " <name>", "Remove an installed module"},
 		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
 		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},
