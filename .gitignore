@@ -19,3 +19,4 @@ __debug*
 .claude/
 
 
+cmd/modmanager/modmanager

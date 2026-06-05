@@ -249,14 +249,6 @@ func buildAdminNav() []WebNavItem {
 					},
 				},
 				{
-					Name:        "Backups",
-					Target:      "/admin/docs-backups",
-					Description: "Guide to configuring automatic world data backups with Amazon S3.",
-					Children: []WebNavItem{
-						{Label: "Amazon S3 Setup", Target: "/admin/docs-backups", Description: "Step-by-step guide to setting up S3 backups."},
-					},
-				},
-				{
 					Name:        "Hosting",
 					Target:      "/admin/docs-aws",
 					Description: "Guides for hosting GoMud on cloud providers.",

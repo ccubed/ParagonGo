@@ -20,12 +20,16 @@ Playable online demo: **<http://www.gomud.net>**
     - [Web Based Admin Tools](#web-based-admin-tools)
     - [ANSI Colors](#ansi-colors)
     - [Small Feature Demos](#small-feature-demos)
-  - [Quick Install](#quick-install)
-  - [Setup](#setup)
+  - [Getting Started](#getting-started)
     - [Requirements](#requirements)
-    - [Quick Start](#quick-start)
-  - [Connecting](#connecting)
-  - [Common Server Commands](#common-server-commands)
+    - [Quick Install](#quick-install)
+    - [Manual Setup](#manual-setup)
+    - [Connecting to Your Server](#connecting-to-your-server)
+    - [First Login](#first-login)
+  - [Community Modules](#community-modules)
+    - [Module Manager](#module-manager)
+    - [Available Commands](#available-commands)
+    - [After Installing or Removing a Module](#after-installing-or-removing-a-module)
   - [Configuration](#configuration)
     - [Config Files](#config-files)
     - [Enable Server HTTPS Support](#enable-server-https-support)
@@ -80,9 +84,16 @@ Colorization is handled through extensive use of my [github.com/GoMudEngine/ansi
 
 ---
 
-## Quick Install
+## Getting Started
 
-The quickest way to get GoMud running. The script installs Go and Git if needed, clones the repo, and builds the server binary.
+### Requirements
+
+- Go 1.24 or newer
+- Optional: Docker (for container-based runs)
+
+### Quick Install
+
+The fastest way to get GoMud running. These scripts install Go and Git if needed, clone the repo, and build the server binary automatically.
 
 **Linux / macOS:**
 
@@ -98,62 +109,104 @@ irm https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.p
 
 Both scripts install GoMud to `~/GoMud` by default. Set the `GOMUD_DIR` environment variable before running to choose a different location.
 
----
+### Manual Setup
 
-## Setup
-
-### Requirements
-
-- `go` 1.24 or newer
-- Optional: `docker` for container builds/test/runs
-
-### Quick Start
-
-In a Terminal, run the following commands:
+If you prefer to clone and run the server yourself:
 
 ```shell
 git clone https://github.com/GoMudEngine/GoMud.git
 cd GoMud
 
-make reset-admin-pw   # set a new default admin password
-make run              # runs GoMud server using `go`
-
-make docker-run       # Alternatively, run the GoMud server using `docker`
+make reset-admin-pw   # set a new admin password before first run
+make run              # build and start the server
 ```
 
-Then open your browser to: `http://localhost`
+To run inside Docker instead:
+
+```shell
+make run-docker
+```
+
+Other useful commands:
+
+```shell
+make build        # compile a standalone binary at ./go-mud-server
+make run-new      # delete generated room instance data and start fresh
+make help         # list all available make targets
+```
+
+### Connecting to Your Server
+
+Once the server is running, you can connect in several ways:
+
+| Method | Address |
+|---|---|
+| Telnet (public) | `localhost:33333` or `localhost:44444` |
+| Telnet (local only) | `127.0.0.1:9999` |
+| Web client | [http://localhost/webclient](http://localhost/webclient) |
+| Web admin | [http://localhost/admin/](http://localhost/admin/) |
+
+The web client is the easiest way to jump in without installing a separate telnet client.
+
+### First Login
+
+Before starting the server for the first time, run:
+
+```shell
+make reset-admin-pw
+```
+
+This sets a password of your choosing for the built-in `admin` account. If you skip this step, the server starts with the default credentials `admin` / `password`, which you should change immediately.
+
+The admin account gives you access to in-game admin commands as well as the web-based admin panel at `http://localhost/admin/`.
 
 ---
 
-## Connecting
+## Community Modules
 
-When the GoMud server is running, you can connect it via the Terminal, or with a web browser.
+GoMud supports optional community modules that add new gameplay features, commands, events, and more. Modules are compiled into the server binary, so they are fast and have full access to the engine.
 
-- Telnet: `localhost:33333` or `localhost:44444`
-- Local-only telnet port: `127.0.0.1:9999`
+### Module Manager
 
-- Web client: [http://localhost/webclient](http://localhost/webclient)
-- Web admin: [http://localhost/admin/](http://localhost/admin/)
-
-**Important:** Run `make reset-admin-pw`, otherwise your default world will launch with these credentials:
-
-- Username: `admin`
-- Password: `password`
-
-## Common Server Commands
-
-In a Terminal, run one of the following commands:
+The module manager is a built-in tool for browsing and installing community modules from the GoMud module registry. You can run it directly without any extra setup:
 
 ```shell
-
-make run          # runs GoMud using the `go` framework
-
-make build        # creates a executable binary of GoMud at `./go-mud-server`
-
-make run-docker   # runs GoMud in a container using Docker Compose
-
-make help         # shows all available `make` command options
+go run ./cmd/modmanager
 ```
+
+Running it with no arguments and an interactive terminal launches an interactive menu. You can also pass subcommands directly (see below).
+
+A `make module` shortcut is also available if you prefer:
+
+```shell
+make module list
+make module install <name>
+```
+
+### Available Commands
+
+| Command | Description |
+|---|---|
+| `go run ./cmd/modmanager list` | List all modules available in the registry |
+| `go run ./cmd/modmanager info <name>` | Show full details for a specific module |
+| `go run ./cmd/modmanager install <name>` | Download, verify, and install a module |
+| `go run ./cmd/modmanager remove <name>` | Remove an installed module |
+| `go run ./cmd/modmanager update` | Check for updates to all installed modules |
+| `go run ./cmd/modmanager update <name>` | Update a specific installed module |
+
+### After Installing or Removing a Module
+
+Modules are compiled into the server binary, so a rebuild is required for any change to take effect:
+
+```shell
+make build
+```
+
+If a newly installed module depends on a Go package not already in `go.mod`, run `go mod tidy` before building.
+
+The manager records what is installed in `modules/modules.lock.yaml`. This file is managed automatically - do not edit it by hand. You can commit it to source control to track which community modules your server uses.
+
+---
 
 ## Configuration
 

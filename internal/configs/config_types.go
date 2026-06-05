@@ -55,6 +55,27 @@ func StringToConfigValue(strVal string, typeName string) ConfigValue {
 		var v ConfigSliceString = []string{}
 		v.Set(strVal)
 		return &v
+	// Native Go type names produced by reflect.TypeOf on module overlay values.
+	case "string":
+		var v ConfigString = ""
+		v.Set(strVal)
+		return &v
+	case "bool":
+		var v ConfigBool = false
+		v.Set(strVal)
+		return &v
+	case "int":
+		v := ConfigInt(0)
+		v.Set(strVal)
+		return &v
+	case "int64":
+		v := ConfigInt(0)
+		v.Set(strVal)
+		return &v
+	case "float64":
+		var v ConfigFloat = 0
+		v.Set(strVal)
+		return &v
 	}
 
 	// Don't know what it is, lets try and figure it out the lazy way
