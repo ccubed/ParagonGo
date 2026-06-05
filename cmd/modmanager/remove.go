@@ -24,9 +24,9 @@ func cmdRemove(name string) error {
 
 	destDir := filepath.Join("modules", name)
 	if _, err := os.Stat(destDir); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "warning: directory %s does not exist; updating lock file only\n", destDir)
+		printWarning("directory %s does not exist; updating lock file only", destDir)
 	} else {
-		fmt.Printf("Removing %s...\n", destDir)
+		printStep("Removing %s...", gray(destDir))
 		if err := os.RemoveAll(destDir); err != nil {
 			return fmt.Errorf("removing module directory: %w", err)
 		}
@@ -37,10 +37,10 @@ func cmdRemove(name string) error {
 		return err
 	}
 
-	fmt.Printf("\nModule %q removed.\n", name)
+	printSuccess("Module %s removed.", bold(name))
 	fmt.Println()
-	fmt.Println("To deactivate, rebuild the server:")
-	fmt.Println("  make build")
-	fmt.Println("  (or: go generate && go build -o go-mud-server)")
+	fmt.Println(bold("To deactivate, rebuild the server:"))
+	fmt.Println(codeSnippet("make build"))
+	fmt.Println(codeSnippet("(or: go generate && go build -o go-mud-server)"))
 	return nil
 }

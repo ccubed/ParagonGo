@@ -55,13 +55,13 @@ func main() {
 		err = cmdPackage(os.Args[2])
 
 	default:
-		fmt.Fprintf(os.Stderr, "unknown subcommand: %q\n\n", os.Args[1])
+		printError("unknown subcommand: %q", os.Args[1])
 		printUsage()
 		os.Exit(1)
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		printError("%v", err)
 		os.Exit(1)
 	}
 }
@@ -75,30 +75,37 @@ func validateName(name string) error {
 }
 
 func fatalf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, format, args...)
+	printError(format, args...)
 	os.Exit(1)
 }
 
 func printUsage() {
-	fmt.Print(`GoMud Module Manager
-
-Usage:
-  modmanager <subcommand> [arguments]
-
-Subcommands:
-  list                  List available modules from the registry
-  info    <name>        Show details for a module
-  install <name>        Download, verify, and install a module
-  remove  <name>        Remove an installed module
-  update  [name]        Check for updates; update a specific module if name given
-  package <name>        Package a local module into a .tar.gz and print its SHA256
-
-Run without arguments (with a terminal) to start interactive mode.
-
-After installing or removing a module, rebuild the server:
-  make build
-  (or: go generate && go build -o go-mud-server)
-
-Registry: https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules/refs/heads/master/module-registry.yaml
-`)
+	fmt.Println()
+	fmt.Println(cyan("GoMud Module Manager"))
+	fmt.Println()
+	fmt.Println(bold("Usage:"))
+	fmt.Println("  modmanager " + yellow("<subcommand>") + " [arguments]")
+	fmt.Println()
+	fmt.Println(bold("Subcommands:"))
+	type entry struct{ cmd, desc string }
+	entries := []entry{
+		{green("list"), "List available modules from the registry"},
+		{green("info") + " <name>", "Show details for a module"},
+		{green("install") + " <name>", "Download, verify, and install a module"},
+		{green("remove") + " <name>", "Remove an installed module"},
+		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
+		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},
+	}
+	for _, e := range entries {
+		fmt.Printf("  %s  %s\n", padRight(e.cmd, 22), e.desc)
+	}
+	fmt.Println()
+	fmt.Println(gray("Run without arguments (with a terminal) to start interactive mode."))
+	fmt.Println()
+	fmt.Println(bold("After installing or removing a module, rebuild the server:"))
+	fmt.Println(codeSnippet("make build"))
+	fmt.Println(codeSnippet("(or: go generate && go build -o go-mud-server)"))
+	fmt.Println()
+	fmt.Println(gray("Registry: https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules/refs/heads/master/module-registry.yaml"))
+	fmt.Println()
 }

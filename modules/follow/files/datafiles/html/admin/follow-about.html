@@ -1,0 +1,34 @@
+{{template "header" .}}
+
+<style>
+    .about-h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .about-subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .about-section { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .about-section h2 { font-size: 1.05rem; margin: 0 0 0.6rem; color: var(--color-text-strong); }
+    .about-section p { font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 0.5rem; }
+    .about-section p:last-child { margin-bottom: 0; }
+    .tag-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.875rem; }
+    .tag-table th { text-align: left; padding: 0.4rem 0.75rem; background: var(--color-border-faint); color: var(--color-text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--color-border); }
+    .tag-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+    .tag-table tr:last-child td { border-bottom: none; }
+    .tag-name { font-family: monospace; color: var(--color-primary); font-size: 0.85rem; white-space: nowrap; }
+    .no-tags { font-size: 0.875rem; color: var(--color-text-faint); font-style: italic; }
+</style>
+
+<h1 class="about-h1">Follow</h1>
+<p class="about-subtitle">Module overview and room tag reference.</p>
+
+<div class="about-section">
+    <h2>Description</h2>
+    <p>The Follow module lets players and mobs trail another character through the world. When a leader moves through an exit, all followers automatically move through the same exit in their wake.</p>
+    <p>Players use <code>follow &lt;name&gt;</code> to begin following a player or mob, <code>follow stop</code> to stop following, and <code>follow lose</code> to shed all followers. An optional duration argument (e.g. <code>follow guard 30 real minutes</code>) limits how long the follow lasts. The <code>DefaultFollowPeriod</code> config key sets the default duration when none is given.</p>
+    <p>Following is automatically cancelled on party changes, player death, mob death, or if the leader teleports (moves without using a named exit). Mobs that are following suppress their idle AI so they do not wander away.</p>
+    <p>A scripting export <code>GetFollowers</code> is available for scripts that need to inspect who is following a given actor.</p>
+</div>
+
+<div class="about-section">
+    <h2>Room Tags</h2>
+    <p class="no-tags">This module does not use any room tags.</p>
+</div>
+
+{{template "footer" .}}

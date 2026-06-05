@@ -1,0 +1,34 @@
+{{template "header" .}}
+
+<style>
+    .about-h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .about-subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .about-section { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .about-section h2 { font-size: 1.05rem; margin: 0 0 0.6rem; color: var(--color-text-strong); }
+    .about-section p { font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 0.5rem; }
+    .about-section p:last-child { margin-bottom: 0; }
+    .tag-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.875rem; }
+    .tag-table th { text-align: left; padding: 0.4rem 0.75rem; background: var(--color-border-faint); color: var(--color-text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--color-border); }
+    .tag-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+    .tag-table tr:last-child td { border-bottom: none; }
+    .tag-name { font-family: monospace; color: var(--color-primary); font-size: 0.85rem; white-space: nowrap; }
+    .no-tags { font-size: 0.875rem; color: var(--color-text-faint); font-style: italic; }
+</style>
+
+<h1 class="about-h1">GMCP</h1>
+<p class="about-subtitle">Module overview and room tag reference.</p>
+
+<div class="about-section">
+    <h2>Description</h2>
+    <p>The GMCP module implements the Generic MUD Communication Protocol, a telnet sub-negotiation extension that allows the server to send structured JSON data alongside normal text output. This enables feature-rich MUD clients such as Mudlet to display live character stats, room data, map information, and more in dedicated UI panels.</p>
+    <p>On connection the module negotiates GMCP capability with the client. WebSocket connections are treated as always-enabled and receive GMCP payloads via a text prefix format (<code>!!GMCP(...)</code>) instead of telnet IAC sequences.</p>
+    <p>Supported GMCP namespaces include <code>Char</code> (character stats, inventory, skills, vitals), <code>Room</code> (room details and map data), <code>World</code> (server-wide info), <code>Party</code> (party state), <code>Game</code> (server info), <code>Gametime</code> (in-game time), <code>Comm</code> (channel messages), and <code>External.Discord</code> (Discord rich presence integration).</p>
+    <p>Other modules can send GMCP events by calling the exported <code>SendGMCPEvent(userId, namespace, payload)</code> function. The <code>IsMudlet(connectionId)</code> export lets other modules adapt output for Mudlet clients.</p>
+</div>
+
+<div class="about-section">
+    <h2>Room Tags</h2>
+    <p class="no-tags">This module does not use any room tags.</p>
+</div>
+
+{{template "footer" .}}

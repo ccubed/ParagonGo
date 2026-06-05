@@ -1,3 +1,23 @@
 # Managed by: go run ./cmd/modmanager
 # Do not edit manually.
-installed: []
+installed:
+- name: gmcp
+  version: "1.1"
+  url: https://github.com/GoMudEngine/GoMud-Modules/raw/refs/heads/master/official-modules/gmcp.tar.gz
+  sha256: be47f942bc96ba90616834a827018e56e929c61084f5bfba4d6196890e4e7c5a
+  installed_at: "2026-06-05T19:04:05Z"
+- name: webhelp
+  version: "1.0"
+  url: https://github.com/GoMudEngine/GoMud-Modules/raw/refs/heads/master/official-modules/webhelp.tar.gz
+  sha256: 78f93ea1058cc36748b3fbb1624273734a6670f2629e94196bd22a966460c7ac
+  installed_at: "2026-06-05T19:05:12Z"
+- name: cleanup
+  version: "1.0"
+  url: https://github.com/GoMudEngine/GoMud-Modules/raw/refs/heads/master/official-modules/cleanup.tar.gz
+  sha256: 88c44a61afd1e85585b978e8b9d0a68be068e5c59ebffd492bf286e57e917554
+  installed_at: "2026-06-05T19:05:57Z"
+- name: follow
+  version: "1.0"
+  url: https://github.com/GoMudEngine/GoMud-Modules/raw/refs/heads/master/official-modules/follow.tar.gz
+  sha256: a86b1d501f6f4537f5e6c5c410cea9ac1d84515e273be5b14926a071bccfabe5
+  installed_at: "2026-06-05T19:11:07Z"

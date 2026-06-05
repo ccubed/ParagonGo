@@ -19,14 +19,15 @@ func cmdList() error {
 	}
 
 	if regErr != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not fetch registry: %v\n", regErr)
-		fmt.Fprintf(os.Stderr, "showing installed modules only\n\n")
+		printWarning("could not fetch registry: %v", regErr)
+		printWarning("showing installed modules only")
+		fmt.Println()
 		printInstalledOnly(lf)
 		return nil
 	}
 
 	if lfErr != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not read lock file: %v\n", lfErr)
+		printWarning("could not read lock file: %v", lfErr)
 		lf = &LockFile{}
 	}
 
@@ -53,18 +54,20 @@ func cmdInfo(name string) error {
 	lf, _ := readLockFile()
 	installed := lf != nil && lf.findLocked(name) != nil
 
-	fmt.Printf("Name:        %s\n", entry.Name)
-	fmt.Printf("Version:     %s\n", entry.Version)
-	fmt.Printf("Author:      %s\n", entry.Author)
-	fmt.Printf("Description: %s\n", entry.Description)
-	fmt.Printf("URL:         %s\n", entry.URL)
-	fmt.Printf("SHA256:      %s\n", entry.SHA256)
+	fmt.Println()
+	fmt.Printf("  %s  %s\n", padRight(gray("Name:"), 20), bold(entry.Name))
+	fmt.Printf("  %s  %s\n", padRight(gray("Version:"), 20), cyan(entry.Version))
+	fmt.Printf("  %s  %s\n", padRight(gray("Author:"), 20), entry.Author)
+	fmt.Printf("  %s  %s\n", padRight(gray("Description:"), 20), entry.Description)
+	fmt.Printf("  %s  %s\n", padRight(gray("URL:"), 20), blue(entry.URL))
+	fmt.Printf("  %s  %s\n", padRight(gray("SHA256:"), 20), dimStr(entry.SHA256))
 	if installed {
 		locked := lf.findLocked(name)
-		fmt.Printf("Installed:   yes (v%s, %s)\n", locked.Version, locked.InstalledAt)
+		fmt.Printf("  %s  %s\n", padRight(gray("Installed:"), 20), green(fmt.Sprintf("yes (v%s, %s)", locked.Version, locked.InstalledAt)))
 	} else {
-		fmt.Printf("Installed:   no\n")
+		fmt.Printf("  %s  %s\n", padRight(gray("Installed:"), 20), dimStr("no"))
 	}
+	fmt.Println()
 	return nil
 }
 
@@ -84,7 +87,7 @@ func cmdUpdate(name string) error {
 	}
 
 	if len(lf.Installed) == 0 {
-		fmt.Println("No community modules are installed.")
+		fmt.Println(dimStr("No community modules are installed."))
 		return nil
 	}
 
@@ -101,10 +104,10 @@ func cmdUpdate(name string) error {
 			return err
 		}
 		if locked.Version == entry.Version {
-			fmt.Printf("Module %q is up to date (v%s).\n", name, locked.Version)
+			fmt.Printf("%s %s is up to date (%s).\n", green("✓"), bold(name), cyan("v"+locked.Version))
 			return nil
 		}
-		fmt.Printf("Updating %q from v%s to v%s...\n", name, locked.Version, entry.Version)
+		fmt.Printf("%s Updating %s from %s to %s...\n", yellow("↑"), bold(name), dimStr("v"+locked.Version), cyan("v"+entry.Version))
 		return cmdInstall(name)
 	}
 
@@ -113,21 +116,23 @@ func cmdUpdate(name string) error {
 	for _, locked := range lf.Installed {
 		entry, err := reg.findEntry(locked.Name)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: %v (skipping)\n", err)
+			printWarning("%v (skipping)", err)
 			continue
 		}
 		if locked.Version != entry.Version {
-			fmt.Printf("  %-20s  installed: v%-10s  available: v%s\n",
-				locked.Name, locked.Version, entry.Version)
+			fmt.Printf("  %s  installed: %s  available: %s\n",
+				padRight(bold(locked.Name), 22),
+				dimStr("v"+locked.Version),
+				yellow("v"+entry.Version))
 			anyUpdates = true
 		}
 	}
 	if !anyUpdates {
-		fmt.Println("All installed modules are up to date.")
+		fmt.Println(green("✓ ") + "All installed modules are up to date.")
 	} else {
 		fmt.Println()
-		fmt.Println("To update a module, run:")
-		fmt.Println("  modmanager install <name>")
+		fmt.Println(bold("To update a module, run:"))
+		fmt.Println(codeSnippet("modmanager install <name>"))
 	}
 	return nil
 }
@@ -180,40 +185,48 @@ func printRegistryTable(reg *Registry, lf *LockFile) {
 		}
 	}
 
-	header := fmt.Sprintf("%-*s  %-*s  %-*s  %s",
-		colName, "NAME",
-		colVersion, "VERSION",
-		colStatus, "STATUS",
-		"DESCRIPTION",
+	// Separator widths are based on plain-text column widths.
+	totalSep := colName + 2 + colVersion + 2 + colStatus + 2 + 11 // rough desc header
+	if totalSep > terminalWidth() {
+		totalSep = terminalWidth()
+	}
+
+	fmt.Println()
+	fmt.Printf("  %s  %s  %s  %s\n",
+		padRight(bold("NAME"), colName),
+		padRight(bold("VERSION"), colVersion),
+		padRight(bold("STATUS"), colStatus),
+		bold("DESCRIPTION"),
 	)
-	fmt.Println(header)
-	fmt.Println(strings.Repeat("-", len(header)))
+	fmt.Println("  " + divider(totalSep))
 
 	descIndent := colName + 2 + colVersion + 2 + colStatus + 2
-	indent := strings.Repeat(" ", descIndent)
+	indent := strings.Repeat(" ", descIndent+2) // +2 for leading "  "
 
 	for _, r := range rows {
+		coloredStatus := statusColor(r.status)
 		if wrapDescriptions {
-			descWidth := terminalWidth() - descIndent
+			descWidth := terminalWidth() - descIndent - 2
 			lines := wrapText(r.description, descWidth)
-			fmt.Printf("%-*s  %-*s  %-*s  %s\n",
-				colName, r.name,
-				colVersion, r.version,
-				colStatus, r.status,
+			fmt.Printf("  %s  %s  %s  %s\n",
+				padRight(cyan(r.name), colName),
+				padRight(dimStr(r.version), colVersion),
+				padRight(coloredStatus, colStatus),
 				lines[0],
 			)
 			for _, line := range lines[1:] {
 				fmt.Printf("%s%s\n", indent, line)
 			}
 		} else {
-			fmt.Printf("%-*s  %-*s  %-*s  %s\n",
-				colName, r.name,
-				colVersion, r.version,
-				colStatus, r.status,
+			fmt.Printf("  %s  %s  %s  %s\n",
+				padRight(cyan(r.name), colName),
+				padRight(dimStr(r.version), colVersion),
+				padRight(coloredStatus, colStatus),
 				r.description,
 			)
 		}
 	}
+	fmt.Println()
 }
 
 // wrapText splits text into lines of at most width characters, breaking on
@@ -250,12 +263,14 @@ func wrapText(text string, width int) []string {
 
 func printInstalledOnly(lf *LockFile) {
 	if lf == nil || len(lf.Installed) == 0 {
-		fmt.Println("No community modules are installed.")
+		fmt.Println(dimStr("No community modules are installed."))
 		return
 	}
-	fmt.Printf("%-20s  %-10s  %s\n", "NAME", "VERSION", "INSTALLED AT")
-	fmt.Println(strings.Repeat("-", 60))
+	fmt.Println()
+	fmt.Printf("  %s  %s  %s\n", padRight(bold("NAME"), 20), padRight(bold("VERSION"), 10), bold("INSTALLED AT"))
+	fmt.Println("  " + divider(60))
 	for _, e := range lf.Installed {
-		fmt.Printf("%-20s  %-10s  %s\n", e.Name, e.Version, e.InstalledAt)
+		fmt.Printf("  %s  %s  %s\n", padRight(cyan(e.Name), 20), padRight(dimStr(e.Version), 10), gray(e.InstalledAt))
 	}
+	fmt.Println()
 }

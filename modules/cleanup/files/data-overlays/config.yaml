@@ -1,0 +1,13 @@
+################################################################################
+# If modified, these settings will be copied into your config overrides 
+# folder under `Modules.cleanup`:
+#
+# Modules:
+#   cleanup:
+#     ExperienceValue: 5
+################################################################################
+# - ExperienceValue -
+#   Minimum experience awarded when a player trashes an item.
+#   The actual grant is the higher of this value and 1/10th of the item's gold value.
+#   Set to 0 to disable experience rewards entirely.
+ExperienceValue: 5

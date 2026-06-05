@@ -1,0 +1,26 @@
+# Help keywords for Mudlet and client-related commands
+# These will be merged with the main keywords.yaml by the help system
+
+help:
+  command:
+    interface:
+      - client
+      - checkclient
+      - mudletmap
+      - mudletui
+    integration:
+      - discord
+      - gmcp
+
+# Aliases for keywords when typing: help <keyword>
+help-aliases:
+  mudletui:      [mudlet, mudletgui, mudlet-ui, mudlet ui]
+  mudletmap:     [mudlet-map, mudlet map]
+  checkclient:   [client-check, clientcheck]
+  client:        [clients, mud-client, mudclient]
+
+# Command aliases for Mudlet-related commands
+command-aliases:
+  mudletui:      [mudlet, mgui]
+  mudletmap:     [mudlet-map]
+  checkclient:   [clientcheck] 

@@ -118,6 +118,7 @@ build: validate build_local  ### Validate the code and build the binary.
 
 .PHONY: build_local
 build_local: generate
+	@go mod tidy
 	CGO_ENABLED=0 go build -trimpath -a -o $(BIN)
 
 .PHONY: generate
@@ -240,7 +241,7 @@ fmt:
 	@go fmt ./...
 
 .PHONY: fmtcheck
-fmtcheck:
+fmtcheck: fmt
 	@set -e; \
 	unformatted=$$(go fmt ./...); \
 	if [ ! -z "$$unformatted" ]; then \

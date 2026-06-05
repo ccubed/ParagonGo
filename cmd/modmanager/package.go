@@ -92,7 +92,9 @@ func cmdPackage(name string) error {
 
 	digest := hex.EncodeToString(h.Sum(nil))
 
-	fmt.Printf("Archive:  %s\n", outFile)
-	fmt.Printf("SHA256:   %s\n", digest)
+	fmt.Println()
+	fmt.Printf("  %s  %s\n", padRight(gray("Archive:"), 12), bold(outFile))
+	fmt.Printf("  %s  %s\n", padRight(gray("SHA256:"), 12), dimStr(digest))
+	fmt.Println()
 	return nil
 }

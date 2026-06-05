@@ -34,11 +34,11 @@ func cmdInstall(name string) error {
 	}
 
 	if existing := lf.findLocked(name); existing != nil && existing.Version == entry.Version {
-		fmt.Printf("Module %q is already installed at version %s.\n", name, entry.Version)
+		fmt.Printf("%s Module %s is already installed at version %s.\n", green("✓"), bold(name), cyan(entry.Version))
 		return nil
 	}
 
-	fmt.Printf("Downloading %s v%s...\n", entry.Name, entry.Version)
+	printStep("Downloading %s %s...", bold(entry.Name), cyan("v"+entry.Version))
 
 	tmpFile, err := os.CreateTemp("", "gomud-module-*.tmp")
 	if err != nil {
@@ -70,13 +70,13 @@ func cmdInstall(name string) error {
 
 	destDir := filepath.Join("modules", name)
 	if _, err := os.Stat(destDir); err == nil {
-		fmt.Printf("Removing existing %s...\n", destDir)
+		fmt.Printf("%s Removing existing %s...\n", yellow("-"), gray(destDir))
 		if err := os.RemoveAll(destDir); err != nil {
 			return fmt.Errorf("removing existing module directory: %w", err)
 		}
 	}
 
-	fmt.Printf("Extracting to %s...\n", destDir)
+	printStep("Extracting to %s...", gray(destDir))
 
 	archiveType, err := detectArchiveType(entry.URL, tmpPath)
 	if err != nil {
@@ -312,12 +312,13 @@ func commonPrefix(names []string) string {
 }
 
 func printInstallNextSteps(name string) {
-	fmt.Printf("\nModule %q installed to modules/%s/\n", name, name)
 	fmt.Println()
-	fmt.Println("To activate, rebuild the server:")
-	fmt.Println("  make build")
-	fmt.Println("  (or: go generate && go build -o go-mud-server)")
+	printSuccess("Module %s installed to %s", bold(name), gray("modules/"+name+"/"))
 	fmt.Println()
-	fmt.Println("If the module requires new Go dependencies, run first:")
-	fmt.Println("  go mod tidy")
+	fmt.Println(bold("To activate, rebuild the server:"))
+	fmt.Println(codeSnippet("make build"))
+	fmt.Println(codeSnippet("(or: go generate && go build -o go-mud-server)"))
+	fmt.Println()
+	fmt.Println(gray("If the module requires new Go dependencies, run first:"))
+	fmt.Println(codeSnippet("go mod tidy"))
 }

@@ -12,14 +12,14 @@ import (
 // runInteractive starts an interactive REPL session. It is only called when
 // the binary is invoked with no arguments and stdin is a terminal.
 func runInteractive() {
-	fmt.Print(`GoMud Module Manager (interactive)
-Type 'help' for a list of commands, 'quit' to exit.
-
-`)
+	fmt.Println()
+	fmt.Println(cyan("GoMud Module Manager") + gray(" (interactive)"))
+	fmt.Println(gray("Type 'help' for a list of commands, 'quit' to exit."))
+	fmt.Println()
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("> ")
+		fmt.Print(cyan(">") + " ")
 		if !scanner.Scan() {
 			// EOF (Ctrl-D)
 			fmt.Println()
@@ -44,34 +44,34 @@ Type 'help' for a list of commands, 'quit' to exit.
 
 		case "list":
 			if err := cmdList(); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		case "info":
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "usage: info <name>")
+				printError("usage: info <name>")
 				continue
 			}
 			if err := cmdInfo(args[0]); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		case "install":
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "usage: install <name>")
+				printError("usage: install <name>")
 				continue
 			}
 			if err := cmdInstall(args[0]); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		case "remove":
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "usage: remove <name>")
+				printError("usage: remove <name>")
 				continue
 			}
 			if err := cmdRemove(args[0]); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		case "update":
@@ -80,20 +80,20 @@ Type 'help' for a list of commands, 'quit' to exit.
 				name = args[0]
 			}
 			if err := cmdUpdate(name); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		case "package":
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "usage: package <name>")
+				printError("usage: package <name>")
 				continue
 			}
 			if err := cmdPackage(args[0]); err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				printError("%v", err)
 			}
 
 		default:
-			fmt.Fprintf(os.Stderr, "unknown command: %q (type 'help' for a list)\n", cmd)
+			printError("unknown command: %q (type 'help' for a list)", cmd)
 		}
 	}
 }
@@ -104,18 +104,24 @@ func isInteractiveTerminal() bool {
 }
 
 func printInteractiveHelp() {
-	fmt.Print(`Commands:
-  list                  List available modules from the registry
-  info    <name>        Show details for a module
-  install <name>        Download, verify, and install a module
-  remove  <name>        Remove an installed module
-  update  [name]        Check for updates; update a specific module if name given
-  package <name>        Package a local module into a .tar.gz and print its SHA256
-  help                  Show this help
-  quit / exit           Exit the module manager
-
-After installing or removing a module, rebuild the server:
-  make build
-
-`)
+	fmt.Println()
+	fmt.Println(bold("Commands:"))
+	type entry struct{ cmd, desc string }
+	entries := []entry{
+		{green("list"), "List available modules from the registry"},
+		{green("info") + " <name>", "Show details for a module"},
+		{green("install") + " <name>", "Download, verify, and install a module"},
+		{green("remove") + " <name>", "Remove an installed module"},
+		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
+		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},
+		{green("help"), "Show this help"},
+		{green("quit") + " / " + green("exit"), "Exit the module manager"},
+	}
+	for _, e := range entries {
+		fmt.Printf("  %s  %s\n", padRight(e.cmd, 22), e.desc)
+	}
+	fmt.Println()
+	fmt.Println(bold("After installing or removing a module, rebuild the server:"))
+	fmt.Println(codeSnippet("make build"))
+	fmt.Println()
 }
