@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,6 +11,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestCharacter_XPTLClampsToMaxInt(t *testing.T) {
+	c := New()
+
+	got := c.XPTL(200_000_000)
+
+	assert.Equal(t, math.MaxInt, got)
+}
 
 func TestCharacter_CanDualWield(t *testing.T) {
 	tests := []struct {

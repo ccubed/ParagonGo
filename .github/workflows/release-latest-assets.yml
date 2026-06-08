@@ -117,11 +117,17 @@ jobs:
           -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
           -o bin/gomud-linux_x64 .
 
-      - name: Build linux/arm5
+      - name: Build linux/arm64
         run: >-
-          env GOOS=linux GOARCH=arm GOARM=5 go build -v
+          env GOOS=linux GOARCH=arm64 go build -v
           -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
-          -o bin/gomud-linux_arm5 .
+          -o bin/gomud-linux_arm64 .
+
+      - name: Build linux/armv7
+        run: >-
+          env GOOS=linux GOARCH=arm GOARM=7 go build -v
+          -ldflags "-X main.version=${{ env.BINARY_VERSION }}"
+          -o bin/gomud-linux_armv7 .
 
       - name: Upload bin
         # actions/upload-artifact v7.0.1
@@ -174,7 +180,8 @@ jobs:
             gomud-darwin_arm64 \
             gomud-darwin_x64 \
             gomud-linux_x64 \
-            gomud-linux_arm5 \
+            gomud-linux_arm64 \
+            gomud-linux_armv7 \
             "${{ env.DATAFILES_ARCHIVE }}" \
             > "${{ env.CHECKSUMS_FILE }}"
 
@@ -224,7 +231,8 @@ jobs:
             bin/gomud-darwin_arm64
             bin/gomud-darwin_x64
             bin/gomud-linux_x64
-            bin/gomud-linux_arm5
+            bin/gomud-linux_arm64
+            bin/gomud-linux_armv7
             "bin/$DATAFILES_ARCHIVE"
             "bin/$CHECKSUMS_FILE"
           )

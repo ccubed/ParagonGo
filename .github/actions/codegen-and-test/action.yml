@@ -1,10 +1,28 @@
 ---
-name: "Codegen and Test"
-description: "Run go generate and go test"
+name: "Codegen, Test, and Cross-Compile"
+description: "Run go generate, go test, and release target cross-compiles"
 runs:
   using: "composite"
   steps:
     - run: go generate ./...
       shell: bash
     - run: go test -race ./...
+      shell: bash
+    - name: Check release cross-compiles
+      run: |
+        tmp_dir="$(mktemp -d)"
+        trap 'rm -rf "$tmp_dir"' EXIT
+
+        env GOOS=linux GOARCH=amd64 \
+          go build -o "$tmp_dir/gomud-linux_x64" .
+        env GOOS=linux GOARCH=arm64 \
+          go build -o "$tmp_dir/gomud-linux_arm64" .
+        env GOOS=linux GOARCH=arm GOARM=7 \
+          go build -o "$tmp_dir/gomud-linux_armv7" .
+        env GOOS=windows GOARCH=amd64 \
+          go build -o "$tmp_dir/gomud-windows_x64.exe" .
+        env GOOS=darwin GOARCH=amd64 \
+          go build -o "$tmp_dir/gomud-darwin_x64" .
+        env GOOS=darwin GOARCH=arm64 \
+          go build -o "$tmp_dir/gomud-darwin_arm64" .
       shell: bash
