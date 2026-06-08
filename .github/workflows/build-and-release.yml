@@ -287,6 +287,21 @@ jobs:
             "bin/$DATAFILES_ARCHIVE"
             "bin/$CHECKSUMS_FILE"
           )
+          stale_assets=(
+            gomud-linux_arm5
+          )
+
+          delete_stale_release_assets() {
+            local asset_name
+            for asset_name in "$@"; do
+              if gh release view "$RELEASE_TAG" \
+                --json assets \
+                --jq '.assets[].name' \
+                | grep -Fxq "$asset_name"; then
+                gh release delete-asset "$RELEASE_TAG" "$asset_name" --yes
+              fi
+            done
+          }
 
           if [ -n "$REQUESTED_RELEASE_TAG" ]; then
             if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
@@ -295,6 +310,7 @@ jobs:
                 "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
                 -f "sha=${GITHUB_SHA}" \
                 -F force=true
+              delete_stale_release_assets "${stale_assets[@]}"
               gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
               gh release edit "$RELEASE_TAG" \
                 --title "$RELEASE_TITLE" \
@@ -318,6 +334,7 @@ jobs:
             fi
           else
             if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+              delete_stale_release_assets "${stale_assets[@]}"
               gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
               gh release edit "$RELEASE_TAG" \
                 --title "$RELEASE_TITLE" \
