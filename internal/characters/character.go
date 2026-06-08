@@ -1335,8 +1335,8 @@ func (c *Character) XPTL(lvl int) int {
 	cfg := configs.GetProgressionConfig()
 	base := float64(cfg.XPBase)
 	xp := (base + math.Pow(float64(lvl), float64(cfg.XPLevelPower))*float64(cfg.XPLevelFactor)*base) * float64(c.TNLScale)
-	if xp > math.MaxInt {
-		return math.MaxInt
+	if xp > math.MaxInt64 {
+		return math.MaxInt64
 	}
 	return int(xp)
 }

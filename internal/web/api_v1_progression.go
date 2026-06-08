@@ -270,8 +270,5 @@ func xpTLWithCfg(lvl int, cfg configs.ProgressionConfig) int {
 	}
 	base := float64(cfg.XPBase)
 	xp := base + math.Pow(float64(lvl), float64(cfg.XPLevelPower))*float64(cfg.XPLevelFactor)*base
-	if xp > math.MaxInt {
-		return math.MaxInt
-	}
 	return int(xp)
 }
