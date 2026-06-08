@@ -8,3 +8,33 @@ runs:
       shell: bash
     - run: go test -race ./...
       shell: bash
+    - name: Cross-compile release targets
+      run: |
+        tmp_dir="$(mktemp -d)"
+        trap 'rm -rf "$tmp_dir"' EXIT
+
+        build_target() {
+          local goos="$1"
+          local goarch="$2"
+          local goarm="$3"
+          local output="$4"
+
+          echo "::group::Build $output ($goos/$goarch${goarm:+ GOARM=$goarm})"
+          if [ -n "$goarm" ]; then
+            env GOOS="$goos" GOARCH="$goarch" GOARM="$goarm" \
+              go build -v -o "$tmp_dir/$output" .
+          else
+            env GOOS="$goos" GOARCH="$goarch" \
+              go build -v -o "$tmp_dir/$output" .
+          fi
+          echo "::endgroup::"
+        }
+
+        build_target linux amd64 "" gomud-linux_x64
+        build_target linux arm64 "" gomud-linux_arm64
+        build_target linux arm 7 gomud-linux_armv7
+        build_target windows amd64 "" gomud-windows_x64.exe
+        build_target windows arm64 "" gomud-windows_arm64.exe
+        build_target darwin amd64 "" gomud-darwin_x64
+        build_target darwin arm64 "" gomud-darwin_arm64
+      shell: bash
