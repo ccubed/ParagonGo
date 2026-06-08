@@ -21,6 +21,8 @@ runs:
           go build -o "$tmp_dir/gomud-linux_armv7" .
         env GOOS=windows GOARCH=amd64 \
           go build -o "$tmp_dir/gomud-windows_x64.exe" .
+        env GOOS=windows GOARCH=arm64 \
+          go build -o "$tmp_dir/gomud-windows_arm64.exe" .
         env GOOS=darwin GOARCH=amd64 \
           go build -o "$tmp_dir/gomud-darwin_x64" .
         env GOOS=darwin GOARCH=arm64 \
