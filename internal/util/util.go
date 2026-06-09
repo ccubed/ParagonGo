@@ -706,6 +706,48 @@ func ReadFile(path string) ([]byte, error) {
 	return os.ReadFile(filepath.FromSlash(path))
 }
 
+// ResolveScriptPath maps a data file path (ending in ".yaml") to the script file
+// that backs it, choosing the scripting language by file extension.
+//
+// JavaScript takes precedence: if a ".js" script exists it is returned even when
+// a ".lua" script is also present. If only a ".lua" script exists, that path is
+// returned. When neither exists the ".js" path is returned as the default so
+// existing callers that stat/read the result behave unchanged.
+func ResolveScriptPath(yamlPath string) string {
+	jsPath := FilePath(strings.Replace(yamlPath, `.yaml`, `.js`, 1))
+	if _, err := os.Stat(jsPath); err == nil {
+		return jsPath
+	}
+
+	luaPath := FilePath(strings.Replace(yamlPath, `.yaml`, `.lua`, 1))
+	if _, err := os.Stat(luaPath); err == nil {
+		return luaPath
+	}
+
+	return jsPath
+}
+
+// ApplyScriptLang returns scriptPath with its extension forced to match the
+// requested editor language ("js" or "lua"). It is used when saving a script so
+// a new file is created with the chosen language's extension instead of always
+// defaulting to ".js" (the read-side default in ResolveScriptPath).
+//
+// An empty/unknown lang is treated as a no-op so callers that do not yet pass a
+// language preserve the resolved path unchanged.
+func ApplyScriptLang(scriptPath string, lang string) string {
+	switch lang {
+	case `lua`:
+		if strings.HasSuffix(scriptPath, `.js`) {
+			return strings.TrimSuffix(scriptPath, `.js`) + `.lua`
+		}
+	case `js`:
+		if strings.HasSuffix(scriptPath, `.lua`) {
+			return strings.TrimSuffix(scriptPath, `.lua`) + `.js`
+		}
+	}
+	return scriptPath
+}
+
 func WriteFile(path string, data []byte, perm os.FileMode) error {
 	return os.WriteFile(filepath.FromSlash(path), data, perm)
 }

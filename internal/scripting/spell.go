@@ -9,11 +9,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/spells"
-	"github.com/dop251/goja"
 )
 
 var (
-	spellVMCache       = make(map[string]*VMWrapper)
+	spellVMCache       = make(map[string]scriptVM)
 	scriptSpellTimeout = 50 * time.Millisecond
 )
 
@@ -112,18 +111,18 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 		userTextWrap.Set(`spell-text`, ``, `pink`, colorpatterns.Stretch)
 		roomTextWrap.Set(`spell-text`, ``, `pink`, colorpatterns.Stretch)
 
-		var argValue goja.Value
+		var argValue any
 		if multiTargetArg != nil {
-			argValue = vmw.VM.ToValue(multiTargetArg)
+			argValue = vmw.ToValue(multiTargetArg)
 		} else if singleTargetArg != nil {
-			argValue = vmw.VM.ToValue(singleTargetArg)
+			argValue = vmw.ToValue(singleTargetArg)
 		} else {
-			argValue = vmw.VM.ToValue(stringArg)
+			argValue = vmw.ToValue(stringArg)
 		}
 
 		res, err := runCallable(vmw, scriptSpellTimeout, onCommandFunc,
-			vmw.VM.ToValue(sourceActor),
-			vmw.VM.ToValue(argValue),
+			vmw.ToValue(sourceActor),
+			argValue,
 		)
 
 		// Reset forced ansi tag wrappers
@@ -144,7 +143,7 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 
 }
 
-func getSpellVM(scriptId string) (*VMWrapper, error) {
+func getSpellVM(scriptId string) (scriptVM, error) {
 
 	if vmw, ok := spellVMCache[scriptId]; ok {
 		if vmw == nil {
@@ -154,7 +153,7 @@ func getSpellVM(scriptId string) (*VMWrapper, error) {
 			spellData := spells.GetSpell(scriptId)
 			if spellData != nil {
 				if info, err := os.Stat(spellData.GetScriptPath()); err == nil {
-					if info.ModTime().After(vmw.loadedAt) {
+					if info.ModTime().After(vmw.LoadedAt()) {
 						delete(spellVMCache, scriptId)
 						// fall through to reload
 					} else {
@@ -182,7 +181,8 @@ func getSpellVM(scriptId string) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`spell-%s`, scriptId), script, nil)
+	src := sourceFromPath(spellData.GetScriptPath(), script)
+	vmw, err := loadVM(fmt.Sprintf(`spell-%s`, scriptId), src, nil)
 	if err != nil {
 		return nil, err
 	}

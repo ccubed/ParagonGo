@@ -146,12 +146,17 @@
                             <tr><td class="arg-name">sourceActor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The player casting.</td></tr>
                             <tr><td class="arg-name">ARG</td><td class="arg-type">varies</td><td>Depends on spell type — see table above.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onCast(sourceActor, ARG) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCast(sourceActor, ARG) {
     if (sourceActor.GetMana() < 10) {
         sourceActor.SendText('You don\'t have enough mana!');
         return false; // abort
     }
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCast(sourceActor, ARG)
+    if sourceActor:GetMana() &lt; 10 then
+        sourceActor:SendText("You don't have enough mana!")
+        return false -- abort
+    end
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -163,9 +168,11 @@
                             <tr><td class="arg-name">sourceActor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The casting player.</td></tr>
                             <tr><td class="arg-name">ARG</td><td class="arg-type">varies</td><td>Depends on spell type — see table above.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onWait(sourceActor, ARG) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onWait(sourceActor, ARG) {
     sourceActor.SendText('You continue channeling the spell...');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onWait(sourceActor, ARG)
+    sourceActor:SendText("You continue channeling the spell...")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -178,12 +185,17 @@
                             <tr><td class="arg-name">sourceActor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The caster.</td></tr>
                             <tr><td class="arg-name">ARG</td><td class="arg-type">varies</td><td>Depends on spell type — see table above.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">// helpsingle spell — ARG is the target actor
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">// helpsingle spell — ARG is the target actor
 function onMagic(sourceActor, ARG) {
     var healed = ARG.AddHealth(50);
     ARG.SendText('You feel a wave of healing wash over you (+' + healed + ' HP).');
     sourceActor.SendText('You heal ' + ARG.GetCharacterName(false) + ' for ' + healed + ' HP.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">-- helpsingle spell — ARG is the target actor
+function onMagic(sourceActor, ARG)
+    local healed = ARG:AddHealth(50)
+    ARG:SendText("You feel a wave of healing wash over you (+" .. healed .. " HP).")
+    sourceActor:SendText("You heal " .. ARG:GetCharacterName(false) .. " for " .. healed .. " HP.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -202,13 +214,7 @@ function onMagic(sourceActor, ARG) {
 </div>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 document.querySelectorAll('pre code').forEach(function(el) { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
 (function() {
     var sidebar = document.getElementById('doc-sidebar');

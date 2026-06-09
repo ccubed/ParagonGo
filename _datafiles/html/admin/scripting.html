@@ -202,7 +202,7 @@
 
         <div class="callout callout-info">
             <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <p>All scripts run in <strong>ECMAScript 5.1</strong> (JavaScript) via the <strong>Goja</strong> engine. Modern JS syntax (arrow functions, <code>let</code>/<code>const</code>, template literals) is <em>not</em> available — use <code>var</code> and standard ES5 patterns.</p>
+            <p>Scripts can be written in <strong>JavaScript</strong> or <strong>Lua</strong>. JavaScript runs as <strong>ECMAScript 5.1</strong> via the <strong>Goja</strong> engine — modern syntax (arrow functions, <code>let</code>/<code>const</code>, template literals) is <em>not</em> available, so use <code>var</code> and standard ES5 patterns. Lua runs as <strong>Lua 5.1</strong> (plus <code>goto</code>) via the <strong>gopher-lua</strong> engine. The language is chosen per script by file extension (<code>.js</code> or <code>.lua</code>), selected in the script editor. Use the <strong>JavaScript / Lua</strong> toggle on the reference pages to view every example in either language.</p>
         </div>
 
         <!-- ── Script Types ── -->
@@ -257,7 +257,7 @@
                 <div class="concept-row">
                     <div class="concept-col">
                         <div class="concept-col-label scripts">Scripts</div>
-                        <p>A <strong>script</strong> is a JavaScript file attached to a game entity &mdash; a room, mob, item, buff, spell, or pet. It defines <em>event hooks</em> (functions like <code>onEnter</code> or <code>onIdle</code>) that the server calls when something happens. Scripts are the <em>where and when</em>: which entity reacts, and to which event.</p>
+                        <p>A <strong>script</strong> is a JavaScript or Lua file attached to a game entity &mdash; a room, mob, item, buff, spell, or pet. It defines <em>event hooks</em> (functions like <code>onEnter</code> or <code>onIdle</code>) that the server calls when something happens. Scripts are the <em>where and when</em>: which entity reacts, and to which event.</p>
                     </div>
                     <div class="concept-col">
                         <div class="concept-col-label objects">Objects</div>
@@ -547,7 +547,7 @@
                     <div class="feature-card-icon">🔌</div>
                     <div class="feature-card-body">
                         <div class="feature-card-title">REST API</div>
-                        <div class="feature-card-desc">Endpoints for retrieving the script function schema and validating JavaScript syntax without running scripts.</div>
+                        <div class="feature-card-desc">Endpoints for retrieving the script function schema and object-type reference that power the editor.</div>
                     </div>
                 </a>
             </div>

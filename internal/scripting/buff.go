@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	buffVMCache       = make(map[int]*VMWrapper)
+	buffVMCache       = make(map[int]scriptVM)
 	scriptBuffTimeout = 50 * time.Millisecond
 )
 
@@ -52,8 +52,8 @@ func TryBuffScriptEvent(eventName string, userId int, mobInstanceId int, buffId 
 		roomTextWrap.Set(`buff-text`, ``, `cyan`, colorpatterns.Stretch)
 
 		res, err := runCallable(vmw, scriptBuffTimeout, onCommandFunc,
-			vmw.VM.ToValue(actorInfo),
-			vmw.VM.ToValue(buffTriggersLeft),
+			vmw.ToValue(actorInfo),
+			vmw.ToValue(buffTriggersLeft),
 		)
 
 		// Reset forced ansi tag wrappers
@@ -90,9 +90,9 @@ func TryBuffCommand(cmd string, rest string, userId int, mobInstanceId int, buff
 	if onCommandFunc, ok := vmw.GetFunction(`onCommand_` + cmd); ok {
 
 		res, err := runCallable(vmw, scriptBuffTimeout, onCommandFunc,
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sActor),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(rest),
+			vmw.ToValue(sActor),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand_%s(): %w", cmd, err)
@@ -105,10 +105,10 @@ func TryBuffCommand(cmd string, rest string, userId int, mobInstanceId int, buff
 	} else if onCommandFunc, ok := vmw.GetFunction(`onCommand`); ok {
 
 		res, err := runCallable(vmw, scriptBuffTimeout, onCommandFunc,
-			vmw.VM.ToValue(cmd),
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sActor),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(cmd),
+			vmw.ToValue(rest),
+			vmw.ToValue(sActor),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand(): %w", err)
@@ -122,7 +122,7 @@ func TryBuffCommand(cmd string, rest string, userId int, mobInstanceId int, buff
 	return false, ErrEventNotFound
 }
 
-func getBuffVM(buffId int) (*VMWrapper, error) {
+func getBuffVM(buffId int) (scriptVM, error) {
 
 	if vmw, ok := buffVMCache[buffId]; ok {
 		if vmw == nil {
@@ -132,7 +132,7 @@ func getBuffVM(buffId int) (*VMWrapper, error) {
 			bSpec := buffs.GetBuffSpec(buffId)
 			if bSpec != nil {
 				if info, err := os.Stat(bSpec.GetScriptPath()); err == nil {
-					if info.ModTime().After(vmw.loadedAt) {
+					if info.ModTime().After(vmw.LoadedAt()) {
 						delete(buffVMCache, buffId)
 						// fall through to reload
 					} else {
@@ -160,7 +160,8 @@ func getBuffVM(buffId int) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`buff-%d`, buffId), script, nil)
+	src := sourceFromPath(bSpec.GetScriptPath(), script)
+	vmw, err := loadVM(fmt.Sprintf(`buff-%d`, buffId), src, nil)
 	if err != nil {
 		return nil, err
 	}

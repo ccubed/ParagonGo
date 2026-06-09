@@ -172,17 +172,8 @@ func (b *BuffSpec) GetScript() string {
 }
 
 func (b *BuffSpec) GetScriptPath() string {
-	// Load any script for the buff
-
-	buffFilePath := b.Filename()
-	scriptFilePath := strings.Replace(buffFilePath, `.yaml`, `.js`, 1)
-
-	fullScriptPath := strings.Replace(string(configs.GetFilePathsConfig().DataFiles)+`/buffs/`+b.Filepath(),
-		buffFilePath,
-		scriptFilePath,
-		1)
-
-	return util.FilePath(fullScriptPath)
+	// Load any script for the buff (prefers .js, falls back to .lua)
+	return util.ResolveScriptPath(string(configs.GetFilePathsConfig().DataFiles) + `/buffs/` + b.Filepath())
 }
 
 // file self loads due to init()

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
-	"github.com/dop251/goja"
 )
 
 var (
@@ -105,7 +104,7 @@ func SetHotReload(enabled bool) {
 	scriptHotReload = enabled
 }
 
-func setAllScriptingFunctions(vm *goja.Runtime) {
+func setAllScriptingFunctions(vm registrar) {
 	setMessagingFunctions(vm)
 	setRoomFunctions(vm)
 	setActorFunctions(vm)
@@ -124,27 +123,20 @@ type ValidationResult struct {
 	Column int    `json:"column,omitempty"`
 }
 
-func ValidateScript(source string, script string) ValidationResult {
-	_, err := goja.Compile(source, script, false)
-	if err != nil {
-		if synErr, ok := err.(*goja.CompilerSyntaxError); ok {
-			result := ValidationResult{
-				Valid: false,
-				Error: synErr.Message,
-			}
-			if synErr.File != nil {
-				pos := synErr.File.Position(synErr.Offset)
-				result.Line = pos.Line
-				result.Column = pos.Column
-			}
-			return result
-		}
-		return ValidationResult{
-			Valid: false,
-			Error: err.Error(),
-		}
+// ValidateScript compiles the given script source without running it and
+// reports syntax errors. label is used in error messages. The optional lang
+// selects the engine; it defaults to JavaScript for backward compatibility.
+func ValidateScript(label string, script string, lang ...ScriptLang) ValidationResult {
+	l := LangJS
+	if len(lang) > 0 && lang[0] != LangNone {
+		l = lang[0]
 	}
-	return ValidationResult{Valid: true}
+	switch l {
+	case LangLua:
+		return validateLuaScript(label, script)
+	default:
+		return validateGojaScript(label, script)
+	}
 }
 
 func PruneVMs(forceClear ...bool) {

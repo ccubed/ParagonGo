@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	petVMCache       = make(map[string]*VMWrapper)
+	petVMCache       = make(map[string]scriptVM)
 	scriptPetTimeout = 50 * time.Millisecond
 )
 
@@ -65,9 +65,9 @@ func TryPetScriptEvent(eventName string, userId int) (bool, error) {
 		roomTextWrap.Set(`script-text`, ``, ``)
 
 		res, err := runCallable(vmw, scriptPetTimeout, onFunc,
-			vmw.VM.ToValue(sPet),
-			vmw.VM.ToValue(sActor),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sPet),
+			vmw.ToValue(sActor),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -121,10 +121,10 @@ func TryPetCommand(cmd string, rest string, userId int) (bool, error) {
 		roomTextWrap.Set(`script-text`, ``, ``)
 
 		res, err := runCallable(vmw, scriptPetTimeout, onCommandFunc,
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sPet),
-			vmw.VM.ToValue(sActor),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(rest),
+			vmw.ToValue(sPet),
+			vmw.ToValue(sActor),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -144,11 +144,11 @@ func TryPetCommand(cmd string, rest string, userId int) (bool, error) {
 		roomTextWrap.Set(`script-text`, ``, ``)
 
 		res, err := runCallable(vmw, scriptPetTimeout, onCommandFunc,
-			vmw.VM.ToValue(cmd),
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sPet),
-			vmw.VM.ToValue(sActor),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(cmd),
+			vmw.ToValue(rest),
+			vmw.ToValue(sPet),
+			vmw.ToValue(sActor),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -166,7 +166,7 @@ func TryPetCommand(cmd string, rest string, userId int) (bool, error) {
 	return false, ErrEventNotFound
 }
 
-func getPetVM(sPet *ScriptPet) (*VMWrapper, error) {
+func getPetVM(sPet *ScriptPet) (scriptVM, error) {
 
 	scriptId := sPet.petRecord.Type
 
@@ -178,7 +178,7 @@ func getPetVM(sPet *ScriptPet) (*VMWrapper, error) {
 			spec := pets.GetPetCopy(scriptId)
 			if spec.Exists() {
 				if info, err := os.Stat(spec.GetScriptPath()); err == nil {
-					if info.ModTime().After(vmw.loadedAt) {
+					if info.ModTime().After(vmw.LoadedAt()) {
 						delete(petVMCache, scriptId)
 						// fall through to reload
 					} else {
@@ -201,7 +201,8 @@ func getPetVM(sPet *ScriptPet) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`pet-%s`, scriptId), script, nil)
+	src := sourceFromPath(sPet.petRecord.GetScriptPath(), script)
+	vmw, err := loadVM(fmt.Sprintf(`pet-%s`, scriptId), src, nil)
 	if err != nil {
 		return nil, err
 	}

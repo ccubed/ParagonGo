@@ -18,11 +18,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/dop251/goja"
 	"github.com/mattn/go-runewidth"
 )
 
-func setRoomFunctions(vm *goja.Runtime) {
+func setRoomFunctions(vm registrar) {
 	vm.Set(`GetRoom`, GetRoom)
 	vm.Set(`GetMap`, GetMap)
 	vm.Set(`CreateEmptyRoomInstances`, CreateEmptyRoomInstances)

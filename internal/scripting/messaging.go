@@ -1,16 +1,12 @@
 package scripting
 
-import (
-	"github.com/dop251/goja"
-)
-
 var (
 	disableMessageQueue = false
 )
 
-func setMessagingFunctions(vm *goja.Runtime) {
+func setMessagingFunctions(vm registrar) {
 
-	vm.Set(`console`, newConsole(vm))
+	vm.Set(`console`, consoleObject())
 	vm.Set(`SendUserMessage`, SendUserMessage)
 	vm.Set(`SendRoomMessage`, SendRoomMessage)
 	vm.Set(`SendRoomExitsMessage`, SendRoomExitsMessage)

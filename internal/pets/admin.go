@@ -70,7 +70,7 @@ func CreatePetSpec(p *Pet) error {
 }
 
 // SavePetScript writes (or removes) the JavaScript script file for a pet type.
-func SavePetScript(petType string, content string) error {
+func SavePetScript(petType string, content string, lang string) error {
 	petType = strings.ToLower(strings.TrimSpace(petType))
 	p, ok := petTypes[petType]
 	if !ok {
@@ -86,6 +86,7 @@ func SavePetScript(petType string, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	if err := os.MkdirAll(filepath.Dir(scriptPath), os.ModePerm); err != nil {
 		return fmt.Errorf("creating pet scripts directory: %w", err)
 	}

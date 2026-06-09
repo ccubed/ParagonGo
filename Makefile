@@ -34,6 +34,11 @@ JSHINT := npx --yes --loglevel=error jshint@$(JSHINT_VERSION)
 JSHINT_BASE_CMD := $(JSHINT) $(WEBCLIENT_BASE_JS)
 JSHINT_WINDOWS_CMD := $(JSHINT) --config .jshintrc.webclient-windows $(WEBCLIENT_WINDOW_JS)
 
+LUACHECK_DOCKER_IMAGE ?= pipelinecomponents/luacheck:latest
+LUA_LINT_PATHS := $(filter-out $(VENDORED_JS_LINT_PATHS),$(shell find _datafiles -name '*.lua' -print))
+LUACHECK := luacheck
+LUACHECK_CMD := $(LUACHECK) $(LUA_LINT_PATHS)
+
 CROSS_BUILD_CMD = env $(strip GOOS=$(CROSS_GOOS) GOARCH=$(CROSS_GOARCH) $(if $(CROSS_GOARM),GOARM=$(CROSS_GOARM))) go build -o $(CROSS_OUTPUT)
 
 CI_LOCAL_RUN := docker run --rm \
@@ -60,7 +65,7 @@ help: ## List documented Makefile targets.
 	@printf "\n"
 
 ## Developer Workflow
-.PHONY: build build_local generate module validate test coverage fmt fmtcheck vet mod js-lint
+.PHONY: build build_local generate module validate test coverage fmt fmtcheck vet mod js-lint lua-lint
 
 build: validate build_local ## Validate the code and build ./$(BIN).
 
@@ -86,7 +91,7 @@ endif
 
 validate: fmtcheck vet ## Run the standard Go formatting and vet checks.
 
-test: generate js-lint ## Run code generation, JavaScript linting, and Go tests.
+test: generate js-lint lua-lint ## Run code generation, JavaScript/Lua linting, and Go tests.
 	@go test -race ./...
 
 coverage: ## Generate and open an HTML Go coverage report.
@@ -125,6 +130,18 @@ js-lint: ## Run JSHint using npx when available, otherwise Docker.
 			$(JSHINT_WINDOWS_CMD)"; \
 	else \
 		echo "js-lint requires npx or docker" >&2; \
+		exit 127; \
+	fi
+
+lua-lint: ## Run Luacheck using a local install when available, otherwise Docker.
+	@if [ -z "$(strip $(LUA_LINT_PATHS))" ]; then \
+		echo "lua-lint: no .lua files to check"; \
+	elif command -v luacheck >/dev/null 2>&1; then \
+		$(LUACHECK_CMD); \
+	elif command -v docker >/dev/null 2>&1; then \
+		docker run --rm -v "$(PWD)":/code -w /code $(LUACHECK_DOCKER_IMAGE) $(LUACHECK_CMD); \
+	else \
+		echo "lua-lint requires luacheck or docker" >&2; \
 		exit 127; \
 	fi
 

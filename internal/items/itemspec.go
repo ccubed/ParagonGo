@@ -538,8 +538,8 @@ func (i ItemSpec) GetScript() string {
 }
 
 func (i *ItemSpec) GetScriptPath() string {
-	// Load any script for the room
-	return util.FilePath(strings.Replace(string(configs.GetFilePathsConfig().DataFiles)+`/items/`+i.Filepath(), `.yaml`, `.js`, 1))
+	// Load any script for the item (prefers .js, falls back to .lua)
+	return util.ResolveScriptPath(string(configs.GetFilePathsConfig().DataFiles) + `/items/` + i.Filepath())
 }
 
 func GetItemSpec(itemId int) *ItemSpec {

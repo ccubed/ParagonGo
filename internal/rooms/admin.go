@@ -357,7 +357,7 @@ func DeleteRoomInstance(roomId int) error {
 
 // SaveRoomScript writes (or overwrites) the JavaScript file for a room. If
 // content is empty the script file is deleted instead.
-func SaveRoomScript(roomId int, content string) error {
+func SaveRoomScript(roomId int, content string, lang string) error {
 	r := LoadRoomTemplate(roomId)
 	if r == nil {
 		return fmt.Errorf("room %d not found", roomId)
@@ -372,6 +372,7 @@ func SaveRoomScript(roomId int, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
 }
 

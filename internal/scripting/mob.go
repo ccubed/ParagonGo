@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/dop251/goja"
 )
 
 var (
-	mobVMCache       = make(map[string]*VMWrapper)
+	mobVMCache       = make(map[string]scriptVM)
 	scriptMobTimeout = 50 * time.Millisecond
 )
 
@@ -74,9 +73,9 @@ func TryPlayerDownedEvent(mobInstanceId int, downedPlayerId int) (bool, error) {
 		sRoom := GetRoom(sMob.GetRoomId())
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(sMob),
-			vmw.VM.ToValue(tUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sMob),
+			vmw.ToValue(tUser),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onPlayerDowned(): %w", err)
@@ -120,9 +119,9 @@ func TryMobScriptEvent(eventName string, mobInstanceId int, sourceId int, source
 		details["sourceType"] = sourceType
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(sMob),
-			vmw.VM.ToValue(sRoom),
-			vmw.VM.ToValue(details),
+			vmw.ToValue(sMob),
+			vmw.ToValue(sRoom),
+			vmw.ToValue(details),
 		)
 		if err != nil {
 			return false, fmt.Errorf("%s(): %w", eventName, err)
@@ -164,10 +163,10 @@ func TryMobCommand(cmd string, rest string, mobInstanceId int, sourceId int, sou
 		sRoom := GetRoom(sMob.mobRecord.Character.RoomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sMob),
-			vmw.VM.ToValue(sRoom),
-			vmw.VM.ToValue(details),
+			vmw.ToValue(rest),
+			vmw.ToValue(sMob),
+			vmw.ToValue(sRoom),
+			vmw.ToValue(details),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand_%s(): %w", cmd, err)
@@ -187,11 +186,11 @@ func TryMobCommand(cmd string, rest string, mobInstanceId int, sourceId int, sou
 		sRoom := GetRoom(sMob.GetRoomId())
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(cmd),
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sMob),
-			vmw.VM.ToValue(sRoom),
-			vmw.VM.ToValue(details),
+			vmw.ToValue(cmd),
+			vmw.ToValue(rest),
+			vmw.ToValue(sMob),
+			vmw.ToValue(sRoom),
+			vmw.ToValue(details),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand(): %w", err)
@@ -205,7 +204,7 @@ func TryMobCommand(cmd string, rest string, mobInstanceId int, sourceId int, sou
 	return false, ErrEventNotFound
 }
 
-func getMobVM(mobActor *ScriptActor) (*VMWrapper, error) {
+func getMobVM(mobActor *ScriptActor) (scriptVM, error) {
 
 	scriptId := fmt.Sprintf(`%d-%s`, mobActor.MobTypeId(), mobActor.getScriptTag())
 
@@ -216,7 +215,7 @@ func getMobVM(mobActor *ScriptActor) (*VMWrapper, error) {
 		if scriptHotReload {
 			scriptPath := mobActor.mobRecord.GetScriptPath()
 			if info, err := os.Stat(scriptPath); err == nil {
-				if info.ModTime().After(vmw.loadedAt) {
+				if info.ModTime().After(vmw.LoadedAt()) {
 					delete(mobVMCache, scriptId)
 					// fall through to reload
 				} else {
@@ -236,9 +235,10 @@ func getMobVM(mobActor *ScriptActor) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`mob-%s`, scriptId), script, func(vm *goja.Runtime) error {
-		if fn, ok := goja.AssertFunction(vm.Get(`onLoad`)); ok {
-			_, err := fn(goja.Undefined(), vm.ToValue(mobActor))
+	src := sourceFromPath(mobActor.mobRecord.GetScriptPath(), script)
+	vmw, err := loadVM(fmt.Sprintf(`mob-%s`, scriptId), src, func(vm scriptVM) error {
+		if fn, ok := vm.GetFunction(`onLoad`); ok {
+			_, err := vm.Call(scriptLoadTimeout, fn, vm.ToValue(mobActor))
 			return err
 		}
 		return nil

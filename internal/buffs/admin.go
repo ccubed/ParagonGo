@@ -68,7 +68,7 @@ func DeleteBuffSpec(buffId int) error {
 
 // SaveBuffScript writes (or overwrites) the JavaScript file for a buff.  If
 // content is empty the script file is deleted instead.
-func SaveBuffScript(buffId int, content string) error {
+func SaveBuffScript(buffId int, content string, lang string) error {
 	spec := GetBuffSpec(buffId)
 	if spec == nil {
 		return fmt.Errorf("buff %d not found", buffId)
@@ -83,5 +83,6 @@ func SaveBuffScript(buffId int, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
 }

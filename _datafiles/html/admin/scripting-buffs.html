@@ -125,9 +125,11 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The actor receiving the buff.</td></tr>
                             <tr><td class="arg-name">triggersLeft</td><td class="arg-type">int</td><td>Number of remaining triggers until expiry.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onStart(actor, triggersLeft) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onStart(actor, triggersLeft) {
     actor.SendText('A warm light surrounds you.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onStart(actor, triggersLeft)
+    actor:SendText("A warm light surrounds you.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -139,12 +141,17 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The actor with the buff.</td></tr>
                             <tr><td class="arg-name">triggersLeft</td><td class="arg-type">int</td><td>Remaining triggers until expiry.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onTrigger(actor, triggersLeft) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onTrigger(actor, triggersLeft) {
     actor.AddHealth(5); // heal 5 HP each trigger
     if (triggersLeft === 1) {
         actor.SendText('The healing light is fading...');
     }
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onTrigger(actor, triggersLeft)
+    actor:AddHealth(5) -- heal 5 HP each trigger
+    if triggersLeft == 1 then
+        actor:SendText("The healing light is fading...")
+    end
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -156,9 +163,11 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The actor losing the buff.</td></tr>
                             <tr><td class="arg-name">triggersLeft</td><td class="arg-type">int</td><td>Will be 0 when buff expires naturally.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onEnd(actor, triggersLeft) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onEnd(actor, triggersLeft) {
     actor.SendText('The light fades and darkness returns.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onEnd(actor, triggersLeft)
+    actor:SendText("The light fades and darkness returns.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -177,13 +186,7 @@
 </div>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 document.querySelectorAll('pre code').forEach(function(el) { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
 (function() {
     var sidebar = document.getElementById('doc-sidebar');

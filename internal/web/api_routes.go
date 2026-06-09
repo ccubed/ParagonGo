@@ -10,8 +10,8 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 
 	// Scripting
 	mux.HandleFunc("GET /admin/api/v1/scripting/functions", doBasicAuth(RunWithMUDLocked(apiV1GetScriptFunctions)))
+	mux.HandleFunc("GET /admin/api/v1/scripting/objecttypes", doBasicAuth(RunWithMUDLocked(apiV1GetScriptObjectTypes)))
 	mux.HandleFunc("GET /admin/api/v1/scripting/types.d.ts", doBasicAuth(apiV1GetScriptingTypesDts))
-	mux.HandleFunc("POST /admin/api/v1/scripting/validate", doBasicAuth(RunWithMUDLocked(apiV1ValidateScript)))
 
 	// Telemetry
 	mux.HandleFunc("GET /admin/api/v1/telemetry", doBasicAuth(RunWithoutMUDLock(apiV1GetTelemetry)))

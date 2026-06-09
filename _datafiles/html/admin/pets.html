@@ -109,13 +109,6 @@
         display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
     }
     .script-section-label { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); flex: 1; }
-    .script-has-badge {
-        font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 3px;
-        background: var(--color-warning-bg); color: var(--color-warning-text);
-        border: 1px solid var(--color-warning-text); display: none;
-    }
-    .script-has-badge.visible { display: inline; }
-    .script-error { font-size: 0.78rem; color: var(--color-error-text); margin-top: 0.3rem; }
 
     /* help modal */
     .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
@@ -200,12 +193,11 @@
                 <div class="span2 script-section">
                     <div class="script-section-toolbar">
                         <span class="script-section-label">Script</span>
-                        <span class="script-has-badge" id="script-has-badge">has script</span>
+                        <span class="script-lang-mount"></span>
                         <button class="btn-add-sm" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
                         <button class="btn-add-sm" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                     </div>
                     <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
-                    <div id="script-error" class="script-error"></div>
                 </div>
 
                 <div class="btn-row">
@@ -346,17 +338,20 @@
         document.getElementById('f-script').value = script;
         if (scriptSync) scriptSync();
         const hasScript = script.length > 0;
-        document.getElementById('script-has-badge').classList.toggle('visible', hasScript);
+        // Lock the language to the existing file's type; a new (empty) script
+        // stays selectable until it is saved. (Refined by the async load below.)
+        ScriptEditor.lockLang('f-script', !isNew && hasScript);
 
         // Load script from API for existing pets
         if (!isNew && activeType) {
             AdminAPI.get('/admin/api/v1/pets/' + encodeURIComponent(activeType) + '/script').then(res => {
                 if (res.ok) {
                     const scriptContent = (res.data && res.data.data && res.data.data.script) || '';
+                    const scriptLang = (res.data && res.data.data && res.data.data.lang) || 'js';
                     document.getElementById('f-script').value = scriptContent;
-                    if (scriptSync) scriptSync();
+                    if (scriptSync) scriptSync(undefined, scriptLang);
                     const hasScript2 = scriptContent.length > 0;
-                    document.getElementById('script-has-badge').classList.toggle('visible', hasScript2);
+                    ScriptEditor.lockLang('f-script', hasScript2);
                 }
             });
         }
@@ -685,14 +680,6 @@
 
         const scriptContent = document.getElementById('f-script').value;
 
-        if (scriptContent.trim().length > 0) {
-            const check = await ScriptWizard.validateScript(scriptContent);
-            if (!check.valid) {
-                btn.disabled = false; btn.textContent = 'Save';
-                return;
-            }
-        }
-
         let res;
         if (isNew) {
             res = await AdminAPI.post('/admin/api/v1/pets', payload);
@@ -710,10 +697,11 @@
         const saved = (res.data && res.data.data) || payload;
         const savedType = saved.type || saved.Type || payload.type;
 
-        const scriptRes = await AdminAPI.put('/admin/api/v1/pets/' + encodeURIComponent(savedType) + '/script', { script: scriptContent });
+        const scriptRes = await AdminAPI.put('/admin/api/v1/pets/' + encodeURIComponent(savedType) + '/script', { script: scriptContent, lang: ScriptEditor.getLang('f-script') });
         if (!scriptRes.ok) {
             showStatus('error', 'Pet saved but script update failed: ' + scriptRes.error);
         }
+        ScriptEditor.lockLang('f-script', scriptContent.trim().length > 0);
 
         petsData[savedType] = saved;
         if (isNew) {

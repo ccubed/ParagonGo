@@ -232,12 +232,6 @@
         display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
     }
     .script-section-label { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); flex: 1; }
-    .script-has-badge {
-        font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 3px;
-        background: var(--color-warning-bg); color: var(--color-warning-text);
-        border: 1px solid var(--color-warning-text); display: none;
-    }
-    .script-has-badge.visible { display: inline; }
 
     /* action bar */
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
@@ -508,14 +502,13 @@
             <div class="script-section">
                 <div class="script-section-toolbar">
                     <span class="script-section-label">Script</span>
-                    <span class="script-has-badge" id="script-has-badge">has script</span>
+                    <span class="script-lang-mount"></span>
                     <select id="script-selector" style="padding:0.3rem 0.5rem;border:1px solid var(--color-border-medium);border-radius:4px;font-size:0.85rem;background:var(--color-surface-white);" onchange="switchScript(this.value)"></select>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="promptNewInstanceScript()">+ New Instance Script</button>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                 </div>
                 <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
-                <div id="script-error" class="script-error"></div>
                 <div id="script-hint" style="font-size:0.75rem;color:var(--color-text-faint);"></div>
             </div>
 
@@ -760,7 +753,7 @@
                 <span class="mob-id">#${mob.MobId}</span>
                 <span>${esc(name)}</span>
                 ${mob.Hostile ? '<span class="mob-hostile-badge">AGG</span>' : ''}
-                ${mob.HasScript ? '<span class="mob-script-badge">JS</span>' : ''}
+                ${mob.HasScript ? '<span class="mob-script-badge">{}</span>' : ''}
                 <span class="mob-zone-badge">${esc(mob.Zone || '')}</span>`;
             row.onclick = () => loadMob(mob.MobId);
             list.appendChild(row);
@@ -1458,14 +1451,6 @@
 
         const scriptContent = document.getElementById('f-script').value;
 
-        if (scriptContent.trim().length > 0) {
-            var check = await ScriptWizard.validateScript(scriptContent);
-            if (!check.valid) {
-                btn.disabled = false; btn.textContent = 'Save Mob';
-                return;
-            }
-        }
-
         let mobRes;
         if (isNew) {
             mobRes = await AdminAPI.post('/admin/api/v1/mobs', payload);
@@ -1487,12 +1472,14 @@
         const scriptUrl = (currentScriptTag === null || currentScriptTag === '')
             ? '/admin/api/v1/mobs/' + savedId + '/script'
             : '/admin/api/v1/mobs/' + savedId + '/scripts/' + encodeURIComponent(currentScriptTag);
-        const scriptRes = await AdminAPI.put(scriptUrl, { script: scriptContent });
+        const scriptRes = await AdminAPI.put(scriptUrl, { script: scriptContent, lang: ScriptEditor.getLang('f-script') });
         if (!scriptRes.ok) {
             showStatus('Mob saved but script update failed: ' + scriptRes.error, false);
         } else {
             showStatus('Mob saved successfully.', true);
         }
+        // Lock the language once a file exists; unlock if the script was cleared.
+        ScriptEditor.lockLang('f-script', scriptContent.trim().length > 0);
 
         // Refresh list - HasScript: true if there's any script content or existing scripts
         const existingTags = getAllSelectorTags();
@@ -1568,23 +1555,23 @@
         if (sel) sel.value = tag === null ? '' : tag;
 
         let script = '';
+        let lang = 'js';
         if (!isNew && currentMobId !== null && tag !== null) {
             const url = tag === ''
                 ? '/admin/api/v1/mobs/' + currentMobId + '/script'
                 : '/admin/api/v1/mobs/' + currentMobId + '/scripts/' + encodeURIComponent(tag);
             const res = await AdminAPI.get(url);
-            if (res.ok) script = res.data.data.script || '';
+            if (res.ok) {
+                script = res.data.data.script || '';
+                lang = res.data.data.lang || 'js';
+            }
         }
 
         setVal('f-script', script);
-        if (scriptSync) scriptSync();
-
-        // Open the section if there's any script content or any real script files exist
-        // Only auto-toggle on initial load (when tags list is explicitly provided)
-        if (tags !== undefined) {
-            const hasAnyScript = script.length > 0 || resolvedTags.length > 0;
-            document.getElementById('script-has-badge').classList.toggle('visible', hasAnyScript);
-        }
+        if (scriptSync) scriptSync(undefined, lang);
+        // Lock the language to the existing file's type; a new (empty) script
+        // stays selectable until it is saved.
+        ScriptEditor.lockLang('f-script', script !== '');
 
         const hint = document.getElementById('script-hint');
         if (hint) {

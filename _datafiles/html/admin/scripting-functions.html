@@ -220,7 +220,7 @@
                     <tr><td class="an">diceQty</td><td class="at">int</td><td>Number of dice to roll.</td></tr>
                     <tr><td class="an">diceSides</td><td class="at">int</td><td>Number of sides per die.</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var dmg = UtilDiceRoll(2, 6); // 2d6</code></pre></div>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var dmg = UtilDiceRoll(2, 6); // 2d6</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local dmg = UtilDiceRoll(2, 6) -- 2d6</code></pre></div>
             </div>
         </details>
 
@@ -364,7 +364,7 @@
                     <tr><td class="an">gap</td><td class="at">1</td><td>Spaces between panels placed side by side.</td></tr>
                     <tr><td class="an">margin</td><td class="at">0</td><td>Spaces prepended to every output line.</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var layout = PanelLayoutNew({ border: 'full', charset: 'rounded', gap: 1, margin: 1 });</code></pre></div>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var layout = PanelLayoutNew({ border: 'full', charset: 'rounded', gap: 1, margin: 1 });</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local layout = PanelLayoutNew({ border = "full", charset = "rounded", gap = 1, margin = 1 })</code></pre></div>
             </div>
         </details>
 
@@ -397,9 +397,11 @@
             <summary><span class="fn-name-sig"><span class="fn-n">SlotObject.AddRow</span><span class="fn-p">([</span><span class="fn-a">ids</span> <span class="fn-t">[]string</span><span class="fn-p">])</span></span><span class="fn-ret-badge ret-object">SlotObject</span></summary>
             <div class="fn-body">
                 <p class="fn-desc">Adds a horizontal row of panels to the slot. Returns the slot for chaining.</p>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var slot = layout.AddSlot();
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var slot = layout.AddSlot();
 slot.AddRow(['health', 'mana']);  // two panels side by side
-slot.AddRow(['gold']);            // one panel underneath</code></pre></div>
+slot.AddRow(['gold']);            // one panel underneath</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local slot = layout:AddSlot()
+slot:AddRow({"health", "mana"})  -- two panels side by side
+slot:AddRow({"gold"})            -- one panel underneath</code></pre></div>
             </div>
         </details>
 
@@ -432,9 +434,11 @@ slot.AddRow(['gold']);            // one panel underneath</code></pre></div>
             <summary><span class="fn-name-sig"><span class="fn-n">PanelObject.Add</span><span class="fn-p">(</span><span class="fn-a">fullLabel</span>, <span class="fn-a">shortLabel</span>, <span class="fn-a">value</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-object">PanelObject</span></summary>
             <div class="fn-body">
                 <p class="fn-desc">Appends a label+value row to the panel. The renderer uses <code>fullLabel</code> when it fits, falling back to <code>shortLabel</code> when the panel is too narrow. Returns panel for chaining.</p>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">layout.Panel('info')
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">layout.Panel('info')
     .Add('&lt;ansi fg="yellow"&gt;Health:&lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;HP:&lt;/ansi&gt;', '142/200')
-    .Add('&lt;ansi fg="yellow"&gt;Mana:  &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;MP:&lt;/ansi&gt;', '80/100');</code></pre></div>
+    .Add('&lt;ansi fg="yellow"&gt;Mana:  &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;MP:&lt;/ansi&gt;', '80/100');</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">layout:Panel("info")
+    :Add("&lt;ansi fg=\"yellow\"&gt;Health:&lt;/ansi&gt;", "&lt;ansi fg=\"yellow\"&gt;HP:&lt;/ansi&gt;", "142/200")
+    :Add("&lt;ansi fg=\"yellow\"&gt;Mana:  &lt;/ansi&gt;", "&lt;ansi fg=\"yellow\"&gt;MP:&lt;/ansi&gt;", "80/100")</code></pre></div>
             </div>
         </details>
 
@@ -449,7 +453,7 @@ slot.AddRow(['gold']);            // one panel underneath</code></pre></div>
                 <span class="fn-name-sig" style="color:var(--color-text-muted);font-style:italic;font-weight:normal">Full example — two-panel status display</span>
             </summary>
             <div class="fn-body">
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onCommand_status(rest, user, room) {
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCommand_status(rest, user, room) {
     var layout = PanelLayoutNew({ border: 'full', charset: 'single', gap: 1, margin: 1 });
 
     var slot = layout.AddSlot();
@@ -474,7 +478,32 @@ slot.AddRow(['gold']);            // one panel underneath</code></pre></div>
 
     user.SendText(layout.Render());
     return true;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCommand_status(rest, user, room)
+    local layout = PanelLayoutNew({ border = "full", charset = "single", gap = 1, margin = 1 })
+
+    local slot = layout:AddSlot()
+    slot:AddRow({"info", "stats"})
+
+    layout:Panel("info")
+        :SetTitle(' &lt;ansi fg="black-bold"&gt;.:&lt;/ansi&gt;&lt;ansi fg="20"&gt;Character&lt;/ansi&gt; ')
+        :SetMinWidth(24)
+        :Add('&lt;ansi fg="yellow"&gt;Name:  &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;N:&lt;/ansi&gt;', user:GetCharacterName(false))
+        :Add('&lt;ansi fg="yellow"&gt;Level: &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;Lvl:&lt;/ansi&gt;', tostring(user:GetLevel()))
+        :Add('&lt;ansi fg="yellow"&gt;Health:&lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;HP:&lt;/ansi&gt;', user:GetHealth() .. "/" .. user:GetHealthMax())
+        :Add('&lt;ansi fg="yellow"&gt;Mana:  &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;MP:&lt;/ansi&gt;', user:GetMana() .. "/" .. user:GetManaMax())
+
+    layout:Panel("stats")
+        :SetTitle(' &lt;ansi fg="black-bold"&gt;.:&lt;/ansi&gt;&lt;ansi fg="20"&gt;Attributes&lt;/ansi&gt; ')
+        :SetMinWidth(28)
+        :SetColumns(2)
+        :Add('&lt;ansi fg="yellow"&gt;Strength: &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;Str:&lt;/ansi&gt;', tostring(user:GetStat("strength")))
+        :Add('&lt;ansi fg="yellow"&gt;Vitality: &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;Vit:&lt;/ansi&gt;', tostring(user:GetStat("vitality")))
+        :Add('&lt;ansi fg="yellow"&gt;Speed:    &lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;Spd:&lt;/ansi&gt;', tostring(user:GetStat("speed")))
+        :Add('&lt;ansi fg="yellow"&gt;Mysticism:&lt;/ansi&gt;', '&lt;ansi fg="yellow"&gt;Mys:&lt;/ansi&gt;', tostring(user:GetStat("mysticism")))
+
+    user:SendText(layout:Render())
+    return true
+end</code></pre></div>
             </div>
         </details>
 
@@ -487,13 +516,7 @@ slot.AddRow(['gold']);            // one panel underneath</code></pre></div>
 <button id="back-to-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679;</button>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 
 document.querySelectorAll('pre code').forEach(function(el) {
     if (typeof hljs !== 'undefined') hljs.highlightElement(el);

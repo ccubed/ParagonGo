@@ -96,57 +96,6 @@
         </div>
     </details>
 
-    <!-- POST /admin/api/v1/scripting/validate -->
-    <details class="api-entry">
-        <summary>
-            <span class="method method-post">POST</span>
-            <span class="api-path">/admin/api/v1/scripting/validate</span>
-            <span class="api-desc">Validate a script for syntax errors</span>
-            <span class="perm-badge">scripting.read</span>
-        </summary>
-        <div class="api-body">
-            <p>Compiles the provided JavaScript using the same Goja (ECMAScript 5.1) engine that runs scripts at runtime. Returns whether the script is syntactically valid and, if not, the error message with line and column numbers.</p>
-            <p>This endpoint only checks syntax. It does not execute the script or verify that called functions exist.</p>
-            <p><strong>Request body (JSON):</strong></p>
-            <table class="field-table">
-                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-                <tr><td><code>script</code></td><td>string</td><td>The JavaScript source to validate.</td></tr>
-            </table>
-            <p><strong>Response data fields:</strong></p>
-            <table class="field-table">
-                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-                <tr><td><code>valid</code></td><td>bool</td><td>True if the script compiled without errors.</td></tr>
-                <tr><td><code>error</code></td><td>string</td><td>Error message (only present when invalid).</td></tr>
-                <tr><td><code>line</code></td><td>int</td><td>Line number of the error (only present when invalid).</td></tr>
-                <tr><td><code>column</code></td><td>int</td><td>Column number of the error (only present when invalid).</td></tr>
-            </table>
-            <div class="curl-block"><span class="kw">curl</span> <span class="flag">-s</span> <span class="flag">-u</span> <span class="str">admin:password</span> <span class="flag">-X</span> POST \
-     <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> \
-     <span class="flag">-d</span> <span class="str">'{"script":"function onLoad(room) {\n    return true;\n}\n"}'</span> \
-     <span class="str">http://{{.CONFIG.FilePaths.WebDomain}}/admin/api/v1/scripting/validate</span></div>
-            <div class="response-examples">
-                <details class="resp-entry">
-                    <summary><span class="method resp-label status-ok">200</span> <span class="resp-label">Valid script</span></summary>
-                    <div class="resp-body"><div class="curl-block">{"success":true,"data":{"valid":true}}</div></div>
-                </details>
-                <details class="resp-entry">
-                    <summary><span class="method resp-label status-err">422</span> <span class="resp-label">Syntax error</span></summary>
-                    <div class="resp-body">
-                        <p>The script has a syntax error. The <code>line</code> and <code>column</code> fields indicate where.</p>
-                        <div class="curl-block">{"success":false,"data":{"valid":false,"error":"Unexpected token )","line":2,"column":15}}</div>
-                    </div>
-                </details>
-                <details class="resp-entry">
-                    <summary><span class="method resp-label status-err">400</span> <span class="resp-label">Bad request</span></summary>
-                    <div class="resp-body">
-                        <p>The request body is missing, malformed, or the <code>script</code> field is empty.</p>
-                        <div class="curl-block">{"success":false,"error":"Script body is empty."}</div>
-                    </div>
-                </details>
-            </div>
-        </div>
-    </details>
-
 </div>
 
 {{template "footer" .}}

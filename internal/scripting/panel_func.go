@@ -2,10 +2,9 @@ package scripting
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
-	"github.com/dop251/goja"
 )
 
-func setPanelFunctions(vm *goja.Runtime) {
+func setPanelFunctions(vm registrar) {
 	vm.Set(`PanelLayoutLoad`, PanelLayoutLoad)
 	vm.Set(`PanelLayoutNew`, PanelLayoutNew)
 }

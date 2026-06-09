@@ -3,10 +3,9 @@ package scripting
 import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/dop251/goja"
 )
 
-func setItemFunctions(vm *goja.Runtime) {
+func setItemFunctions(vm registrar) {
 	vm.Set(`CreateItem`, CreateItem)
 }
 

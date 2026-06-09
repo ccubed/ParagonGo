@@ -24,7 +24,7 @@ func Benchmark_VMW_Get_Found_Cached(b *testing.B) {
 	// Set up the VM
 	vm := goja.New()
 	vm.RunString(TEST_SCRIPT)
-	vmw := newVMWrapper(vm, 100)
+	vmw := newGojaVM(vm, 100)
 
 	for n := 0; n < b.N; n++ {
 		vmw.GetFunction(`TestFound`)
@@ -45,7 +45,7 @@ func Benchmark_VMW_Get_Missing_Cached(b *testing.B) {
 	// Set up the VM
 	vm := goja.New()
 	vm.RunString(TEST_SCRIPT)
-	vmw := newVMWrapper(vm, 100)
+	vmw := newGojaVM(vm, 100)
 
 	for n := 0; n < b.N; n++ {
 		vmw.GetFunction(`TestMissing`)
@@ -56,7 +56,7 @@ func Benchmark_VMW_Get_Found_NotCached(b *testing.B) {
 	// Set up the VM
 	vm := goja.New()
 	vm.RunString(TEST_SCRIPT)
-	vmw := newVMWrapper(vm, 0)
+	vmw := newGojaVM(vm, 0)
 
 	for n := 0; n < b.N; n++ {
 		vmw.GetFunction(`TestFound`)
@@ -67,7 +67,7 @@ func Benchmark_VMW_Get_Missing_NotCached(b *testing.B) {
 	// Set up the VM
 	vm := goja.New()
 	vm.RunString(TEST_SCRIPT)
-	vmw := newVMWrapper(vm, 0)
+	vmw := newGojaVM(vm, 0)
 
 	for n := 0; n < b.N; n++ {
 		vmw.GetFunction(`TestMissing`)

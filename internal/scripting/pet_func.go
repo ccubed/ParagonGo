@@ -2,10 +2,9 @@ package scripting
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/pets"
-	"github.com/dop251/goja"
 )
 
-func setPetFunctions(vm *goja.Runtime) {
+func setPetFunctions(vm registrar) {
 }
 
 // ScriptPet wraps a live pet record and exposes it to the scripting engine.

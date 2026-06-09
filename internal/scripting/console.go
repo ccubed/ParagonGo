@@ -2,34 +2,28 @@ package scripting
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/dop251/goja"
 )
 
-type console struct{}
-
-func (c *console) log(msg any) {
-	mudlog.Info(`JSVM`, `msg`, msg)
-}
-func (c *console) info(msg any) {
-	mudlog.Info(`JSVM`, `msg`, msg)
-}
-func (c *console) debug(msg any) {
-	mudlog.Debug(`JSVM`, `msg`, msg)
-}
-func (c *console) warn(msg any) {
-	mudlog.Warn(`JSVM`, `msg`, msg)
-}
-func (c *console) error(msg any) {
-	mudlog.Error(`JSVM`, `msg`, msg)
-}
-
-func newConsole(vm *goja.Runtime) *goja.Object {
-	c := &console{}
-	obj := vm.NewObject()
-	obj.Set(`log`, c.log)
-	obj.Set(`info`, c.info)
-	obj.Set(`debug`, c.debug)
-	obj.Set(`warn`, c.warn)
-	obj.Set(`error`, c.error)
-	return obj
+// consoleObject returns the global `console` object exposed to scripts as a map
+// of named functions. Both engines reflect a map[string]any into an indexable
+// object with the same keys, so scripts call console.log(...) identically in
+// JavaScript and Lua.
+func consoleObject() map[string]any {
+	return map[string]any{
+		`log`: func(msg any) {
+			mudlog.Info(`SCRIPTVM`, `msg`, msg)
+		},
+		`info`: func(msg any) {
+			mudlog.Info(`SCRIPTVM`, `msg`, msg)
+		},
+		`debug`: func(msg any) {
+			mudlog.Debug(`SCRIPTVM`, `msg`, msg)
+		},
+		`warn`: func(msg any) {
+			mudlog.Warn(`SCRIPTVM`, `msg`, msg)
+		},
+		`error`: func(msg any) {
+			mudlog.Error(`SCRIPTVM`, `msg`, msg)
+		},
+	}
 }

@@ -53,7 +53,7 @@ func DeleteSpellSpec(spellId string) error {
 	return nil
 }
 
-func SaveSpellScript(spellId string, content string) error {
+func SaveSpellScript(spellId string, content string, lang string) error {
 	spec := GetSpell(spellId)
 	if spec == nil {
 		return fmt.Errorf("spell %q not found", spellId)
@@ -68,5 +68,6 @@ func SaveSpellScript(spellId string, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
 }

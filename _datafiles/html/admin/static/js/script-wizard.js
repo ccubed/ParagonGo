@@ -3,27 +3,12 @@
 //
 // Usage:
 //   ScriptWizard.open({ scriptType: 'room', textareaId: 'f-script' });
-//
-// ScriptWizard.validateScript(text) - validates script text via the server API
 
 const ScriptWizard = (() => {
     'use strict';
 
     let overlay = null;
     let schemaCache = null;
-
-    (function injectBaseStyles() {
-        const s = document.createElement('style');
-        s.textContent = `
-            .script-error {
-                display: none; margin-top: 0.4rem; padding: 0.5rem 0.75rem;
-                background: var(--color-btn-danger-bg); color: var(--color-surface-white);
-                border-radius: 4px; font-family: monospace; font-size: 0.82rem;
-                line-height: 1.5; white-space: pre-wrap;
-            }
-        `;
-        document.head.appendChild(s);
-    })();
 
     function injectStyles() {
         if (document.getElementById('script-wizard-styles')) return;
@@ -314,7 +299,11 @@ const ScriptWizard = (() => {
             if (selectedFn.dynamic && dynamicValue) {
                 fnName = fnName.split(selectedFn.dynamic.placeholder).join(dynamicValue);
             }
-            const stub = buildStub(selectedFn, dynamicValue);
+            const lang = (typeof ScriptEditor !== 'undefined' && ScriptEditor.getLang)
+                ? ScriptEditor.getLang(textareaId) : 'js';
+            const stub = lang === 'lua'
+                ? buildLuaStub(selectedFn, dynamicValue)
+                : buildStub(selectedFn, dynamicValue);
             const iframeWin = ScriptEditor.getEditor(textareaId);
             if (iframeWin) {
                 // Modal is open: ask the iframe to jump-to or insert
@@ -350,19 +339,9 @@ const ScriptWizard = (() => {
         lines.push(' * ' + fn.description);
         if (fn.params && fn.params.length > 0) {
             fn.params.forEach(function (p) {
-                let typ = p.type;
-                if (p.typeVariants) {
-                    const seen = {};
-                    const types = [];
-                    Object.keys(p.typeVariants).forEach(function (k) {
-                        const t = p.typeVariants[k].type;
-                        if (!seen[t]) { seen[t] = true; types.push(t); }
-                    });
-                    typ = types.join('|');
-                }
                 // Strip optional/variadic markers from the param name for JSDoc
                 const paramName = p.name.replace(/^\.\.\./, '').replace(/\?$/, '');
-                lines.push(' * @param {' + typ + '} ' + paramName + ' ' + p.description);
+                lines.push(' * @param {' + paramTypeString(p) + '} ' + paramName + ' ' + p.description);
             });
         }
         if (fn.returnType && fn.returnType !== 'void') {
@@ -379,29 +358,61 @@ const ScriptWizard = (() => {
         return lines.join('\n') + '\n' + code;
     }
 
+    // Resolve a parameter's declared type, collapsing typeVariants into a union.
+    function paramTypeString(p) {
+        if (!p.typeVariants) return p.type;
+        const seen = {};
+        const types = [];
+        Object.keys(p.typeVariants).forEach(function (k) {
+            const t = p.typeVariants[k].type;
+            if (!seen[t]) { seen[t] = true; types.push(t); }
+        });
+        return types.join('|');
+    }
+
+    // Build a Lua event-handler stub. The JavaScript schema is the single source
+    // of truth, so the signature (parameter names/order) and any return value are
+    // derived from fn.stub, while the doc block is rebuilt as Lua comments.
+    function buildLuaStub(fn, dynValue) {
+        let code = fn.stub;
+        if (fn.dynamic && dynValue) {
+            code = code.split(fn.dynamic.placeholder).join(dynValue);
+        }
+
+        // Pull "function NAME(args)" and any "return <expr>;" out of the JS stub.
+        const sig = /function\s+([A-Za-z0-9_]+)\s*\(([^)]*)\)/.exec(code);
+        const fnName = sig ? sig[1] : fn.name;
+        const params = sig ? sig[2].trim() : '';
+        const ret = /return\s+([^;]+);/.exec(code);
+
+        const lines = [];
+        lines.push('-- ' + fn.description);
+        if (fn.params && fn.params.length > 0) {
+            fn.params.forEach(function (p) {
+                const paramName = p.name.replace(/^\.\.\./, '').replace(/\?$/, '');
+                lines.push('-- @param ' + paramName + ' (' + paramTypeString(p) + ') ' + p.description);
+            });
+        }
+        if (fn.returnType && fn.returnType !== 'void') {
+            lines.push('-- @return (' + fn.returnType + ') ' + (fn.returnSemantics || ''));
+        } else if (fn.returnSemantics && fn.returnSemantics !== 'Return value is ignored.') {
+            lines.push('-- ' + fn.returnSemantics);
+        }
+
+        lines.push('function ' + fnName + '(' + params + ')');
+        lines.push('');
+        if (ret) {
+            lines.push('    return ' + ret[1].trim());
+        }
+        lines.push('end');
+        return lines.join('\n') + '\n';
+    }
+
     function escHtml(str) {
         const d = document.createElement('div');
         d.textContent = str;
         return d.innerHTML;
     }
 
-    function showScriptError(msg) {
-        const el = document.getElementById('script-error');
-        if (!el) return;
-        el.textContent = msg;
-        el.style.display = msg ? 'block' : 'none';
-    }
-
-    async function validateScript(scriptText) {
-        showScriptError('');
-        const res = await AdminAPI.post('/admin/api/v1/scripting/validate', { script: scriptText });
-        if (res.ok) return { valid: true };
-        const d = (res.data && res.data.data) || {};
-        const msg = (d.line ? 'Line ' + d.line + (d.column ? ':' + d.column : '') + ' - ' : '') +
-                    (d.error || res.error || 'Unknown validation error');
-        showScriptError(msg);
-        return { valid: false, error: msg, line: d.line || 0, column: d.column || 0 };
-    }
-
-    return { open, close, validateScript };
+    return { open, close };
 })();

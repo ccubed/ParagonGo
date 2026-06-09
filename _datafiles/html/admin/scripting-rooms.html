@@ -149,7 +149,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
                 Room Scripts
             </h1>
-            <p class="subtitle">Event-driven JavaScript hooks attached to individual rooms.</p>
+            <p class="subtitle">Event-driven script hooks attached to individual rooms.</p>
         </div>
 
         <!-- Script Path -->
@@ -196,10 +196,14 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onLoad(room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLoad(room) {
     // Initialize room state once
     room.SetTempData('initialized', true);
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLoad(room)
+    -- Initialize room state once
+    room:SetTempData("initialized", true)
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -223,9 +227,12 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onEnter(user, room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onEnter(user, room) {
     user.SendText('A chill wind greets you as you step inside.');
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onEnter(user, room)
+    user:SendText("A chill wind greets you as you step inside.")
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -250,13 +257,20 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onTryExit(exitName, user, room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onTryExit(exitName, user, room) {
     if (exitName === 'north') {
         user.SendText('A magical barrier blocks the northern passage.');
         return false; // block movement
     }
     return true;
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onTryExit(exitName, user, room)
+    if exitName == "north" then
+        user:SendText("A magical barrier blocks the northern passage.")
+        return false -- block movement
+    end
+    return true
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -280,7 +294,7 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onTryEnter(user, room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onTryEnter(user, room) {
     // Require a specific quest to enter
     if (!user.HasQuest('dungeon-key:start')) {
         user.SendText('The dungeon gate is sealed. You need a key.');
@@ -288,6 +302,14 @@
     }
     return true;
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onTryEnter(user, room)
+    -- Require a specific quest to enter
+    if not user:HasQuest("dungeon-key:start") then
+        user:SendText("The dungeon gate is sealed. You need a key.")
+        return false
+    end
+    return true
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -310,9 +332,12 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onExit(user, room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onExit(user, room) {
     room.SendText(user.GetCharacterName(true) + ' departs into the darkness.');
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onExit(user, room)
+    room:SendText(user:GetCharacterName(true) .. " departs into the darkness.")
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -335,12 +360,18 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onIdle(room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onIdle(room) {
     // 10% chance each round to drip water sounds
     if (Math.random() < 0.1) {
         room.SendText('Water drips somewhere in the darkness.');
     }
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onIdle(room)
+    -- 10% chance each round to drip water sounds
+    if math.random() &lt; 0.1 then
+        room:SendText("Water drips somewhere in the darkness.")
+    end
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -366,13 +397,20 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">function onCommand(cmd, rest, user, room) {
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCommand(cmd, rest, user, room) {
     if (cmd === 'knock' && rest === 'door') {
         room.SendText('A hollow echo rings through the chamber.');
         return true; // consumed
     }
     return false;
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCommand(cmd, rest, user, room)
+    if cmd == "knock" and rest == "door" then
+        room:SendText("A hollow echo rings through the chamber.")
+        return true -- consumed
+    end
+    return false
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -397,11 +435,16 @@
                         </table>
                         <div class="code-wrap">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code class="language-javascript">// Intercept only the 'look' command
+                            <pre class="scriptlang-block" data-lang="js"><code class="language-javascript">// Intercept only the 'look' command
 function onCommand_look(rest, user, room) {
     user.SendText('You see strange runes carved into the walls...');
     return false; // still show normal room description
 }</code></pre>
+                            <pre class="scriptlang-block" data-lang="lua"><code class="language-lua">-- Intercept only the 'look' command
+function onCommand_look(rest, user, room)
+    user:SendText("You see strange runes carved into the walls...")
+    return false -- still show normal room description
+end</code></pre>
                         </div>
                     </div>
                 </details>
@@ -425,15 +468,7 @@ function onCommand_look(rest, user, room) {
 </div>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    var text = pre ? pre.textContent : '';
-    navigator.clipboard.writeText(text).then(function() {
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 document.querySelectorAll('pre code').forEach(function(el) {
     if (typeof hljs !== 'undefined') hljs.highlightElement(el);
 });

@@ -25,7 +25,7 @@ func apiV1GetMobs(w http.ResponseWriter, r *http.Request) {
 	for i, s := range specs {
 		result[i] = mobListEntry{
 			Mob:       s,
-			HasScript: s.GetScript() != "",
+			HasScript: s.HasAnyScript(),
 		}
 	}
 	writeJSON(w, http.StatusOK, APIResponse[[]mobListEntry]{
@@ -166,7 +166,7 @@ func apiV1GetMobScript(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, APIResponse[map[string]string]{
 		Success: true,
-		Data:    map[string]string{"script": spec.GetScript()},
+		Data:    map[string]string{"script": spec.GetScript(), "lang": scriptLangString(spec.GetScriptPath())},
 	})
 }
 
@@ -180,13 +180,14 @@ func apiV1PutMobScript(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		Script string `json:"script"`
+		Lang   string `json:"lang"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
 		return
 	}
 
-	if err := mobs.SaveMobScript(mobId, body.Script); err != nil {
+	if err := mobs.SaveMobScript(mobId, body.Script, body.Lang); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -237,9 +238,14 @@ func apiV1GetMobScriptByTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	lang := "js"
+	if spec := mobs.GetMobSpec(mobId); spec != nil {
+		lang = scriptLangString(spec.GetScriptPathForTag(tag))
+	}
+
 	writeJSON(w, http.StatusOK, APIResponse[map[string]string]{
 		Success: true,
-		Data:    map[string]string{"script": script, "tag": tag},
+		Data:    map[string]string{"script": script, "tag": tag, "lang": lang},
 	})
 }
 
@@ -255,13 +261,14 @@ func apiV1PutMobScriptByTag(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		Script string `json:"script"`
+		Lang   string `json:"lang"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
 		return
 	}
 
-	if err := mobs.SaveMobScriptForTag(mobId, tag, body.Script); err != nil {
+	if err := mobs.SaveMobScriptForTag(mobId, tag, body.Script, body.Lang); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

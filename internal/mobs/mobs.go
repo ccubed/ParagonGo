@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -700,6 +701,17 @@ func (m *Mob) HasScript() bool {
 	return false
 }
 
+// HasAnyScript reports whether this mob has any script on disk, including
+// instance (tagged) scripts. HasScript only checks the mob's current ScriptTag
+// (the base/untagged script for a spec), so listings that want to flag mobs
+// with only instance scripts should use this instead.
+func (m *Mob) HasAnyScript() bool {
+	if m.HasScript() {
+		return true
+	}
+	return len(m.GetAllScriptTags()) > 0
+}
+
 func (m *Mob) GetScript() string {
 
 	if script := getPluginScript(int(m.MobId), m.ScriptTag); script != `` {
@@ -722,27 +734,28 @@ func (m *Mob) GetScriptPath() string {
 }
 
 func (m *Mob) GetScriptPathForTag(tag string) string {
-	// Load any script for the room
+	// Load any script for the mob (prefers .js, falls back to .lua)
 
 	mobFilePath := m.Filename()
 
-	newExt := `.js`
+	newExt := `.yaml`
 	if tag != `` {
-		newExt = fmt.Sprintf(`-%s.js`, tag)
+		newExt = fmt.Sprintf(`-%s.yaml`, tag)
 	}
 
 	scriptFilePath := `scripts/` + strings.Replace(mobFilePath, `.yaml`, newExt, 1)
-	fullScriptPath := strings.Replace(configs.GetFilePathsConfig().DataFiles.String()+`/mobs/`+m.Filepath(),
+	yamlScriptPath := strings.Replace(configs.GetFilePathsConfig().DataFiles.String()+`/mobs/`+m.Filepath(),
 		mobFilePath,
 		scriptFilePath,
 		1)
 
-	return util.FilePath(fullScriptPath)
+	return util.ResolveScriptPath(yamlScriptPath)
 }
 
 // GetAllScriptTags returns the tag (empty string for the base script) of every
-// .js script file that exists for this mob. The base (untagged) script is
-// always first when present; tagged scripts follow in sorted order.
+// .js or .lua script file that exists for this mob. The base (untagged) script
+// is always first when present; tagged scripts follow in sorted order. When
+// both a .js and .lua exist for the same tag, the tag is reported once.
 func (m *Mob) GetAllScriptTags() []string {
 	mobFilePath := m.Filename()
 	baseName := strings.TrimSuffix(mobFilePath, `.yaml`)
@@ -750,28 +763,41 @@ func (m *Mob) GetAllScriptTags() []string {
 	// Derive the scripts directory from the canonical script path so the logic
 	// stays in sync with GetScriptPathForTag.
 	baseScriptPath := m.GetScriptPathForTag(``)
-	scriptDir := strings.TrimSuffix(baseScriptPath, baseName+`.js`)
+	scriptDir := filepath.Dir(baseScriptPath)
 
 	entries, err := os.ReadDir(scriptDir)
 	if err != nil {
 		return nil
 	}
 
+	hasBase := false
+	seen := map[string]bool{}
 	var tags []string
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
 		name := e.Name()
-		if name == baseName+`.js` {
-			tags = append([]string{``}, tags...)
+		ext := filepath.Ext(name)
+		if ext != `.js` && ext != `.lua` {
+			continue
+		}
+		stem := strings.TrimSuffix(name, ext)
+		if stem == baseName {
+			hasBase = true
 			continue
 		}
 		prefix := baseName + `-`
-		if strings.HasPrefix(name, prefix) && strings.HasSuffix(name, `.js`) {
-			tag := strings.TrimSuffix(strings.TrimPrefix(name, prefix), `.js`)
-			tags = append(tags, tag)
+		if strings.HasPrefix(stem, prefix) {
+			tag := strings.TrimPrefix(stem, prefix)
+			if !seen[tag] {
+				seen[tag] = true
+				tags = append(tags, tag)
+			}
 		}
+	}
+	if hasBase {
+		tags = append([]string{``}, tags...)
 	}
 	return tags
 }

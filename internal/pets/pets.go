@@ -3,7 +3,6 @@ package pets
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -391,7 +390,8 @@ func (p *Pet) Id() string {
 }
 
 func (p *Pet) GetScriptPath() string {
-	return util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `pets`, `/`, strings.Replace(p.Filepath(), `.yaml`, `.js`, 1))
+	// Prefers .js, falls back to .lua
+	return util.ResolveScriptPath(util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `pets`, `/`, p.Filepath()))
 }
 
 func (p *Pet) HasScript() bool {

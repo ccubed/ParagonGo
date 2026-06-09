@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	itemVMCache       = make(map[string]*VMWrapper)
+	itemVMCache       = make(map[string]scriptVM)
 	scriptItemTimeout = 50 * time.Millisecond
 )
 
@@ -51,9 +51,9 @@ func TryItemScriptEvent(eventName string, item items.Item, userId int) (bool, er
 		sRoom := GetRoom(sUser.GetRoomId())
 
 		res, err := runCallable(vmw, scriptItemTimeout, onCommandFunc,
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sItem),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sItem),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("%s(): %w", eventName, err)
@@ -93,9 +93,9 @@ func TryItemCommand(cmd string, item items.Item, userId int) (bool, error) {
 		sRoom := GetRoom(sUser.GetRoomId())
 
 		res, err := runCallable(vmw, scriptItemTimeout, onCommandFunc,
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sItem),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sItem),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand_%s(): %w", cmd, err)
@@ -114,10 +114,10 @@ func TryItemCommand(cmd string, item items.Item, userId int) (bool, error) {
 		sRoom := GetRoom(sUser.GetRoomId())
 
 		res, err := runCallable(vmw, scriptItemTimeout, onCommandFunc,
-			vmw.VM.ToValue(cmd),
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sItem),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(cmd),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sItem),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onCommand(): %w", err)
@@ -155,9 +155,9 @@ func TryItemTryPurchaseEvent(item items.Item, userId int) (bool, error) {
 		sRoom := GetRoom(sUser.GetRoomId())
 
 		res, err := runCallable(vmw, scriptItemTimeout, onTryPurchaseFunc,
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sItem),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sItem),
+			vmw.ToValue(sRoom),
 		)
 		if err != nil {
 			return false, fmt.Errorf("onTryPurchase(): %w", err)
@@ -173,7 +173,7 @@ func TryItemTryPurchaseEvent(item items.Item, userId int) (bool, error) {
 	return false, ErrEventNotFound
 }
 
-func getItemVM(sItem *ScriptItem) (*VMWrapper, error) {
+func getItemVM(sItem *ScriptItem) (scriptVM, error) {
 
 	scriptId := strconv.Itoa(sItem.ItemId())
 
@@ -185,7 +185,7 @@ func getItemVM(sItem *ScriptItem) (*VMWrapper, error) {
 			spec := items.GetItemSpec(sItem.ItemId())
 			if spec != nil {
 				if info, err := os.Stat(spec.GetScriptPath()); err == nil {
-					if info.ModTime().After(vmw.loadedAt) {
+					if info.ModTime().After(vmw.LoadedAt()) {
 						delete(itemVMCache, scriptId)
 						// fall through to reload
 					} else {
@@ -208,7 +208,12 @@ func getItemVM(sItem *ScriptItem) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`item-%s`, scriptId), script, nil)
+	var scriptPath string
+	if spec := items.GetItemSpec(sItem.ItemId()); spec != nil {
+		scriptPath = spec.GetScriptPath()
+	}
+	src := sourceFromPath(scriptPath, script)
+	vmw, err := loadVM(fmt.Sprintf(`item-%s`, scriptId), src, nil)
 	if err != nil {
 		return nil, err
 	}

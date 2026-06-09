@@ -159,12 +159,6 @@
     .script-section-label {
         font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); flex: 1;
     }
-    .script-has-badge {
-        font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 3px;
-        background: var(--color-warning-bg); color: var(--color-warning-text);
-        border: 1px solid var(--color-warning-text); display: none;
-    }
-    .script-has-badge.visible { display: inline; }
     .script-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.3rem; }
 
     /* action bar */
@@ -367,12 +361,11 @@
             <div class="script-section">
                 <div class="script-section-toolbar">
                     <span class="script-section-label">Script</span>
-                    <span class="script-has-badge" id="script-has-badge">has script</span>
+                    <span class="script-lang-mount"></span>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                 </div>
                 <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
-                <div id="script-error" class="script-error"></div>
             </div>
 
             <div class="action-bar">
@@ -456,7 +449,7 @@
             row.innerHTML = `
                 <span class="item-id">#${item.ItemId}</span>
                 <span>${esc(item.Name)}</span>
-                ${item.HasScript ? '<span class="item-script-badge">JS</span>' : ''}
+                ${item.HasScript ? '<span class="item-script-badge">{}</span>' : ''}
                 ${item.QuestToken ? '<span class="item-quest-badge">Q</span>' : ''}
                 ${item.BuffCount ? '<span class="item-buff-badge">B' + item.BuffCount + '</span>' : ''}
                 <span class="item-type-badge">${esc(item.Type || '')}</span>`;
@@ -521,13 +514,14 @@
 
         const item = itemRes.data.data;
         const script = scriptRes.ok ? (scriptRes.data.data.script || '') : '';
+        const lang = scriptRes.ok ? (scriptRes.data.data.lang || 'js') : 'js';
 
         currentItemId = itemId;
         isNew = false;
         location.hash = itemId;
         setActiveRow(itemId);
         showEditor();
-        fillForm(item, script);
+        fillForm(item, script, lang);
     }
 
     function setActiveRow(itemId) {
@@ -542,7 +536,8 @@
         document.getElementById('delete-btn').style.display = isNew ? 'none' : '';
     }
 
-    function fillForm(item, script) {
+    function fillForm(item, script, lang) {
+        lang = lang || 'js';
         document.getElementById('editor-title').textContent = isNew ? 'New Item' : item.Name;
         document.getElementById('editor-type-badge').textContent = item.Type || '';
         document.getElementById('item-id-display').textContent = isNew ? '' : 'ID: ' + item.ItemId;
@@ -598,8 +593,10 @@
 
         // Script
         setVal('f-script', script);
-        if (scriptSync) scriptSync();
-        document.getElementById('script-has-badge').classList.toggle('visible', script.length > 0);
+        if (scriptSync) scriptSync(undefined, lang);
+        // Lock the language to the existing file's type; a new (empty) script
+        // stays selectable until it is saved.
+        ScriptEditor.lockLang('f-script', script !== '');
     }
 
     // -------------------------------------------------------------------------
@@ -733,14 +730,6 @@
 
         const scriptContent = document.getElementById('f-script').value;
 
-        if (scriptContent.trim().length > 0) {
-            var check = await ScriptWizard.validateScript(scriptContent);
-            if (!check.valid) {
-                btn.disabled = false; btn.textContent = 'Save Item';
-                return;
-            }
-        }
-
         let itemRes;
         if (isNew) {
             itemRes = await AdminAPI.post('/admin/api/v1/items', payload);
@@ -759,12 +748,13 @@
         const savedId = saved.ItemId;
 
         // Save script separately
-        const scriptRes = await AdminAPI.put('/admin/api/v1/items/' + savedId + '/script', { script: scriptContent });
+        const scriptRes = await AdminAPI.put('/admin/api/v1/items/' + savedId + '/script', { script: scriptContent, lang: ScriptEditor.getLang('f-script') });
         if (!scriptRes.ok) {
             showStatus('Item saved but script update failed: ' + scriptRes.error, false);
         } else {
             showStatus('Item saved successfully.', true);
         }
+        ScriptEditor.lockLang('f-script', scriptContent.trim().length > 0);
 
         // Refresh list
         if (isNew) {

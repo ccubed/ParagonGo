@@ -9,11 +9,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/dop251/goja"
 )
 
 var (
-	roomVMCache       = make(map[int]*VMWrapper)
+	roomVMCache       = make(map[int]scriptVM)
 	scriptLoadTimeout = 1000 * time.Millisecond
 	scriptRoomTimeout = 50 * time.Millisecond
 )
@@ -75,8 +74,8 @@ func TryRoomScriptEvent(eventName string, userId int, roomId int) (bool, error) 
 		sRoom := GetRoom(roomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -116,8 +115,8 @@ func TryRoomTryEnterEvent(userId int, destRoomId int) (bool, error) {
 		sRoom := GetRoom(destRoomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onTryEnterFunc,
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -159,9 +158,9 @@ func TryRoomTryExitEvent(exitName string, userId int, roomId int) (bool, error) 
 		sRoom := GetRoom(roomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onTryExitFunc,
-			vmw.VM.ToValue(exitName),
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(exitName),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -202,7 +201,7 @@ func TryRoomIdleEvent(roomId int) (bool, error) {
 		sRoom := GetRoom(roomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -271,9 +270,9 @@ func TryRoomCommand(cmd string, rest string, userId int) (bool, error) {
 		sRoom := GetRoom(user.Character.RoomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(rest),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -297,10 +296,10 @@ func TryRoomCommand(cmd string, rest string, userId int) (bool, error) {
 		sRoom := GetRoom(user.Character.RoomId)
 
 		res, err := runCallable(vmw, scriptRoomTimeout, onCommandFunc,
-			vmw.VM.ToValue(cmd),
-			vmw.VM.ToValue(rest),
-			vmw.VM.ToValue(sUser),
-			vmw.VM.ToValue(sRoom),
+			vmw.ToValue(cmd),
+			vmw.ToValue(rest),
+			vmw.ToValue(sUser),
+			vmw.ToValue(sRoom),
 		)
 
 		userTextWrap.Reset()
@@ -318,7 +317,7 @@ func TryRoomCommand(cmd string, rest string, userId int) (bool, error) {
 	return false, ErrEventNotFound
 }
 
-func getRoomVM(roomId int) (*VMWrapper, error) {
+func getRoomVM(roomId int) (scriptVM, error) {
 
 	if vmw, ok := roomVMCache[roomId]; ok {
 		if vmw == nil {
@@ -328,7 +327,7 @@ func getRoomVM(roomId int) (*VMWrapper, error) {
 			room := rooms.LoadRoom(roomId)
 			if room != nil {
 				if info, err := os.Stat(room.GetScriptPath()); err == nil {
-					if info.ModTime().After(vmw.loadedAt) {
+					if info.ModTime().After(vmw.LoadedAt()) {
 						delete(roomVMCache, roomId)
 						// fall through to reload
 					} else {
@@ -356,10 +355,11 @@ func getRoomVM(roomId int) (*VMWrapper, error) {
 		return nil, errNoScript
 	}
 
-	vmw, err := loadVM(fmt.Sprintf(`room-%d`, roomId), script, func(vm *goja.Runtime) error {
-		if fn, ok := goja.AssertFunction(vm.Get(`onLoad`)); ok {
+	src := sourceFromPath(room.GetScriptPath(), script)
+	vmw, err := loadVM(fmt.Sprintf(`room-%d`, roomId), src, func(vm scriptVM) error {
+		if fn, ok := vm.GetFunction(`onLoad`); ok {
 			sRoom := GetRoom(roomId)
-			_, err := fn(goja.Undefined(), vm.ToValue(sRoom))
+			_, err := vm.Call(scriptLoadTimeout, fn, vm.ToValue(sRoom))
 			return err
 		}
 		return nil

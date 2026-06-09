@@ -25,6 +25,7 @@
 - Validate Go formatting and vet: `make validate`
 - Full test pass: `make test`
 - JavaScript lint: `make js-lint`
+- Lua lint: `make lua-lint`
 - Local CI dry run: `make ci-local`
 - HTTPS helper: `make https-setup`
 - Reset admin password: `make reset-admin-pw`

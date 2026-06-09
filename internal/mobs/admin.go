@@ -87,11 +87,11 @@ func DeleteMobSpec(mobId MobId) error {
 	return nil
 }
 
-func SaveMobScript(mobId MobId, content string) error {
-	return SaveMobScriptForTag(mobId, "", content)
+func SaveMobScript(mobId MobId, content string, lang string) error {
+	return SaveMobScriptForTag(mobId, "", content, lang)
 }
 
-func SaveMobScriptForTag(mobId MobId, tag string, content string) error {
+func SaveMobScriptForTag(mobId MobId, tag string, content string, lang string) error {
 	spec := GetMobSpec(mobId)
 	if spec == nil {
 		return fmt.Errorf("mob %d not found", mobId)
@@ -106,6 +106,7 @@ func SaveMobScriptForTag(mobId MobId, tag string, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	os.MkdirAll(filepath.Dir(scriptPath), os.ModePerm)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
 }

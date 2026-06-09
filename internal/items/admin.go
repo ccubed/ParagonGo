@@ -309,7 +309,7 @@ func DeleteItemSpec(itemId int) error {
 
 // SaveItemScript writes (or overwrites) the JavaScript file for an item.  If
 // content is empty the script file is deleted instead.
-func SaveItemScript(itemId int, content string) error {
+func SaveItemScript(itemId int, content string, lang string) error {
 	spec := GetItemSpec(itemId)
 	if spec == nil {
 		return fmt.Errorf("item %d not found", itemId)
@@ -324,5 +324,6 @@ func SaveItemScript(itemId int, content string) error {
 		return nil
 	}
 
+	scriptPath = util.ApplyScriptLang(scriptPath, lang)
 	return util.WriteFile(scriptPath, []byte(content), 0644)
 }

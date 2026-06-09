@@ -128,7 +128,7 @@ func apiV2GetSpellScript(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, APIResponse[map[string]string]{
 		Success: true,
-		Data:    map[string]string{"script": spec.GetScript()},
+		Data:    map[string]string{"script": spec.GetScript(), "lang": scriptLangString(spec.GetScriptPath())},
 	})
 }
 
@@ -142,13 +142,14 @@ func apiV2PutSpellScript(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		Script string `json:"script"`
+		Lang   string `json:"lang"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
 		return
 	}
 
-	if err := spells.SaveSpellScript(spellId, body.Script); err != nil {
+	if err := spells.SaveSpellScript(spellId, body.Script, body.Lang); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

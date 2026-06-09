@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/dop251/goja"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 	}
 )
 
-func setUtilFunctions(vm *goja.Runtime) {
+func setUtilFunctions(vm registrar) {
 	vm.Set(`RandInt`, RandInt)
 	vm.Set(`UtilGetRoundNumber`, UtilGetRoundNumber)
 	vm.Set(`UtilFindMatchIn`, UtilFindMatchIn)

@@ -26,9 +26,11 @@ require (
 	github.com/mattn/go-runewidth v0.0.19
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/pkg/errors v0.9.1
+	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/crypto v0.45.0
 	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v2 v2.4.0
+	layeh.com/gopher-luar v1.0.11
 )
 
 require (

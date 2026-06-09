@@ -16,10 +16,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/dop251/goja"
 )
 
-func setActorFunctions(vm *goja.Runtime) {
+func setActorFunctions(vm registrar) {
 	vm.Set(`GetUser`, GetUser)
 	vm.Set(`GetMob`, GetMob)
 	vm.Set(`ActorNames`, ActorNames)

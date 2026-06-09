@@ -434,8 +434,8 @@ func (r *Room) HasScript() bool {
 }
 
 func (r *Room) GetScriptPath() string {
-	// Load any script for the room
-	return util.FilePath(strings.Replace(configs.GetFilePathsConfig().DataFiles.String()+`/rooms/`+r.Filepath(), `.yaml`, `.js`, 1))
+	// Load any script for the room (prefers .js, falls back to .lua)
+	return util.ResolveScriptPath(configs.GetFilePathsConfig().DataFiles.String() + `/rooms/` + r.Filepath())
 }
 
 func (r *Room) FindTemporaryExitByUserId(userId int) (exit.TemporaryRoomExit, bool) {

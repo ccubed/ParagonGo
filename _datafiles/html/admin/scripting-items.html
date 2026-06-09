@@ -132,9 +132,11 @@
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item being lost.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room where it happened.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onLost(user, item, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLost(user, item, room) {
     user.SendText('The sleeping bag rolls away from you.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLost(user, item, room)
+    user:SendText("The sleeping bag rolls away from you.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -147,9 +149,11 @@
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item being gained.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room where it happened.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onFound(user, item, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onFound(user, item, room) {
     user.SendText('The sleeping bag feels surprisingly warm.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onFound(user, item, room)
+    user:SendText("The sleeping bag feels surprisingly warm.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -164,13 +168,19 @@
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item targeted.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The current room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onCommand(cmd, user, item, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCommand(cmd, user, item, room) {
     if (cmd === 'shake') {
         user.SendText('You shake the bag. Nothing happens.');
         return true;
     }
     return false;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCommand(cmd, user, item, room)
+    if cmd == "shake" then
+        user:SendText("You shake the bag. Nothing happens.")
+        return true
+    end
+    return false
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -184,12 +194,17 @@
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item targeted.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The current room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">// Fires only when player types 'sleep bag'
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">// Fires only when player types 'sleep bag'
 function onCommand_sleep(user, item, room) {
     user.GiveBuff(12, 'item'); // rested buff
     user.SendText('You curl up in the sleeping bag and drift off...');
     return true;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">-- Fires only when player types 'sleep bag'
+function onCommand_sleep(user, item, room)
+    user:GiveBuff(12, "item") -- rested buff
+    user:SendText("You curl up in the sleeping bag and drift off...")
+    return true
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -203,12 +218,17 @@ function onCommand_sleep(user, item, room) {
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The purchased item.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The shop room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onPurchase(user, item, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onPurchase(user, item, room) {
     // Treat this as a "ferry ticket" — teleport instead of giving item
     user.MoveRoom(500);
     user.SendText('The ferryman nods and you board the boat.');
     return false; // don't give the item
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onPurchase(user, item, room)
+    -- Treat this as a "ferry ticket" — teleport instead of giving item
+    user:MoveRoom(500)
+    user:SendText("The ferryman nods and you board the boat.")
+    return false -- don't give the item
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -222,14 +242,21 @@ function onCommand_sleep(user, item, room) {
                             <tr><td class="arg-name">item</td><td class="arg-type"><a href="/admin/scripting-functions#item">ItemObject</a></td><td>The item being purchased.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The shop room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onTryPurchase(user, item, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onTryPurchase(user, item, room) {
     // Only allow purchase during daytime
     if (UtilGetTime().Night) {
         user.SendText('The shop is closed at night.');
         return false;
     }
     return true;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onTryPurchase(user, item, room)
+    -- Only allow purchase during daytime
+    if UtilGetTime().Night then
+        user:SendText("The shop is closed at night.")
+        return false
+    end
+    return true
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -249,13 +276,7 @@ function onCommand_sleep(user, item, room) {
 </div>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 document.querySelectorAll('pre code').forEach(function(el) { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
 (function() {
     var sidebar = document.getElementById('doc-sidebar');

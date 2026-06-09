@@ -1,9 +1,5 @@
 package scripting
 
-import (
-	"github.com/dop251/goja"
-)
-
 var (
 	moduleFunctions = map[string]map[string]any{}
 )
@@ -15,6 +11,6 @@ func AddModlueFunction(namespace string, name string, funcRef any) {
 	moduleFunctions[namespace][name] = funcRef
 }
 
-func setModuleFunctions(vm *goja.Runtime) {
+func setModuleFunctions(vm registrar) {
 	vm.Set("modules", moduleFunctions)
 }

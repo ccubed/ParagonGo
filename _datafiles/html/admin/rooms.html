@@ -307,12 +307,6 @@
         display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
     }
     .script-section-label { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); flex: 1; }
-    .script-has-badge {
-        font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 3px;
-        background: var(--color-warning-bg); color: var(--color-warning-text);
-        border: 1px solid var(--color-warning-text); display: none;
-    }
-    .script-has-badge.visible { display: inline; }
 
     /* instance editor modal */
     .instance-modal-overlay { display:none; position:fixed; inset:0; background:var(--color-overlay); z-index:600; align-items:center; justify-content:center; }
@@ -610,12 +604,11 @@
             <div class="script-section">
                 <div class="script-section-toolbar">
                     <span class="script-section-label">Script</span>
-                    <span class="script-has-badge" id="script-has-badge">has script</span>
+                    <span class="script-lang-mount"></span>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                 </div>
                 <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
-                <div id="script-error" class="script-error"></div>
             </div>
 
             <div class="action-bar">
@@ -777,7 +770,7 @@
             row.innerHTML =
                 '<span class="room-id">#' + r.RoomId + '</span>' +
                 '<span class="room-title">' + esc(r.Title) + '</span>' +
-                (r.HasScript ? '<span class="room-script-badge">JS</span>' : '') +
+                (r.HasScript ? '<span class="room-script-badge">{}</span>' : '') +
                 (r.TrainingCount ? '<span class="room-train-badge">T</span>' : '') +
                 (r.IsBank ? '<span class="room-bank-badge">B</span>' : '') +
                 (badges.length ? '<span class="room-badge">' + esc(badges.join(', ')) + '</span>' : '');
@@ -816,13 +809,14 @@
 
         const r = roomRes.data.data;
         const script = (scriptRes.ok && scriptRes.data.data && scriptRes.data.data.script) || '';
+        const lang = (scriptRes.ok && scriptRes.data.data && scriptRes.data.data.lang) || 'js';
         currentRoomId = roomId;
         isNew = false;
         location.hash = roomId;
         setActiveRow(roomId);
         document.getElementById('zone-editor').style.display = 'none';
         showEditor();
-        fillForm(r, script);
+        fillForm(r, script, lang);
     }
 
     function setActiveRow(roomId) {
@@ -837,7 +831,8 @@
         document.getElementById('delete-btn').style.display = isNew ? 'none' : '';
     }
 
-    function fillForm(r, script) {
+    function fillForm(r, script, lang) {
+        lang = lang || 'js';
         document.getElementById('editor-title').textContent = isNew ? 'New Room' : r.Title;
         document.getElementById('editor-zone-badge').textContent = r.Zone || '';
         document.getElementById('room-id-display').textContent = isNew ? '' : 'ID: ' + r.RoomId;
@@ -869,8 +864,10 @@
 
         // Script - ScriptEditor.init returns a plain sync function
         setVal('f-script', script);
-        if (scriptSync) scriptSync();
-        document.getElementById('script-has-badge').classList.toggle('visible', script.length > 0);
+        if (scriptSync) scriptSync(undefined, lang);
+        // Lock the language to the existing file's type; a new (empty) script
+        // stays selectable until it is saved.
+        ScriptEditor.lockLang('f-script', script !== '');
     }
 
     // -------------------------------------------------------------------------
@@ -2289,17 +2286,9 @@
             Nouns:         collectNouns(),
         };
 
-        if (script.trim().length > 0) {
-            var check = await ScriptWizard.validateScript(script);
-            if (!check.valid) {
-                btn.disabled = false; btn.textContent = 'Save Room';
-                return;
-            }
-        }
-
         const [patchRes, scriptRes] = await AdminAPI.all([
             AdminAPI.patch('/admin/api/v1/rooms/' + currentRoomId, payload),
-            AdminAPI.put('/admin/api/v1/rooms/' + currentRoomId + '/script', { script: script }),
+            AdminAPI.put('/admin/api/v1/rooms/' + currentRoomId + '/script', { script: script, lang: ScriptEditor.getLang('f-script') }),
         ]);
 
         btn.disabled = false; btn.textContent = 'Save Room';
@@ -2307,6 +2296,7 @@
         if (!patchRes.ok) { showStatus('Save failed: ' + patchRes.error, false); return; }
         if (!scriptRes.ok) { showStatus('Room saved but script save failed: ' + scriptRes.error, false); return; }
 
+        ScriptEditor.lockLang('f-script', script.trim().length > 0);
         showStatus('Room saved.', true);
         const saved = patchRes.data.data;
         document.getElementById('editor-title').textContent = saved.Title;

@@ -90,9 +90,9 @@ declare interface ActorObject {
     GiveQuest(questId: string): void;
     IsQuestDone(questToken: string): boolean;
     ClearQuestToken(questToken: string): void;
-    GetParty(excludeSelf?: boolean): any;
-    GetPartyPresent(excludeSelf?: boolean): any;
-    GetPartyMissing(): any;
+    GetParty(excludeSelf?: boolean): PartyObject;
+    GetPartyPresent(excludeSelf?: boolean): PartyObject;
+    GetPartyMissing(): PartyObject;
     GetMobKills(mobId: number): number;
     GetRaceKills(race: string): number;
     GetCharmCount(): number;
@@ -258,6 +258,34 @@ declare interface PetObject {
     GetBuffIds(): number[];
 }
 
+declare interface PartyObject {
+    GetMembers(): ActorObject[];
+    SendText(msg: string): void;
+    SetResetRoomId(roomId: number): void;
+    GiveQuest(questId: string): void;
+    AddGold(amount: number, bankAmount?: number): void;
+    AddHealth(amt: number): void;
+    AddMana(amt: number): void;
+    Command(cmd: string, waitSeconds?: number): void;
+    TrainSkill(skillName: string, level: number): void;
+    MoveRoom(roomId: number): void;
+    AddEventLog(category: string, message: string): void;
+    GiveBuff(buffId: number, source: string): void;
+    CancelBuffWithFlag(buffFlag: string): void;
+    RemoveBuff(buffId: number): void;
+    ChangeAlignment(alignmentChange: number): void;
+    LearnSpell(spellId: string): void;
+    SetHealth(amt: number): void;
+    SetAdjective(adj: string, addIt: boolean): void;
+    GiveTrainingPoints(count: number): void;
+    GiveStatPoints(count: number): void;
+    GiveExtraLife(): void;
+    GrantXP(amount: number, reason: string): void;
+    TimerSet(name: string, period: string): void;
+    MarkVisitedRoom(...roomIds: number[]): void;
+    MarkVisitedZone(zoneName: string): void;
+}
+
 declare interface ContainerObject {
     Name(): string;
     HasLock(): boolean;
@@ -382,6 +410,8 @@ func goTypeToTS(t string) string {
 		return "ItemObject"
 	case "PetObject":
 		return "PetObject"
+	case "PartyObject":
+		return "PartyObject"
 	case "ContainerObject":
 		return "ContainerObject"
 	case "PanelLayoutObject":

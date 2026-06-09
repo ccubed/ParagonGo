@@ -406,8 +406,9 @@
                     <tr><td class="an">cmd</td><td class="at">string</td><td>The full command string, e.g. <code>"say Hello!"</code> or <code>"attack goblin"</code>.</td></tr>
                     <tr><td class="an">waitTurns</td><td class="at">int (optional)</td><td>Turns to wait before executing (NOT rounds).</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">mob.Command('say Welcome, traveler!');
-mob.Command('pathto 150', 2); // move after 2 turns</code></pre></div>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">mob.Command('say Welcome, traveler!');
+mob.Command('pathto 150', 2); // move after 2 turns</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">mob:Command("say Welcome, traveler!")
+mob:Command("pathto 150", 2) -- move after 2 turns</code></pre></div>
             </div>
         </details>
 
@@ -710,10 +711,13 @@ mob.Command('pathto 150', 2); // move after 2 turns</code></pre></div>
             <div class="fn-body">
                 <p class="fn-desc">Returns the <a href="#pet">PetObject</a> for this actor, or <code>null</code> if they have no pet. Only meaningful for user actors.</p>
                 <p class="fn-note">The returned PetObject is a live reference — mutations take effect immediately.</p>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var pet = actor.GetPet();
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var pet = actor.GetPet();
 if (pet !== null) {
     room.SendText(pet.NameSimple() + ' is here!');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local pet = actor:GetPet()
+if pet ~= nil then
+    room:SendText(pet:NameSimple() .. " is here!")
+end</code></pre></div>
             </div>
         </details>
 
@@ -979,7 +983,7 @@ if (pet !== null) {
             <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.MarkVisitedRoom</span><span class="fn-p">(</span><span class="fn-a">roomId1</span> <span class="fn-t">int</span><span class="fn-p"> [, </span><span class="fn-a">roomId2</span><span class="fn-p">, …])</span></span><span class="fn-ret-badge ret-void">void</span></summary>
             <div class="fn-body">
                 <p class="fn-desc">Marks one or more rooms as visited for this actor. Only applies to user actors; mobs do not track visits.</p>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">user.MarkVisitedRoom(101, 102, 103);</code></pre></div>
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">user.MarkVisitedRoom(101, 102, 103);</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">user:MarkVisitedRoom(101, 102, 103)</code></pre></div>
             </div>
         </details>
 
@@ -1127,10 +1131,13 @@ if (pet !== null) {
                     <tr><td class="an">tag</td><td class="at">string</td><td>Cooldown identifier.</td></tr>
                     <tr><td class="an">period</td><td class="at">string</td><td>Duration, e.g. <code>"30 rounds"</code>, <code>"1 real minute"</code>.</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">// Only fire once per 5 real minutes
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">// Only fire once per 5 real minutes
 if (actor.TryCooldown('my-ability', '5 real minutes')) {
     actor.Command('cast fireball');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">-- Only fire once per 5 real minutes
+if actor:TryCooldown("my-ability", "5 real minutes") then
+    actor:Command("cast fireball")
+end</code></pre></div>
             </div>
         </details>
 
@@ -1201,10 +1208,13 @@ if (actor.TryCooldown('my-ability', '5 real minutes')) {
                 <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
                     <tr><td class="an">zoneName</td><td class="at">string</td><td>Zone name or partial match.</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var prog = user.GetZoneVisitProgress('frostfang');
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var prog = user.GetZoneVisitProgress('frostfang');
 if (prog.percent >= 100) {
     user.SendText('You have fully explored this zone!');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local prog = user:GetZoneVisitProgress("frostfang")
+if prog.percent &gt;= 100 then
+    user:SendText("You have fully explored this zone!")
+end</code></pre></div>
             </div>
         </details>
 
@@ -1620,9 +1630,11 @@ if (prog.percent >= 100) {
                     <tr><td class="an">lockDifficulty</td><td class="at">int</td><td>Lock difficulty (0 = no lock).</td></tr>
                     <tr><td class="an">trapBuffIds</td><td class="at">int&hellip; (optional)</td><td>Buff IDs applied on failed lockpicking.</td></tr>
                 </tbody></table>
-                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">var cName = room.SpawnTempContainer('treasure', '5 minutes', 0);
+                <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">var cName = room.SpawnTempContainer('treasure', '5 minutes', 0);
 var c = room.GetContainer(cName);
-c.AddItem(CreateItem(501));</code></pre></div>
+c.AddItem(CreateItem(501));</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">local cName = room:SpawnTempContainer("treasure", "5 minutes", 0)
+local c = room:GetContainer(cName)
+c:AddItem(CreateItem(501))</code></pre></div>
             </div>
         </details>
 
@@ -2316,13 +2328,7 @@ c.AddItem(CreateItem(501));</code></pre></div>
 <button id="back-to-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679;</button>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 
 document.querySelectorAll('pre code').forEach(function(el) {
     if (typeof hljs !== 'undefined') hljs.highlightElement(el);

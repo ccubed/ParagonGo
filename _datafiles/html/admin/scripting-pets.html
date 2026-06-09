@@ -141,12 +141,17 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The owner.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room both are in.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function PetAct(pet, actor, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function PetAct(pet, actor, room) {
     // 5% chance per eligible round to do something visible
     if (Math.random() < 0.05) {
         room.SendText(pet.NameSimple() + ' sniffs the air curiously.');
     }
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function PetAct(pet, actor, room)
+    -- 5% chance per eligible round to do something visible
+    if math.random() &lt; 0.05 then
+        room:SendText(pet:NameSimple() .. " sniffs the air curiously.")
+    end
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -162,14 +167,21 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The owner.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The current room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function onCommand(cmd, rest, pet, actor, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCommand(cmd, rest, pet, actor, room) {
     if (cmd === 'attack') {
         if (Math.random() < 0.25) {
             room.SendText(pet.NameSimple() + ' growls menacingly.');
         }
     }
     return false;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCommand(cmd, rest, pet, actor, room)
+    if cmd == "attack" then
+        if math.random() &lt; 0.25 then
+            room:SendText(pet:NameSimple() .. " growls menacingly.")
+        end
+    end
+    return false
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -184,11 +196,15 @@
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The owner.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The current room.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">// Called only when owner types 'pet'
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">// Called only when owner types 'pet'
 function onCommand_pet(rest, pet, actor, room) {
     room.SendText(pet.NameSimple() + ' wags its tail happily.');
     return false;
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">-- Called only when owner types 'pet'
+function onCommand_pet(rest, pet, actor, room)
+    room:SendText(pet:NameSimple() .. " wags its tail happily.")
+    return false
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -201,9 +217,11 @@ function onCommand_pet(rest, pet, actor, room) {
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The owner.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room both are in.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function PetLeave(pet, actor, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function PetLeave(pet, actor, room) {
     room.SendText(pet.NameSimple() + ' darts into the shadows and disappears!');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function PetLeave(pet, actor, room)
+    room:SendText(pet:NameSimple() .. " darts into the shadows and disappears!")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -216,9 +234,11 @@ function onCommand_pet(rest, pet, actor, room) {
                             <tr><td class="arg-name">actor</td><td class="arg-type"><a href="/admin/scripting-functions#actor">ActorObject</a></td><td>The owner.</td></tr>
                             <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-functions#room">RoomObject</a></td><td>The room both are in.</td></tr>
                         </tbody></table>
-                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-javascript">function PetReturn(pet, actor, room) {
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function PetReturn(pet, actor, room) {
     room.SendText(pet.NameSimple() + ' trots back to your side.');
-}</code></pre></div>
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function PetReturn(pet, actor, room)
+    room:SendText(pet:NameSimple() .. " trots back to your side.")
+end</code></pre></div>
                     </div>
                 </details>
 
@@ -239,13 +259,7 @@ function onCommand_pet(rest, pet, actor, room) {
 </div>
 
 <script>
-function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre ? pre.textContent : '').then(function() {
-        btn.textContent = 'Copied!'; btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
-    });
-}
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
 document.querySelectorAll('pre code').forEach(function(el) { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
 (function() {
     var sidebar = document.getElementById('doc-sidebar');
