@@ -21,6 +21,11 @@
 //     file (language is fixed until the file is deleted), false for a new one.
 //   ScriptEditor.getLang(textareaId)    - returns active language ('js' | 'lua')
 //   ScriptEditor.lockLang(textareaId, locked) - lock/unlock the selector only
+//
+//   ScriptEditor.setDeleteHandler(textareaId, fn)
+//     Register a "delete script" callback. When set, a "Delete Script" button
+//     appears in the pop-out modal header and invokes fn. The callback blanks
+//     the script and saves it; the backend deletes the file on an empty save.
 
 const ScriptEditor = (() => {
     'use strict';
@@ -57,6 +62,7 @@ const ScriptEditor = (() => {
             inlineContainer: null,
             langSelect: null,
             langMount: null,
+            onDelete: null,
             ready: false,
         };
         registry[textareaId] = rec;
@@ -133,6 +139,15 @@ const ScriptEditor = (() => {
     function lockLang(textareaId, locked) {
         const rec = registry[textareaId];
         if (rec && rec.langSelect) rec.langSelect.disabled = !!locked;
+    }
+
+    // Register a "delete script" callback for this editor. When set, a
+    // "Delete Script" button appears in the pop-out modal header; the callback
+    // is responsible for blanking the script and persisting it (the backend
+    // deletes the script file when an empty script is saved).
+    function setDeleteHandler(textareaId, fn) {
+        const rec = registry[textareaId];
+        if (rec) rec.onDelete = (typeof fn === 'function') ? fn : null;
     }
 
     // Push the textarea's current value plus the active language into the editor.
@@ -231,6 +246,29 @@ const ScriptEditor = (() => {
             ScriptWizard.open({ scriptType: rec.scriptType, textareaId: textareaId });
         });
 
+        // Optional "Delete Script" button — present only when the page has
+        // registered a delete handler (see setDeleteHandler).
+        let deleteBtn = null;
+        if (rec.onDelete) {
+            deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = '🗑 Delete Script';
+            deleteBtn.style.cssText = [
+                'font-size:0.78rem', 'padding:0.25rem 0.7rem',
+                'border:1px solid #7a3030', 'border-radius:3px',
+                'background:#3a2424', 'color:#e0a0a0', 'cursor:pointer', 'flex-shrink:0',
+            ].join(';');
+            deleteBtn.addEventListener('mouseenter', function () {
+                deleteBtn.style.background = '#c0392b'; deleteBtn.style.color = '#fff';
+            });
+            deleteBtn.addEventListener('mouseleave', function () {
+                deleteBtn.style.background = '#3a2424'; deleteBtn.style.color = '#e0a0a0';
+            });
+            deleteBtn.addEventListener('click', function () {
+                if (rec.onDelete) rec.onDelete();
+            });
+        }
+
         const hintEl = document.createElement('span');
         hintEl.style.cssText = 'font-size:0.75rem;color:#666;';
         hintEl.textContent = 'Esc to close';
@@ -253,6 +291,7 @@ const ScriptEditor = (() => {
         header.appendChild(titleEl);
         if (rec.langSelect) header.appendChild(rec.langSelect);
         header.appendChild(addHandlerBtn);
+        if (deleteBtn) header.appendChild(deleteBtn);
         header.appendChild(hintEl);
         header.appendChild(closeBtn);
 
@@ -682,5 +721,5 @@ const ScriptEditor = (() => {
 
     // -------------------------------------------------------------------------
 
-    return { init, getEditor, open, setLang, getLang, lockLang };
+    return { init, getEditor, open, setLang, getLang, lockLang, setDeleteHandler };
 })();

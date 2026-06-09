@@ -198,6 +198,9 @@
                         <button class="btn-add-sm" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                     </div>
                     <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
+                    <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+                        <button class="btn-delete" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="deleteScript()">&#x1F5D1; Delete Script</button>
+                    </div>
                 </div>
 
                 <div class="btn-row">
@@ -257,6 +260,7 @@
         petsData = (res.data && res.data.data) || {};
         renderList();
         scriptSync = ScriptEditor.init('f-script', 'pet');
+        ScriptEditor.setDeleteHandler('f-script', deleteScript);
         const hashType = decodeURIComponent(location.hash.slice(1));
         if (hashType && petsData[hashType]) selectPet(hashType);
     }
@@ -726,6 +730,24 @@
     // -------------------------------------------------------------------------
     window.openScriptWizard = function () {
         ScriptWizard.open({ scriptType: 'pet', textareaId: 'f-script' });
+    };
+
+    // Blank the current script and save it. The backend deletes the script
+    // file when an empty script is saved.
+    window.deleteScript = async function () {
+        if (isNew || !activeType) {
+            if (scriptSync) scriptSync('');
+            ScriptEditor.lockLang('f-script', false);
+            return;
+        }
+        if (!confirm('Delete this script? This cannot be undone.')) return;
+
+        const res = await AdminAPI.put('/admin/api/v1/pets/' + encodeURIComponent(activeType) + '/script', { script: '', lang: ScriptEditor.getLang('f-script') });
+        if (!res.ok) { showStatus('error', 'Script delete failed: ' + res.error); return; }
+
+        if (scriptSync) scriptSync('');
+        ScriptEditor.lockLang('f-script', false);
+        showStatus('success', 'Script deleted.');
     };
 
     window.deletePet = async function () {

@@ -509,6 +509,9 @@
                     <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
                 </div>
                 <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+                    <button class="btn btn-danger" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="deleteScript()">&#x1F5D1; Delete Script</button>
+                </div>
                 <div id="script-hint" style="font-size:0.75rem;color:var(--color-text-faint);"></div>
             </div>
 
@@ -567,6 +570,7 @@
         populateZoneFilter();
         renderList(allMobs);
         scriptSync = ScriptEditor.init('f-script', 'mob');
+        ScriptEditor.setDeleteHandler('f-script', deleteScript);
         const hashId = parseInt(location.hash.slice(1), 10);
         if (hashId) loadMob(hashId);
     }
@@ -1524,6 +1528,28 @@
     // -------------------------------------------------------------------------
     window.openScriptWizard = function () {
         ScriptWizard.open({ scriptType: 'mob', textareaId: 'f-script' });
+    };
+
+    // Blank the current (base or instance) script and save it. The backend
+    // deletes the script file when an empty script is saved.
+    window.deleteScript = async function () {
+        // Nothing persisted yet — just clear the editor locally.
+        if (isNew || currentMobId === null) {
+            if (scriptSync) scriptSync('');
+            ScriptEditor.lockLang('f-script', false);
+            return;
+        }
+        if (!confirm('Delete this script? This cannot be undone.')) return;
+
+        const scriptUrl = (currentScriptTag === null || currentScriptTag === '')
+            ? '/admin/api/v1/mobs/' + currentMobId + '/script'
+            : '/admin/api/v1/mobs/' + currentMobId + '/scripts/' + encodeURIComponent(currentScriptTag);
+        const res = await AdminAPI.put(scriptUrl, { script: '', lang: ScriptEditor.getLang('f-script') });
+        if (!res.ok) { showStatus('Script delete failed: ' + res.error, false); return; }
+
+        if (scriptSync) scriptSync('');
+        ScriptEditor.lockLang('f-script', false);
+        showStatus('Script deleted.', true);
     };
 
     // -------------------------------------------------------------------------
