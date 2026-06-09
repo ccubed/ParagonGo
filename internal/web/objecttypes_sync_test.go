@@ -70,12 +70,15 @@ func TestObjectTypesMatchDts(t *testing.T) {
 
 	// Object type name -> the matching TS interface name.
 	pairs := map[string]string{
-		"ActorObject":     "ActorObject",
-		"RoomObject":      "RoomObject",
-		"ItemObject":      "ItemObject",
-		"PetObject":       "PetObject",
-		"PartyObject":     "PartyObject",
-		"ContainerObject": "ContainerObject",
+		"ActorObject":       "ActorObject",
+		"RoomObject":        "RoomObject",
+		"ItemObject":        "ItemObject",
+		"PetObject":         "PetObject",
+		"PartyObject":       "PartyObject",
+		"ContainerObject":   "ContainerObject",
+		"PanelLayoutObject": "PanelLayoutObject",
+		"SlotObject":        "SlotObject",
+		"PanelObject":       "PanelObject",
 	}
 
 	for typeName, ifaceName := range pairs {

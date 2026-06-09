@@ -351,7 +351,38 @@ declare interface PathEventDetails {
 }
 
 declare interface PanelLayoutObject {
-    [key: string]: any;
+    /** Adds a new vertical slot (column) to the layout. Returns the slot for adding rows. */
+    AddSlot(): SlotObject;
+    /** Returns the named panel for configuration and data population. Throws if the id does not exist. */
+    Panel(id: string): PanelObject;
+    /** Renders the entire layout into a terminal string ready to send to a player. */
+    Render(): string;
+}
+
+declare interface SlotObject {
+    /** Adds a horizontal row of panels (by id) to this slot. Returns the slot for chaining. */
+    AddRow(ids: string[]): SlotObject;
+}
+
+declare interface PanelObject {
+    /** Sets the panel's title string (used verbatim in the top border). May contain ANSI tags. Returns the panel for chaining. */
+    SetTitle(title: string): PanelObject;
+    /** Sets a fixed visual width that all labels are padded to. Returns the panel for chaining. */
+    SetLabelWidth(w: number): PanelObject;
+    /** Sets the panel's total border-inclusive width. Returns the panel for chaining. */
+    SetWidth(w: number): PanelObject;
+    /** Overrides the border character set ("single", "double", "rounded", or an 8-rune literal). Returns the panel for chaining. */
+    SetCharset(name: string): PanelObject;
+    /** Sets the number of label+value pairs per line (1 or 2). Returns the panel for chaining. */
+    SetColumns(n: number): PanelObject;
+    /** Sets the spaces between columns when using 2-column mode. Returns the panel for chaining. */
+    SetColumnGap(n: number): PanelObject;
+    /** Appends a label+value row. fullLabel is used when it fits; shortLabel is the fallback. Returns the panel for chaining. */
+    Add(fullLabel: string, shortLabel: string, value: string): PanelObject;
+    /** Appends a label+value row, wrapping the value when it exceeds wrapWidth. Returns the panel for chaining. */
+    AddWithWrapWidth(fullLabel: string, shortLabel: string, value: string, wrapWidth: number): PanelObject;
+    /** Appends an empty spacer row for visual separation. Returns the panel for chaining. */
+    AddBlank(): PanelObject;
 }
 
 declare interface MatchResult {

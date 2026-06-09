@@ -37,12 +37,15 @@ func GetScriptObjectTypes() *ScriptObjectTypes {
 	return &ScriptObjectTypes{
 		Version: 1,
 		Types: map[string]ObjectTypeDef{
-			"ActorObject":     actorObjectType(),
-			"RoomObject":      roomObjectType(),
-			"ItemObject":      itemObjectType(),
-			"PetObject":       petObjectType(),
-			"PartyObject":     partyObjectType(),
-			"ContainerObject": containerScriptObjectType(),
+			"ActorObject":       actorObjectType(),
+			"RoomObject":        roomObjectType(),
+			"ItemObject":        itemObjectType(),
+			"PetObject":         petObjectType(),
+			"PartyObject":       partyObjectType(),
+			"ContainerObject":   containerScriptObjectType(),
+			"PanelLayoutObject": panelLayoutObjectType(),
+			"SlotObject":        slotObjectType(),
+			"PanelObject":       panelObjectType(),
 		},
 	}
 }
@@ -382,6 +385,46 @@ func containerScriptObjectType() ObjectTypeDef {
 			m("IsTemporary", "boolean", "Returns true if the container is temporary."),
 			m("GetDespawnRound", "number", "Returns the despawn round, or 0."),
 			m("Exists", "boolean", "Returns true if the container still exists."),
+		},
+	}
+}
+
+func panelLayoutObjectType() ObjectTypeDef {
+	return ObjectTypeDef{
+		Name:        "PanelLayoutObject",
+		Description: "A terminal panel layout built from titled boxes arranged in slots and rows.",
+		Methods: []ObjectMethod{
+			m("AddSlot", "SlotObject", "Adds a new vertical slot (column) to the layout. Returns the slot for adding rows."),
+			m("Panel", "PanelObject", "Returns the named panel for configuration and data population. Throws if the id does not exist.", p("id", "string")),
+			m("Render", "string", "Renders the entire layout into a terminal string ready to send to a player."),
+		},
+	}
+}
+
+func slotObjectType() ObjectTypeDef {
+	return ObjectTypeDef{
+		Name:        "SlotObject",
+		Description: "A vertical slot (column) within a panel layout, holding rows of panels.",
+		Methods: []ObjectMethod{
+			m("AddRow", "SlotObject", "Adds a horizontal row of panels (by id) to this slot. Returns the slot for chaining.", p("ids", "string[]")),
+		},
+	}
+}
+
+func panelObjectType() ObjectTypeDef {
+	return ObjectTypeDef{
+		Name:        "PanelObject",
+		Description: "A single titled box within a panel layout. Configuration methods return the panel for chaining.",
+		Methods: []ObjectMethod{
+			m("SetTitle", "PanelObject", "Sets the panel's title string (used verbatim in the top border). May contain ANSI tags.", p("title", "string")),
+			m("SetLabelWidth", "PanelObject", "Sets a fixed visual width that all labels are padded to.", p("w", "number")),
+			m("SetWidth", "PanelObject", "Sets the panel's total border-inclusive width.", p("w", "number")),
+			m("SetCharset", "PanelObject", `Overrides the border character set ("single", "double", "rounded", or an 8-rune literal).`, p("name", "string")),
+			m("SetColumns", "PanelObject", "Sets the number of label+value pairs per line (1 or 2).", p("n", "number")),
+			m("SetColumnGap", "PanelObject", "Sets the spaces between columns when using 2-column mode.", p("n", "number")),
+			m("Add", "PanelObject", "Appends a label+value row. fullLabel is used when it fits; shortLabel is the fallback.", p("fullLabel", "string"), p("shortLabel", "string"), p("value", "string")),
+			m("AddWithWrapWidth", "PanelObject", "Appends a label+value row, wrapping the value when it exceeds wrapWidth.", p("fullLabel", "string"), p("shortLabel", "string"), p("value", "string"), p("wrapWidth", "number")),
+			m("AddBlank", "PanelObject", "Appends an empty spacer row for visual separation."),
 		},
 	}
 }

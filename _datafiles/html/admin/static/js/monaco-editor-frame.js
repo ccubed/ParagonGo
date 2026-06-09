@@ -60,7 +60,7 @@
             editor.layout();
 
         } else if (msg.type === 'monaco-insert') {
-            insertAtEnd(msg.stub);
+            insertAtCursor(msg.stub);
 
         } else if (msg.type === 'monaco-jump-or-insert') {
             var model = editor.getModel();
@@ -76,6 +76,18 @@
                 insertAtEnd(msg.stub);
             }
         }
+    }
+
+    // Insert text at the current cursor position (replacing any selection),
+    // then place the cursor at the end of the inserted text and focus.
+    function insertAtCursor(text) {
+        var selection = editor.getSelection();
+        editor.executeEdits('script-reference', [{
+            range: selection,
+            text: text,
+            forceMoveMarkers: true
+        }]);
+        editor.focus();
     }
 
     function insertAtEnd(stub) {
