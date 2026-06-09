@@ -1,4 +1,4 @@
-# Managed by: go run ./cmd/modmanager
+# Managed by: `make module` or `./go-mud-server module`
 # Do not edit manually.
 installed:
 - name: gmcp

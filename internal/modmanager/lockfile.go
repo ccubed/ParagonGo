@@ -15,7 +15,7 @@ func yamlUnmarshal(data []byte, v interface{}) error { return yaml.Unmarshal(dat
 
 const lockFilePath = "modules/modules.lock.yaml"
 
-const lockFileHeader = "# Managed by: go-mud-server module\n# Do not edit manually.\n"
+const lockFileHeader = "# Managed by: `make module` or `./go-mud-server module`\n# Do not edit manually.\n"
 
 // LockEntry records a single installed community module.
 type LockEntry struct {
