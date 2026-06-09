@@ -72,11 +72,6 @@ else
 fi
 
 published_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-if [ -n "$previous_tag" ] && [ "$previous_tag" != "$release_tag" ]; then
-	changes_since="Changes since: \`${previous_tag}\`"
-else
-	changes_since="Changes since: initial release history"
-fi
 
 if [ "$release_kind" = "prerelease" ]; then
 	overview="Rolling prerelease build from \`${ref_name:-master}\`."
@@ -94,23 +89,22 @@ ${overview}
 - Version: \`${binary_version}\`
 - Commit: \`${commit_sha}\`
 - Published: \`${published_at}\`
-- ${changes_since}
+
 
 ${summary}
 
 ## Install GoMud
 
-### Requirements
+<details>
 
-- Go 1.24 or newer
-- Optional: Docker (for container-based runs)
+<summary>Instructions (expand)</summary>
 
 ### Quick Install (Recommended)
 
 - The fastest way to get GoMud running.
 - These scripts install Go and Git (if needed), clone the GoMud repo, and build the server binary automatically.
 
-**Linux / macOS:**
+#### Linux / macOS
 
 Open a Terminal and run:
 
@@ -118,7 +112,7 @@ Open a Terminal and run:
 curl -fsSL https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.sh | sh
 \`\`\`
 
-**Windows:**
+#### Windows
 
 Open a \`Powershell\` window and run:
 
@@ -129,10 +123,9 @@ irm https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.p
 - Both scripts install GoMud to \`~/GoMud\` by default.
 - Set the \`GOMUD_DIR\` environment variable before running to choose a different location.
 
-### Alternative: Manual Binary Install
+### Alternative: Manual Install
 
-- Go to the GoMud [Release Page](https://github.com/${repository}/releases/tag/${release_tag})
-- Scroll down to the **Assets** section and expand it
+- Scroll down to the **"Assets"** section below and expand it
 - Download the datafiles (needed by all operating systems):
   - **\`${datafiles_archive}\`**
   - Extract this zip file into the same folder as the GoMud binary
@@ -154,8 +147,7 @@ irm https://raw.githubusercontent.com/GoMudEngine/GoMud/master/scripts/install.p
 | gomud-windows_arm64.exe | Windows | ARM64 | Surface Pro X, Snapdragon X Elite laptops, Windows on ARM
 | gomud-linux_arm64 | Linux | ARM64 (AArch64) | Linux systems using ARM-based CPUs |
 | gomud-linux_armv7 | Linux | ARMv7 (32-bit) | Raspberry Pi 2/3 running 32-bit OS |
-
-## Changes
+</details>
 
 EOF
 
