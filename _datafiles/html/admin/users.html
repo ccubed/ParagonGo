@@ -194,16 +194,12 @@
         font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
         text-transform: capitalize; letter-spacing: 0.02em;
     }
-    .skill-level-wrap { display: flex; gap: 0.25rem; }
-    .skill-level-btn {
-        flex: 1; padding: 0.3rem 0; border: 1px solid var(--color-border-medium); border-radius: 4px;
-        background: var(--color-surface-white); font-size: 0.78rem; font-weight: 600; cursor: pointer;
-        color: var(--color-text-faint); text-align: center; transition: background 0.12s, color 0.12s, border-color 0.12s;
+    .skill-slider-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .skill-level-slider { flex: 1; min-width: 0; }
+    .skill-level-value {
+        min-width: 1.5rem; text-align: center; font-size: 0.78rem; font-weight: 600;
+        color: var(--color-chip-text);
     }
-    .skill-level-btn.active {
-        background: var(--color-primary); color: var(--color-surface-white); border-color: var(--color-primary);
-    }
-    .skill-level-btn:hover:not(.active) { background: var(--color-chip-bg); border-color: var(--color-chip-text); color: var(--color-chip-text); }
 
     /* quest progress */
     .quest-progress-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -558,34 +554,20 @@
     let allPetTypes = {}; // keyed by type string
     let currentUserId = null;
 
-    // All known skills with display labels
-    const ALL_SKILLS = [
-        { id: 'cast',        label: 'Cast' },
-        { id: 'dual-wield',  label: 'Dual Wield' },
-        { id: 'map',         label: 'Map' },
-        { id: 'enchant',     label: 'Enchant' },
-        { id: 'peep',        label: 'Peep' },
-        { id: 'inspect',     label: 'Inspect' },
-        { id: 'portal',      label: 'Portal' },
-        { id: 'search',      label: 'Search' },
-        { id: 'track',       label: 'Track' },
-        { id: 'skulduggery', label: 'Skulduggery' },
-        { id: 'brawling',    label: 'Brawling' },
-        { id: 'scribe',      label: 'Scribe' },
-        { id: 'protection',  label: 'Protection' },
-        { id: 'tame',        label: 'Tame' },
-        { id: 'trading',     label: 'Trading' },
-        { id: 'changeform',  label: 'Change Form' },
-    ];
+    // Skills available in the grid. Populated from the skills API in init() so
+    // that each skill's MaxLevel (which drives buttons vs. slider) stays in sync
+    // with the data-driven skill definitions.
+    let ALL_SKILLS = [];
 
     async function init() {
-        const [racesRes, buffsRes, itemsRes, questsRes, petsRes, slotsRes] = await AdminAPI.all([
+        const [racesRes, buffsRes, itemsRes, questsRes, petsRes, slotsRes, skillsRes] = await AdminAPI.all([
             AdminAPI.get('/admin/api/v1/races'),
             AdminAPI.get('/admin/api/v1/buffs'),
             AdminAPI.get('/admin/api/v1/items'),
             AdminAPI.get('/admin/api/v1/quests'),
             AdminAPI.get('/admin/api/v1/pets'),
             AdminAPI.get('/admin/api/v1/items/equip-slots'),
+            AdminAPI.get('/admin/api/v1/skills'),
         ]);
 
         if (racesRes.ok) {
@@ -608,6 +590,11 @@
         }
         if (slotsRes.ok) {
             EQ_SLOTS = slotsRes.data.data || [];
+        }
+        if (skillsRes.ok) {
+            ALL_SKILLS = Object.values(skillsRes.data.data || {})
+                .map(s => ({ id: s.SkillId, label: s.Name || s.SkillId, maxLevel: s.MaxLevel || 4 }))
+                .sort((a, b) => a.label.localeCompare(b.label));
         }
         buildEquipSlotsGrid();
         buildSkillsGrid();
@@ -1391,49 +1378,59 @@
         const grid = document.getElementById('skills-grid');
         grid.innerHTML = '';
         for (const skill of ALL_SKILLS) {
+            const maxLevel = skill.maxLevel || 4;
             const item = document.createElement('div');
             item.className = 'skill-item';
             item.dataset.skillId = skill.id;
+            item.dataset.maxLevel = maxLevel;
 
             const lbl = document.createElement('label');
             lbl.textContent = skill.label;
             item.appendChild(lbl);
 
-            const wrap = document.createElement('div');
-            wrap.className = 'skill-level-wrap';
-            for (let lvl = 1; lvl <= 4; lvl++) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'skill-level-btn';
-                btn.textContent = lvl;
-                btn.dataset.level = lvl;
-                btn.title = 'Set ' + skill.label + ' to level ' + lvl;
-                btn.addEventListener('click', () => {
-                    const currentActive = wrap.querySelector('.skill-level-btn.active');
-                    const clickedLevel = parseInt(btn.dataset.level, 10);
-                    if (currentActive && parseInt(currentActive.dataset.level, 10) === clickedLevel) {
-                        // Clicking active level resets to 0
-                        currentActive.classList.remove('active');
-                    } else {
-                        wrap.querySelectorAll('.skill-level-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                    }
-                });
-                wrap.appendChild(btn);
-            }
-            item.appendChild(wrap);
+            item.appendChild(buildSkillSlider(skill, maxLevel));
             grid.appendChild(item);
         }
+    }
+
+    function buildSkillSlider(skill, maxLevel) {
+        const wrap = document.createElement('div');
+        wrap.className = 'skill-slider-wrap';
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.className = 'skill-level-slider';
+        slider.min = 0;
+        slider.max = maxLevel;
+        slider.step = 1;
+        slider.value = 0;
+        slider.title = 'Set ' + skill.label + ' level (0–' + maxLevel + ')';
+
+        const value = document.createElement('span');
+        value.className = 'skill-level-value';
+        value.textContent = '0';
+
+        slider.addEventListener('input', () => {
+            value.textContent = slider.value;
+        });
+
+        wrap.appendChild(slider);
+        wrap.appendChild(value);
+        return wrap;
     }
 
     function setSkillsGrid(skills) {
         const grid = document.getElementById('skills-grid');
         for (const item of grid.querySelectorAll('.skill-item')) {
             const skillId = item.dataset.skillId;
-            const level = skills[skillId] || 0;
-            item.querySelectorAll('.skill-level-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.level, 10) === level);
-            });
+            const maxLevel = parseInt(item.dataset.maxLevel, 10) || 4;
+            let level = skills[skillId] || 0;
+            if (level > maxLevel) level = maxLevel;
+
+            const slider = item.querySelector('.skill-level-slider');
+            slider.value = level;
+            const valueEl = item.querySelector('.skill-level-value');
+            if (valueEl) valueEl.textContent = level;
         }
     }
 
@@ -1442,9 +1439,10 @@
         const grid = document.getElementById('skills-grid');
         for (const item of grid.querySelectorAll('.skill-item')) {
             const skillId = item.dataset.skillId;
-            const activeBtn = item.querySelector('.skill-level-btn.active');
-            if (activeBtn) {
-                skills[skillId] = parseInt(activeBtn.dataset.level, 10);
+            const slider = item.querySelector('.skill-level-slider');
+            const lvl = parseInt(slider.value, 10) || 0;
+            if (lvl > 0) {
+                skills[skillId] = lvl;
             }
         }
         return skills;
