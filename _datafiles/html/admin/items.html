@@ -568,10 +568,12 @@
         const qtDisplay = document.getElementById('f-questtoken-display');
         if (item.QuestToken) {
             qtDisplay.textContent = item.QuestToken;
+            qtDisplay.dataset.questToken = item.QuestToken;
             qtDisplay.style.color = 'var(--color-text-strong)';
             qtDisplay.style.fontStyle = 'normal';
         } else {
             qtDisplay.textContent = 'none';
+            delete qtDisplay.dataset.questToken;
             qtDisplay.style.color = 'var(--color-empty-text)';
             qtDisplay.style.fontStyle = 'italic';
         }
@@ -675,6 +677,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = id;
+        chip.dataset.buffId = id;
         const label = name != null ? `#${id} ${esc(name)}` : esc(PickerConfigs.buffName(id));
         chip.innerHTML = `${label} <button title="Remove" onclick="this.closest('.buff-chip').remove()">&times;</button>`;
         list.appendChild(chip);
@@ -856,6 +859,7 @@
             document.getElementById('f-questtoken').value = token;
             const display = document.getElementById('f-questtoken-display');
             display.textContent = label;
+            display.dataset.questToken = token;
             display.style.color = 'var(--color-text-strong)';
             display.style.fontStyle = 'normal';
         });
@@ -865,6 +869,7 @@
         document.getElementById('f-questtoken').value = '';
         const display = document.getElementById('f-questtoken-display');
         display.textContent = 'none';
+        delete display.dataset.questToken;
         display.style.color = 'var(--color-empty-text)';
         display.style.fontStyle = 'italic';
     };

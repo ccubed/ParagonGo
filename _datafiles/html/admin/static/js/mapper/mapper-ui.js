@@ -977,7 +977,7 @@ var MapperUI = (function() {
             '<div class="re-spawn-field span2" style="' + (isMob ? hidden : shown) + '">'+
                 '<label>Item</label>'+
                 '<div class="re-spawn-picker-wrap">'+
-                    '<span class="re-spawn-picker-display ' + (s.ItemId ? '' : 'empty') + '">' + (s.ItemId ? '#' + s.ItemId : 'No item (gold only)') + '</span>'+
+                    '<span class="re-spawn-picker-display ' + (s.ItemId ? '' : 'empty') + '"' + (s.ItemId ? ' data-item-id="' + s.ItemId + '"' : '') + '>' + (s.ItemId ? '#' + s.ItemId : 'No item (gold only)') + '</span>'+
                     '<input type="hidden" class="re-spawn-itemid" value="' + (s.ItemId || 0) + '">'+
                     '<button type="button" class="room-editor-noun-add" style="width:auto;margin:0" onclick="MapperUI._rePickItem(this)">Pick Item…</button>'+
                     '<button type="button" class="re-spawn-del" style="margin-left:0" title="Clear item" onclick="MapperUI._reClearItem(this)">&times;</button>'+
@@ -1187,6 +1187,7 @@ var MapperUI = (function() {
                 card.querySelector('.re-spawn-itemid').value = item.ItemId;
                 var disp = card.querySelector('.re-spawn-picker-display');
                 disp.textContent = '#' + item.ItemId + ' ' + item.Name;
+                disp.dataset.itemId = item.ItemId;
                 disp.classList.remove('empty');
                 _reSpawnUpdateHeader(card);
             }
@@ -1198,6 +1199,7 @@ var MapperUI = (function() {
         card.querySelector('.re-spawn-itemid').value = 0;
         var disp = card.querySelector('.re-spawn-picker-display');
         disp.textContent = 'No item (gold only)';
+        delete disp.dataset.itemId;
         disp.classList.add('empty');
         _reSpawnUpdateHeader(card);
     }

@@ -93,10 +93,15 @@
     .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--color-text-placeholder); padding: 0 0.15rem; line-height: 1; }
     .btn-icon:hover { color: var(--color-danger); }
 
-    /* reward section */
-    .reward-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem 1rem; }
+    /* reward section - fixed 3-column template so fields in the same column
+       line up across rows: narrow | narrow | wide (pickers). */
+    .reward-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 6fr); gap: 0.75rem 1rem; }
     .reward-grid .span3 { grid-column: 1 / -1; }
     .reward-grid .field label { font-size: 0.75rem; }
+    .reward-grid .field input.reward-num-sm { width: 7rem; max-width: 100%; }
+    @media (max-width: 720px) {
+        .reward-grid { grid-template-columns: 1fr; }
+    }
 
     /* action bar */
     .action-bar { display: flex; gap: 0.6rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
@@ -190,11 +195,11 @@
             <div class="reward-grid" style="margin-top:0.25rem;">
                 <div class="field">
                     <label>Gold</label>
-                    <input type="number" id="r-gold" min="0" placeholder="0" />
+                    <input type="number" id="r-gold" class="reward-num-sm" min="0" placeholder="0" />
                 </div>
                 <div class="field">
                     <label>Experience</label>
-                    <input type="number" id="r-experience" min="0" placeholder="0" />
+                    <input type="number" id="r-experience" class="reward-num-sm" min="0" placeholder="0" />
                 </div>
                 <div class="field">
                     <label>Item Reward</label>
@@ -214,7 +219,7 @@
                 </div>
                 <div class="field">
                     <label>Teleport Room ID</label>
-                    <input type="number" id="r-roomid" min="0" placeholder="0 = none" />
+                    <input type="number" id="r-roomid" class="reward-num-sm" min="0" placeholder="0 = none" />
                 </div>
                 <div class="field">
                     <label>Chain Quest</label>
@@ -279,9 +284,16 @@
         if (!value) {
             display.textContent = 'none';
             display.className = 'reward-picker-display empty';
+            if (wrapperId === 'r-buffid')  delete display.dataset.buffId;
+            if (wrapperId === 'r-questid') delete display.dataset.questToken;
+            if (wrapperId === 'r-itemid')  delete display.dataset.itemId;
         } else {
             display.textContent = label || String(value);
             display.className = 'reward-picker-display';
+            // The buff / quest / item rewards get hover tooltips (see Buff/Quest/ItemTooltip).
+            if (wrapperId === 'r-buffid')  display.dataset.buffId = value;
+            if (wrapperId === 'r-questid') display.dataset.questToken = value;
+            if (wrapperId === 'r-itemid')  display.dataset.itemId = value;
         }
     }
 
@@ -291,7 +303,7 @@
         // r-questid stores a string token; others store numeric 0
         wrap.dataset.value = wrapperId === 'r-questid' ? '' : 0;
         const display = wrap.querySelector('.reward-picker-display');
-        if (display) { display.textContent = 'none'; display.className = 'reward-picker-display empty'; }
+        if (display) { display.textContent = 'none'; display.className = 'reward-picker-display empty'; delete display.dataset.buffId; }
     };
 
     window.pickRewardItem = function () {

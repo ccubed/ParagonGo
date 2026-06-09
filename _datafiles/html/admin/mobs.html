@@ -210,8 +210,16 @@
     }
     .shop-card-remove:hover { color: var(--color-danger); }
     .shop-card-fields {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 0.5rem 0.75rem;
+        display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 0.5rem 0.75rem; align-items: start;
+    }
+    /* Item & Trade Item get the room they need for full names; Price / Quantity
+       Max stay compact. */
+    .shop-field { grid-column: span 6; min-width: 0; }
+    .shop-field--sm { grid-column: span 3; }
+    @media (max-width: 640px) {
+        .shop-field { grid-column: span 12; }
+        .shop-field--sm { grid-column: span 6; }
     }
     .shop-field label {
         display: block; font-size: 0.72rem; font-weight: 600; color: var(--color-text-subtle);
@@ -955,6 +963,9 @@
         const chip = document.createElement('span');
         chip.className = 'tag-chip';
         chip.dataset.value = value;
+        // Quest flags are quest tokens (questId-stepId); tag them so the shared
+        // QuestTooltip can show the quest name and step description on hover.
+        if (list.id === 'questflags-list') chip.dataset.questToken = value;
         chip.innerHTML = `${esc(value)} <button title="Remove" onclick="this.closest('.tag-chip').remove()">&times;</button>`;
         list.appendChild(chip);
     }
@@ -992,6 +1003,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = id;
+        chip.dataset.buffId = id;
         const label = name != null ? `#${id} ${esc(name)}` : `#${id} ${esc(buffName(id))}`;
         chip.innerHTML = `${label} <button title="Remove" onclick="this.closest('.buff-chip').remove()">&times;</button>`;
         list.appendChild(chip);
@@ -1032,6 +1044,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = spellId;
+        chip.dataset.spellId = spellId;
         chip.dataset.val = val;
         const label = esc(spellId);
         chip.innerHTML = `${label} <button title="Remove" onclick="this.closest('.buff-chip').remove()">&times;</button>`;
@@ -1079,6 +1092,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = itemId;
+        chip.dataset.itemId = itemId;
         const label = name != null ? `#${itemId} ${esc(name)}` : `#${itemId} ${esc(itemName(itemId))}`;
         chip.innerHTML = `${label} <button title="Remove" onclick="this.closest('.buff-chip').remove()">&times;</button>`;
         list.appendChild(chip);
@@ -1176,6 +1190,8 @@
         display.textContent = initialId
             ? ('#' + initialId + (initialName ? ' ' + initialName : ''))
             : 'none selected';
+        // Tag item displays so the shared ItemTooltip can show an info card.
+        if (type === 'item' && initialId) display.dataset.itemId = initialId;
 
         if (initialId && !initialName) {
             resolveShopName(type, initialId).then(name => {
@@ -1204,6 +1220,8 @@
                     wrap.dataset.value = id;
                     display.textContent = '#' + id + ' ' + name;
                     display.className = 'shop-picker-display';
+                    if (type === 'item') display.dataset.itemId = id;
+                    else delete display.dataset.itemId;
                 },
             });
         });
@@ -1225,6 +1243,7 @@
         display.textContent = initialId
             ? ('#' + initialId + (initialName ? ' ' + initialName : ''))
             : 'none';
+        if (initialId) display.dataset.itemId = initialId;
 
         if (initialId && !initialName) {
             resolveShopName('item', initialId).then(name => {
@@ -1244,6 +1263,7 @@
                     wrap.dataset.value = item.ItemId;
                     display.textContent = '#' + item.ItemId + ' ' + item.Name;
                     display.className = 'shop-picker-display';
+                    display.dataset.itemId = item.ItemId;
                     // disable price when trade item is set
                     const card = wrap.closest('.shop-card');
                     if (card) {
@@ -1263,6 +1283,7 @@
             wrap.dataset.value = 0;
             display.textContent = 'none';
             display.className = 'shop-picker-display empty';
+            delete display.dataset.itemId;
             const card = wrap.closest('.shop-card');
             if (card) {
                 const priceInput = card.querySelector('[data-field="price"]');
@@ -1276,9 +1297,11 @@
         return wrap;
     }
 
-    function appendShopCard(list, entry) {
+    function appendShopCard(list, entry, forcedType) {
         const e = entry || {};
-        const type = detectShopType(e);
+        // New entries (from the +Item/+Mob/+Buff/+Pet buttons) pass an explicit
+        // type; loaded entries are detected from their populated id field.
+        const type = forcedType || detectShopType(e);
         const meta = shopTypeMeta[type];
 
         const card = document.createElement('div');
@@ -1315,12 +1338,12 @@
                 <div class="shop-field" data-slot="id">
                     <label>${esc(meta.idLabel)}</label>
                 </div>
-                <div class="shop-field">
+                <div class="shop-field shop-field--sm">
                     <label>Price</label>
                     <input type="number" data-field="price" value="${hasTrade ? 0 : (e.Price || 0)}" min="0" placeholder="0 = auto"${hasTrade ? ' disabled' : ''} />
                     <div class="field-hint">0 = calculated from item value</div>
                 </div>
-                <div class="shop-field">
+                <div class="shop-field shop-field--sm">
                     <label>Quantity Max</label>
                     <select data-field="qtymax">${qtyOpts}</select>
                 </div>
@@ -1359,12 +1382,7 @@
     }
 
     window.addShopEntry = function (type) {
-        const defaults = {};
-        if (type === 'item') defaults.ItemId = 0;
-        else if (type === 'mob') defaults.MobId = 0;
-        else if (type === 'buff') defaults.BuffId = 0;
-        else if (type === 'pet') defaults.PetType = '';
-        appendShopCard(document.getElementById('shop-list'), defaults);
+        appendShopCard(document.getElementById('shop-list'), {}, type);
     };
 
     function collectShop() {

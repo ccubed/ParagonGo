@@ -131,7 +131,10 @@
     .shop-type-pet   { background: var(--color-warning-bg); color: var(--color-warning-text); }
     .shop-card-remove { position: absolute; top: 0.5rem; right: 0.6rem; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--color-text-secondary); line-height: 1; }
     .shop-card-remove:hover { color: var(--color-danger); }
-    .shop-card-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem 0.75rem; }
+    .shop-card-fields { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0.5rem 0.75rem; align-items: start; }
+    .shop-field { grid-column: span 6; min-width: 0; }
+    .shop-field--sm { grid-column: span 3; }
+    @media (max-width: 640px) { .shop-field { grid-column: span 12; } .shop-field--sm { grid-column: span 6; } }
     .shop-field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--color-text-subtle); margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.02em; }
     .shop-field input, .shop-field select { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--color-border-medium); border-radius: 4px; font-size: 0.82rem; background: var(--color-surface-white); }
     .shop-field .field-hint { font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 0.1rem; }
@@ -826,6 +829,7 @@
                 }
                 display.textContent = 'DISABLED';
                 display.className = 'shop-picker-display';
+                delete display.dataset.itemId;
             } else if (display && !isDisabled && wrap.dataset.value === '0') {
                 display.textContent = 'nothing';
                 display.className = 'shop-picker-display empty';
@@ -842,6 +846,7 @@
         if (!itemId || itemId === 0) {
             display.textContent = 'nothing';
             display.className = 'shop-picker-display empty';
+            delete display.dataset.itemId;
             const lockBtn = wrap.querySelector('.eq-lock-btn');
             if (lockBtn) {
                 lockBtn.dataset.locked = 'false';
@@ -852,6 +857,7 @@
         } else {
             display.textContent = '#' + itemId + ' ' + itemName(itemId);
             display.className = 'shop-picker-display';
+            display.dataset.itemId = itemId;
             const lockBtn = wrap.querySelector('.eq-lock-btn');
             if (lockBtn && locked !== undefined) {
                 const isLocked = !!locked;
@@ -911,6 +917,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = itemId;
+        chip.dataset.itemId = itemId;
         const label = name != null ? '#' + itemId + ' ' + esc(name) : '#' + itemId + ' ' + esc(itemName(itemId));
         chip.innerHTML = label + ' <button title="Remove" onclick="this.closest(\'.buff-chip\').remove()">&times;</button>';
         list.appendChild(chip);
@@ -950,6 +957,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = spellId;
+        chip.dataset.spellId = spellId;
         chip.dataset.val = val;
         const label = esc(spellId);
         chip.innerHTML = `${label} <button title="Remove" onclick="this.closest('.buff-chip').remove()">&times;</button>`;
@@ -986,9 +994,11 @@
     // Shop entries (shared logic with mobs page)
     // -------------------------------------------------------------------------
     function detectShopType(entry) {
-        if ('PetType' in entry) return 'pet';
-        if ('BuffId' in entry)  return 'buff';
-        if ('MobId' in entry)   return 'mob';
+        // Loaded entries carry every shop field (the API does not omit zero
+        // values), so detect by which id is actually populated.
+        if (entry.PetType) return 'pet';
+        if (entry.BuffId)  return 'buff';
+        if (entry.MobId)   return 'mob';
         return 'item';
     }
 
@@ -1145,9 +1155,11 @@
         return wrap;
     }
 
-    function appendShopCard(list, entry) {
+    function appendShopCard(list, entry, forcedType) {
         const e    = entry || {};
-        const type = detectShopType(e);
+        // New entries (from the +Item/+Mob/+Buff/+Pet buttons) pass an explicit
+        // type; loaded entries are detected from their populated id field.
+        const type = forcedType || detectShopType(e);
         const meta = shopTypeMeta[type];
 
         const card = document.createElement('div');
@@ -1179,12 +1191,12 @@
             </div>
             <div class="shop-card-fields">
                 <div class="shop-field" data-slot="id"><label>${esc(meta.idLabel)}</label></div>
-                <div class="shop-field">
+                <div class="shop-field shop-field--sm">
                     <label>Price</label>
                     <input type="number" data-field="price" value="${hasTrade ? 0 : (e.Price || 0)}" min="0" placeholder="0 = auto"${hasTrade ? ' disabled' : ''} />
                     <div class="field-hint">0 = calculated from item value</div>
                 </div>
-                <div class="shop-field">
+                <div class="shop-field shop-field--sm">
                     <label>Quantity Max</label>
                     <select data-field="qtymax">${qtyOpts}</select>
                 </div>
@@ -1221,12 +1233,7 @@
     }
 
     window.addShopEntry = function (type) {
-        const defaults = {};
-        if (type === 'item')      defaults.ItemId  = 0;
-        else if (type === 'mob')  defaults.MobId   = 0;
-        else if (type === 'buff') defaults.BuffId  = 0;
-        else if (type === 'pet')  defaults.PetType = '';
-        appendShopCard(document.getElementById('shop-list'), defaults);
+        appendShopCard(document.getElementById('shop-list'), {}, type);
     };
 
     function collectShop() {
@@ -1594,6 +1601,7 @@
             const chip = document.createElement('span');
             chip.className = 'buff-chip';
             chip.dataset.id = it.ItemId;
+            chip.dataset.itemId = it.ItemId;
             chip.innerHTML = '#' + it.ItemId + ' ' + esc(itemName(it.ItemId)) +
                 ' <button title="Remove" onclick="this.closest(\'.buff-chip\').remove()">&times;</button>';
             list.appendChild(chip);
@@ -1613,6 +1621,7 @@
                     const chip = document.createElement('span');
                     chip.className = 'buff-chip';
                     chip.dataset.id = item.ItemId;
+                    chip.dataset.itemId = item.ItemId;
                     chip.innerHTML = '#' + item.ItemId + ' ' + esc(item.Name) +
                         ' <button title="Remove" onclick="this.closest(\'.buff-chip\').remove()">&times;</button>';
                     listEl.appendChild(chip);
@@ -1693,6 +1702,7 @@
                 for (const id of buffIds) {
                     const chip = document.createElement('span');
                     chip.className = 'pet-buff-chip';
+                    chip.dataset.buffId = id;
                     chip.textContent = buffName(id);
                     chips.appendChild(chip);
                 }

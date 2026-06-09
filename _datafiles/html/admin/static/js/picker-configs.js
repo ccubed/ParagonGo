@@ -23,10 +23,28 @@ const PickerConfigs = {
         idKey:   'BuffId',
         columns: [
             { key: 'BuffId',      label: '#',    width: '4rem',  mono: true },
-            { key: 'Name',        label: 'Name', flex: true },
+            {
+                key: 'Name', label: 'Name', flex: true,
+                // Render the name with the description as a muted subtitle so the
+                // picker conveys what each buff actually does.
+                render: (name, buff) => {
+                    const wrap = document.createElement('div');
+                    const n = document.createElement('div');
+                    n.style.fontWeight = '600';
+                    n.textContent = name == null ? '' : String(name);
+                    wrap.appendChild(n);
+                    if (buff.Description) {
+                        const d = document.createElement('div');
+                        d.style.cssText = 'font-size:0.78rem;color:var(--color-text-faint);margin-top:0.1rem;white-space:normal;';
+                        d.textContent = buff.Description;
+                        wrap.appendChild(d);
+                    }
+                    return wrap;
+                },
+            },
             { key: 'TriggerRate', label: 'Rate', width: '6rem' },
         ],
-        searchKeys: ['BuffId', 'Name'],
+        searchKeys: ['BuffId', 'Name', 'Description'],
         sort: (a, b) => a.BuffId - b.BuffId,
         // buffs API returns { data: { specs: { ... } } } - unwrap via source fn
         source: async () => {
@@ -127,12 +145,298 @@ PickerConfigs.buffName = function (id) {
     return '#' + id;
 };
 
+// buffDescription(id) - synchronously resolves a buff's description from the
+// AdminAPI cache. Returns '' if the cache isn't warm yet or the buff has none.
+PickerConfigs.buffDescription = function (id) {
+    const entry = (window._adminBuffSpecs || {})[String(id)];
+    return (entry && entry.Description) || '';
+};
+
 // Pre-warm _adminBuffSpecs whenever buffs are fetched so buffName() works
 // synchronously on subsequent calls.
 AdminAPI.get('/admin/api/v1/buffs').then(res => {
     if (res.ok && res.data && res.data.data && res.data.data.specs) {
         window._adminBuffSpecs = res.data.data.specs;
     }
+});
+
+// Pre-warm _adminQuestSpecs (keyed by QuestId) so quest tooltips can resolve a
+// token's quest name and step description synchronously at hover time.
+AdminAPI.get('/admin/api/v1/quests').then(res => {
+    if (res.ok && res.data && Array.isArray(res.data.data)) {
+        const byId = {};
+        for (const q of res.data.data) byId[String(q.QuestId)] = q;
+        window._adminQuestSpecs = byId;
+    }
+});
+
+// attachHoverTooltip - registers a hover provider for a CSS `selector`. When the
+// pointer is over a matching element, `buildContent(target)` is called to build a
+// DOM node shown in a single shared, themed floating tooltip (returning null
+// suppresses it). Content is built lazily on hover, so it works even when the
+// underlying spec caches warm up after the chips are rendered. A single set of
+// document listeners and one tooltip element are shared across all providers, so
+// providers for different selectors never fight over the tooltip.
+const attachHoverTooltip = (function () {
+    'use strict';
+
+    const providers = []; // { selector, build }
+    let tipEl = null;
+    let bound = false;
+
+    function ensureTip() {
+        if (tipEl) return tipEl;
+        tipEl = document.createElement('div');
+        tipEl.className = 'hover-tooltip';
+        tipEl.style.cssText = [
+            'position:fixed', 'z-index:10000', 'pointer-events:none',
+            'max-width:320px', 'padding:0.5rem 0.65rem', 'border-radius:6px',
+            'background:var(--color-surface-raised)', 'color:var(--color-text)',
+            'border:1px solid var(--color-border-medium)',
+            'box-shadow:0 4px 16px var(--color-shadow)',
+            'font-size:0.8rem', 'line-height:1.35', 'display:none',
+        ].join(';');
+        document.body.appendChild(tipEl);
+        return tipEl;
+    }
+
+    function position(e) {
+        if (!tipEl || tipEl.style.display === 'none') return;
+        const pad = 14;
+        const rect = tipEl.getBoundingClientRect();
+        let x = e.clientX + pad;
+        let y = e.clientY + pad;
+        if (x + rect.width > window.innerWidth - 8) x = e.clientX - rect.width - pad;
+        if (y + rect.height > window.innerHeight - 8) y = e.clientY - rect.height - pad;
+        tipEl.style.left = Math.max(8, x) + 'px';
+        tipEl.style.top = Math.max(8, y) + 'px';
+    }
+
+    function hide() { if (tipEl) tipEl.style.display = 'none'; }
+
+    // Return the first provider whose selector matches an ancestor of `node`,
+    // along with the matched element.
+    function match(node) {
+        if (!node || !node.closest) return null;
+        for (const p of providers) {
+            const el = node.closest(p.selector);
+            if (el) return { el: el, build: p.build };
+        }
+        return null;
+    }
+
+    function bind() {
+        if (bound) return;
+        bound = true;
+
+        document.addEventListener('mouseover', function (e) {
+            const m = match(e.target);
+            if (!m) return;
+            const content = m.build(m.el);
+            if (!content) { hide(); return; }
+            const tip = ensureTip();
+            tip.innerHTML = '';
+            tip.appendChild(content);
+            tip.style.display = 'block';
+            position(e);
+        });
+        document.addEventListener('mousemove', function (e) {
+            if (!tipEl || tipEl.style.display === 'none') return;
+            if (!match(e.target)) { hide(); return; }
+            position(e);
+        });
+        document.addEventListener('mouseout', function (e) {
+            if (!match(e.target)) return;
+            // Keep the tooltip if we're still moving within a matching element.
+            if (match(e.relatedTarget)) return;
+            hide();
+        });
+    }
+
+    return function attach(selector, buildContent) {
+        providers.push({ selector: selector, build: buildContent });
+        bind();
+    };
+})();
+
+// BuffTooltip - any element carrying a `data-buff-id` attribute (e.g. selected
+// buff chips on items/mobs/pets/races/rooms/mutators pages) gets a hover tooltip
+// showing the buff name and description.
+attachHoverTooltip('[data-buff-id]', function (target) {
+    const id = target.getAttribute('data-buff-id');
+    if (id == null || id === '') return null;
+    const spec = (window._adminBuffSpecs || {})[String(id)];
+    if (!spec) return null; // cache not warm / unknown buff - skip silently
+
+    const wrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;margin-bottom:0.15rem;';
+    title.textContent = '#' + id + ' ' + (spec.Name || '');
+    wrap.appendChild(title);
+
+    const body = document.createElement('div');
+    if (spec.Description) {
+        body.style.cssText = 'color:var(--color-text-muted);';
+        body.textContent = spec.Description;
+    } else {
+        body.style.cssText = 'color:var(--color-text-faint);font-style:italic;';
+        body.textContent = 'No description.';
+    }
+    wrap.appendChild(body);
+    return wrap;
+});
+
+// QuestTooltip - any element carrying a `data-quest-token` attribute (e.g. quest
+// flag chips on mobs/rooms/mapper pages) gets a hover tooltip showing the quest
+// name and the matching step's description. The token format is `questId-stepId`.
+attachHoverTooltip('[data-quest-token]', function (target) {
+    const token = target.getAttribute('data-quest-token');
+    if (token == null || token === '') return null;
+    const dash = token.indexOf('-');
+    const questId = dash >= 0 ? token.slice(0, dash) : token;
+    const stepId  = dash >= 0 ? token.slice(dash + 1) : '';
+    const quest = (window._adminQuestSpecs || {})[String(questId)];
+    if (!quest) return null; // cache not warm / unknown quest - skip silently
+
+    const wrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;margin-bottom:0.15rem;';
+    title.textContent = '#' + questId + ' ' + (quest.Name || '');
+    wrap.appendChild(title);
+
+    let step = null;
+    if (stepId && Array.isArray(quest.Steps)) {
+        step = quest.Steps.find(s => String(s.Id) === stepId) || null;
+    }
+
+    const body = document.createElement('div');
+    if (step) {
+        const label = document.createElement('span');
+        label.style.cssText = 'font-weight:600;';
+        label.textContent = stepId + ': ';
+        body.appendChild(label);
+        const desc = document.createElement('span');
+        desc.style.cssText = 'color:var(--color-text-muted);';
+        desc.textContent = step.Description || '(no description)';
+        body.appendChild(desc);
+    } else if (stepId) {
+        body.style.cssText = 'color:var(--color-text-faint);font-style:italic;';
+        body.textContent = 'Step "' + stepId + '" not found.';
+    } else {
+        body.style.cssText = 'color:var(--color-text-faint);font-style:italic;';
+        body.textContent = quest.Description || 'No description.';
+    }
+    wrap.appendChild(body);
+    return wrap;
+});
+
+// Pre-warm _adminItemSpecs (keyed by ItemId) so item info-card tooltips can
+// resolve an item's details synchronously at hover time.
+AdminAPI.get('/admin/api/v1/items').then(res => {
+    if (res.ok && res.data && Array.isArray(res.data.data)) {
+        const byId = {};
+        for (const it of res.data.data) byId[String(it.ItemId)] = it;
+        window._adminItemSpecs = byId;
+    }
+});
+
+// ItemTooltip - any element carrying a `data-item-id` attribute (e.g. selected
+// item chips / spawn displays on mobs/users/rooms pages) gets a hover "info
+// card" with at-a-glance details: name, type/subtype, description, quest token.
+attachHoverTooltip('[data-item-id]', function (target) {
+    const id = target.getAttribute('data-item-id');
+    if (id == null || id === '' || id === '0') return null;
+    const spec = (window._adminItemSpecs || {})[String(id)];
+    if (!spec) return null; // cache not warm / unknown item - skip silently
+
+    const wrap = document.createElement('div');
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;margin-bottom:0.15rem;';
+    title.textContent = '#' + id + ' ' + (spec.Name || '');
+    wrap.appendChild(title);
+
+    const type = (spec.Type || '').toString();
+    const subtype = (spec.Subtype || '').toString();
+    if (type || subtype) {
+        const t = document.createElement('div');
+        t.style.cssText = 'color:var(--color-text-subtle);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.2rem;';
+        t.textContent = subtype ? (type + ' / ' + subtype) : type;
+        wrap.appendChild(t);
+    }
+
+    const desc = document.createElement('div');
+    if (spec.Description) {
+        desc.style.cssText = 'color:var(--color-text-muted);';
+        desc.textContent = spec.Description;
+    } else {
+        desc.style.cssText = 'color:var(--color-text-faint);font-style:italic;';
+        desc.textContent = 'No description.';
+    }
+    wrap.appendChild(desc);
+
+    if (spec.QuestToken) {
+        const q = document.createElement('div');
+        q.style.cssText = 'margin-top:0.3rem;font-size:0.75rem;color:var(--color-text-subtle);';
+        const label = document.createElement('span');
+        label.style.fontWeight = '600';
+        label.textContent = 'Quest token: ';
+        q.appendChild(label);
+        const tok = document.createElement('span');
+        tok.style.fontFamily = 'monospace';
+        tok.textContent = spec.QuestToken;
+        q.appendChild(tok);
+        wrap.appendChild(q);
+    }
+
+    return wrap;
+});
+
+// Pre-warm _adminSpellSpecs (keyed by SpellId) so spell tooltips can resolve a
+// spell's details synchronously at hover time.
+AdminAPI.get('/admin/api/v2/spells').then(res => {
+    if (res.ok && res.data && Array.isArray(res.data.data)) {
+        const byId = {};
+        for (const sp of res.data.data) byId[String(sp.SpellId)] = sp;
+        window._adminSpellSpecs = byId;
+    }
+});
+
+// SpellTooltip - any element carrying a `data-spell-id` attribute (e.g. spellbook
+// chips on mobs/users pages, skill-training rows on rooms) gets a hover tooltip
+// showing the spell name, type, and description.
+attachHoverTooltip('[data-spell-id]', function (target) {
+    const id = target.getAttribute('data-spell-id');
+    if (id == null || id === '') return null;
+    const spec = (window._adminSpellSpecs || {})[String(id)];
+    if (!spec) return null; // cache not warm / unknown spell - skip silently
+
+    const wrap = document.createElement('div');
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;margin-bottom:0.15rem;';
+    title.textContent = spec.Name || id;
+    wrap.appendChild(title);
+
+    const type = (spec.Type || '').toString();
+    if (type) {
+        const t = document.createElement('div');
+        t.style.cssText = 'color:var(--color-text-subtle);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.2rem;';
+        t.textContent = type;
+        wrap.appendChild(t);
+    }
+
+    const desc = document.createElement('div');
+    if (spec.Description) {
+        desc.style.cssText = 'color:var(--color-text-muted);';
+        desc.textContent = spec.Description;
+    } else {
+        desc.style.cssText = 'color:var(--color-text-faint);font-style:italic;';
+        desc.textContent = 'No description.';
+    }
+    wrap.appendChild(desc);
+
+    return wrap;
 });
 
 // QuestTokenPicker

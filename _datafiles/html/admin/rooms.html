@@ -1841,7 +1841,8 @@
             '<div class="spawn-field span2" style="' + (isMob ? hidden : shown) + '">' +
                 '<label>Item</label>' +
                 '<div class="spawn-picker-wrap">' +
-                    '<span class="spawn-picker-display spawn-item-display ' + (s.ItemId ? '' : 'empty') + '">' +
+                    '<span class="spawn-picker-display spawn-item-display ' + (s.ItemId ? '' : 'empty') + '"' +
+                        (s.ItemId ? ' data-item-id="' + s.ItemId + '"' : '') + '>' +
                         (s.ItemId ? '#' + s.ItemId : 'No item (gold only)') + '</span>' +
                     '<input type="hidden" class="spawn-itemid" value="' + (s.ItemId || 0) + '" />' +
                     '<button type="button" class="btn-add-sm" style="margin-top:0" onclick="pickSpawnItem(this)">Pick Item&hellip;</button>' +
@@ -2014,6 +2015,7 @@
                 card.querySelector('.spawn-itemid').value = item.ItemId;
                 const display = card.querySelector('.spawn-item-display');
                 display.textContent = '#' + item.ItemId + ' ' + item.Name;
+                display.dataset.itemId = item.ItemId;
                 display.className = 'spawn-picker-display spawn-item-display';
                 updateSpawnHeader(card);
             },
@@ -2025,6 +2027,7 @@
         card.querySelector('.spawn-itemid').value = 0;
         const display = card.querySelector('.spawn-item-display');
         display.textContent = 'No item (gold only)';
+        delete display.dataset.itemId;
         display.className = 'spawn-picker-display spawn-item-display empty';
         updateSpawnHeader(card);
     };
@@ -2162,6 +2165,7 @@
         const display = document.createElement('div');
         display.className = 'train-skill-display' + (skill ? '' : ' empty');
         display.dataset.skill = skill;
+        if (skill) display.dataset.spellId = skill;
         display.textContent = skill || 'Click to pick skill…';
         display.addEventListener('click', function () {
             Picker.open({
@@ -2169,6 +2173,7 @@
                 title: 'Select Skill',
                 onSelect: function (spell) {
                     display.dataset.skill = spell.SpellId;
+                    display.dataset.spellId = spell.SpellId;
                     display.textContent = spell.SpellId + ' - ' + spell.Name;
                     display.className = 'train-skill-display';
                 },

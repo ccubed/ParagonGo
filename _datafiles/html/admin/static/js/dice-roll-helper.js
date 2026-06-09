@@ -233,6 +233,7 @@ var DiceRollHelper = (function() {
             var chip = document.createElement('span');
             chip.className = 'drh-chip';
             chip.dataset.id = id;
+            chip.dataset.buffId = id;
             var label = escHtml(typeof PickerConfigs !== 'undefined' ? PickerConfigs.buffName(id) : '#' + id);
             chip.innerHTML = label + ' <button title="Remove">&times;</button>';
             chip.querySelector('button').addEventListener('click', function() {

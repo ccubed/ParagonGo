@@ -591,6 +591,7 @@
         const chip = document.createElement('span');
         chip.className = 'buff-chip';
         chip.dataset.id = id;
+        chip.dataset.buffId = id;
         const label = name != null ? '#' + id + ' ' + escHtml(name) : escHtml(PickerConfigs.buffName(id));
         chip.innerHTML = label + ' <button title="Remove" onclick="this.closest(\'[data-id]\').remove()">&times;</button>';
         container.appendChild(chip);

@@ -149,7 +149,7 @@
                     <label for="fUnarmedName">Unarmed Attack Name</label>
                     <input type="text" id="fUnarmedName" placeholder="fist" />
                 </div>
-                <div class="field span2">
+                <div class="field">
                     <label for="fDiceRoll">Unarmed Damage (Dice Roll)</label>
                     <input type="text" id="fDiceRoll" placeholder="1d4" />
                     <div class="field-hint">e.g. 1d6, 2d4+1</div>
@@ -444,6 +444,7 @@ function appendRaceBuffChip(id, name) {
     const chip = document.createElement('span');
     chip.className = 'buff-chip';
     chip.dataset.id = id;
+    chip.dataset.buffId = id;
     const label = name != null ? '#' + id + ' ' + escHtml(name) : escHtml(PickerConfigs.buffName(id));
     chip.innerHTML = label +
         ' <button title="Remove" onclick="this.closest(\'[data-id]\').remove()">&times;</button>';
