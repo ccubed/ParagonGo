@@ -32,20 +32,24 @@ func AttemptConversation(initiatorMobId int, initatorInstanceId int, initiatorNa
 
 	filePath := util.FilePath(convFolder + `/` + fileName)
 
-	_, err := os.Stat(filePath)
-	if err != nil {
-		return 0
-	}
+	var bytes []byte
 
-	bytes, err := util.ReadFile(filePath)
-	if err != nil {
-		mudlog.Error("AttemptConversation()", "error", "Problem reading conversation datafile "+filePath+": "+err.Error())
+	if _, err := os.Stat(filePath); err == nil {
+		bytes, err = util.ReadFile(filePath)
+		if err != nil {
+			mudlog.Error("AttemptConversation()", "error", "Problem reading conversation datafile "+filePath+": "+err.Error())
+			return 0
+		}
+	} else if pluginBytes, ok := readPluginConversationFile(zone, initiatorMobId); ok {
+		// Fall back to a plugin-provided conversation file (disk takes priority).
+		bytes = pluginBytes
+	} else {
 		return 0
 	}
 
 	var dataFile []ConversationData
 
-	err = yaml.Unmarshal(bytes, &dataFile)
+	err := yaml.Unmarshal(bytes, &dataFile)
 	if err != nil {
 		mudlog.Error("AttemptConversation()", "error", "Problem unmarshalling conversation datafile "+filePath+": "+err.Error())
 		return 0
@@ -158,9 +162,7 @@ func HasConverseFile(mobId int, zone string) bool {
 
 	cacheKey := strconv.Itoa(mobId) + `-` + zone
 	if result, ok := converseCheckCache[cacheKey]; ok {
-		if result == false {
-			return false
-		}
+		return result
 	}
 
 	convFolder := string(configs.GetFilePathsConfig().DataFiles) + `/conversations`
@@ -169,15 +171,16 @@ func HasConverseFile(mobId int, zone string) bool {
 
 	filePath := util.FilePath(convFolder + `/` + fileName)
 
-	if _, err := os.Stat(filePath); err != nil {
-		converseCheckCache[cacheKey] = false
-		return false
+	exists := false
+	if _, err := os.Stat(filePath); err == nil {
+		exists = true
+	} else if hasPluginConversationFile(zone, mobId) {
+		exists = true
 	}
 
-	converseCheckCache[cacheKey] = true
+	converseCheckCache[cacheKey] = exists
 
-	return true
-
+	return exists
 }
 
 func (c *Conversation) NextActions(roundNow uint64) []string {

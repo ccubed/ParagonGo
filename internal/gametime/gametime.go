@@ -20,6 +20,26 @@ var (
 	roundDateCacheSeq []uint64
 )
 
+// anchorPeriods maps the user-facing token (already lowercased and trimmed of any
+// "x" prefix down to its first three characters by AddPeriod) to the canonical
+// period name understood by GameDate.LastPeriod.
+//
+// These are "anchor" periods: rather than advancing by a fixed duration, they
+// first snap backwards to the most recent occurrence of a named moment (e.g. the
+// last noon, the last sunrise) and then advance forward by whole days. This is why
+// AddPeriod treats them differently from plain durations like "3 days".
+//
+// Note that "midnight" intentionally maps to the "day" anchor: midnight *is* the
+// start of a game day, so the last midnight is the last day-start.
+var anchorPeriods = map[string]string{
+	`noo`:      `noon`,    // "noon", "noons"
+	`mid`:      `day`,     // "midnight", "midnights" -> start of day
+	`sunrise`:  `sunrise`, // matched in full because "sun" alone is ambiguous
+	`sunrises`: `sunrise`,
+	`sunset`:   `sunset`,
+	`sunsets`:  `sunset`,
+}
+
 type RoundTimer struct {
 	RoundStart uint64 `yaml:"roundstart,omitempty"`
 	Period     string `yaml:"period,omitempty"`
@@ -84,31 +104,32 @@ func (gd GameDate) String(symbolOnly ...bool) string {
 	return fmt.Sprintf("<ansi fg=\"%s\">%d:%02d%s</ansi>", dayNight, gd.Hour, gd.Minute, gd.AmPm)
 }
 
-// Jumps the clock foward to the next night
-// If a roundAdjustment is provided, it will be added to the offset
-// This is useful to set to the round right before the rollover
+// SetToNight jumps the global clock forward to the next night.
+//
+// If a roundAdjustment is provided it is added to (or subtracted from) the target
+// round. This is useful to land on the round right before the rollover.
 func SetToNight(roundAdjustment ...int) {
-
-	dayRound := GetLastPeriod(`sunset`, util.GetRoundCount())
-
-	if len(roundAdjustment) > 0 {
-		if roundAdjustment[0] < 0 {
-			dayRound -= uint64(-1 * roundAdjustment[0])
-		} else {
-			dayRound += uint64(roundAdjustment[0])
-		}
-	}
-
-	gd := GetDate(dayRound).Add(0, 1, 0)
-	util.SetRoundCount(gd.RoundNumber)
+	setToDayPart(`sunset`, roundAdjustment...)
 }
 
-// Jumps the clock forward to the next day
-// If a roundAdjustment is provided, it will be added to the offset
-// This is useful to set to the round right before the rollover
+// SetToDay jumps the global clock forward to the next day.
+//
+// If a roundAdjustment is provided it is added to (or subtracted from) the target
+// round. This is useful to land on the round right before the rollover.
 func SetToDay(roundAdjustment ...int) {
+	setToDayPart(`sunrise`, roundAdjustment...)
+}
 
-	dayRound := GetLastPeriod(`sunrise`, util.GetRoundCount())
+// setToDayPart is the shared implementation behind SetToNight/SetToDay. Both
+// functions are identical except for the anchor they snap to (sunset vs sunrise),
+// so the logic lives here once:
+//   - find the last occurrence of the anchor,
+//   - apply the optional round adjustment,
+//   - advance one day so we land on the *next* occurrence,
+//   - write the result back to the global round counter.
+func setToDayPart(anchor string, roundAdjustment ...int) {
+
+	dayRound := GetLastPeriod(anchor, util.GetRoundCount())
 
 	if len(roundAdjustment) > 0 {
 		if roundAdjustment[0] < 0 {
@@ -122,8 +143,9 @@ func SetToDay(roundAdjustment ...int) {
 	util.SetRoundCount(gd.RoundNumber)
 }
 
-// Jumps the clock forward a specific hour/minutes
-// Between 0 and 23
+// SetTime jumps the global clock forward to a specific hour (0-23) and optional
+// minute. It works by adjusting dayResetOffset so the next ReCalculate reports the
+// requested time, then clears the round-date cache so stale entries are not served.
 func SetTime(setToHour int, setToMinutes ...int) {
 
 	rpd := activeCalendar[`default`].roundsPerDay
@@ -174,8 +196,15 @@ func GetDate(forceRound ...uint64) GameDate {
 }
 
 func getDate(currentRound uint64) GameDate {
+	return getDateForCalendar(currentRound, `default`)
+}
 
-	calendarToUse := "default"
+// getDateForCalendar builds a fully-populated GameDate for a round under a
+// specific named calendar. getDate is the common "default" calendar case; the
+// anchor path in AddPeriod uses this directly with g.Calendar so that day-stepping
+// after a snap (e.g. "1 sunrise") respects the originating date's calendar rather
+// than silently reverting to "default".
+func getDateForCalendar(currentRound uint64, calendarToUse string) GameDate {
 
 	gd := GameDate{Calendar: calendarToUse}
 
@@ -294,261 +323,332 @@ func (g GameDate) Add(adjustHours int, adjustDays int, adjustYears int) GameDate
 	return g
 }
 
+// realTimeRounds converts a real-world quantity into a number of game rounds,
+// based on the configured real seconds per round. It is used by AddPeriod when a
+// period string contains "real" or "irl".
+//
+// Note: a "real day" is treated as 84600 seconds (23.5 hours), not 86400. This is
+// a long-standing intentional quirk of this engine, preserved here so existing
+// content that relies on it keeps the same timing.
+type realTimeRounds struct {
+	perMinute int
+	perHour   int
+	perDay    int
+}
+
+func newRealTimeRounds() realTimeRounds {
+	// RoundSeconds is a real-time value — read from the timing config, not the calendar.
+	roundSeconds := int(configs.GetTimingConfig().RoundSeconds)
+	if roundSeconds < 1 {
+		roundSeconds = 1
+	}
+	return realTimeRounds{
+		perMinute: 60 / roundSeconds,
+		perHour:   3600 / roundSeconds,
+		perDay:    84600 / roundSeconds,
+	}
+}
+
+// AddPeriod returns the round number reached by advancing FORWARD from this
+// GameDate by the supplied period string. It is the additive counterpart to
+// StartOf (which snaps backward).
+//
 // Example:
-// gd := gametime.GetDate()
-// nextPeriodRound := gd.AddPeriod(`10 days`)
-// Accepts: x years, x months, x weeks, x days, x hours, x rounds
-// If `IRL` or `real` are in the mix, such as `x irl days` or `x days irl`, then it will use real world time
+//
+//	gd := gametime.GetDate()
+//	nextPeriodRound := gd.AddPeriod(`10 days`)
+//
+// Accepts: x years, x months, x weeks, x days, x hours, x minutes, x rounds, and
+// the day-anchor units noon/midnight/sunrise/sunset (which snap to the last such
+// moment and then add x days).
+//
+// If `IRL` or `real` appear in the string, such as `x irl days` or `x days irl`,
+// real-world time is used instead of game time. Real time is not supported for the
+// day-anchor units; specifying it logs an error and falls back to game time.
 func (g GameDate) AddPeriod(periodStr string) uint64 {
 
-	if periodStr == `` {
+	qty, timeStr, realTime := parsePeriod(periodStr)
+	if timeStr == `` && qty == 0 {
+		// Empty / unparseable-as-anything input: no movement.
 		return g.RoundNumber
-	}
-
-	qty := 1
-	timeStr := ``
-	realTime := false
-	roundsPerRealDay := 0
-	roundsPerRealHour := 0
-	roundsPerRealMinute := 0
-
-	parts := strings.Split(strings.ToLower(periodStr), ` `)
-	if len(parts) == 1 { // e.g. 2
-
-		// try and parse a number, if not a number, must be a str
-		if qty, _ = strconv.Atoi(parts[0]); qty < 1 {
-			qty = 1
-			timeStr = parts[0]
-		}
-
-	} else if len(parts) == 2 { // e.g. - 2 days
-		// first arg is quantity, second is unit
-		if qty, _ = strconv.Atoi(parts[0]); qty < 1 {
-			qty = 1
-		}
-		timeStr = parts[1]
-
-	} else if len(parts) == 3 {
-
-		// first arg is quantity, second should be `real` and the last is the unit
-		if qty, _ = strconv.Atoi(parts[0]); qty < 1 {
-			qty = 1
-		}
-
-		// RoundSeconds is a real-time value — still read from the timing config (not the calendar).
-		c := configs.GetTimingConfig()
-
-		if parts[1] == `real` || parts[1] == `irl` { // e.g. - 2 irl days
-			realTime = true
-			roundsPerRealDay = 84600 / int(c.RoundSeconds)
-			roundsPerRealHour = 3600 / int(c.RoundSeconds)
-			roundsPerRealMinute = 60 / int(c.RoundSeconds)
-
-			timeStr = parts[2]
-		} else if parts[1] == `game` || parts[1] == `gametime` { // e.g. - 2 game days
-			timeStr = parts[2]
-		} else if parts[2] == `real` || parts[2] == `irl` { // e.g. - 2 days irl
-			realTime = true
-			roundsPerRealDay = 84600 / int(c.RoundSeconds)
-			roundsPerRealHour = 3600 / int(c.RoundSeconds)
-			roundsPerRealMinute = 60 / int(c.RoundSeconds)
-
-			timeStr = parts[1]
-		} else if parts[2] == `game` || parts[2] == `gametime` { // e.g. - 2 days gametime
-			timeStr = parts[1]
-		}
-
 	}
 
 	if len(timeStr) >= 3 {
 
 		strShort := timeStr[0:3]
 
-		if strShort == `yea` { // timeStr == `year` || timeStr == `years` || timeStr == `yearly` {
-
+		// --- Day-anchor units (noon/midnight/sunrise/sunset) ---------------------
+		// These do not advance by a fixed duration. They first snap backward to the
+		// last occurrence of the anchor, then advance forward by qty whole days.
+		// Handled first, and via a shared table, so the four near-identical branches
+		// that previously existed are collapsed into one.
+		anchorKey := strShort
+		if anchorKey != `noo` && anchorKey != `mid` {
+			// sunrise/sunset are matched in full (their first three letters, "sun",
+			// are ambiguous), so use the whole token for the lookup.
+			anchorKey = timeStr
+		}
+		if anchor, ok := anchorPeriods[anchorKey]; ok {
 			if realTime {
-				adjustment := uint64(qty * roundsPerRealDay * 365)
-				return g.RoundNumber + adjustment
+				mudlog.Error("AddPeriod", "error", "real time not supported for "+timeStr)
 			}
-
-			gNext := g.Add(0, 0, 1*qty)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `mon` { // else if timeStr == `month` || timeStr == `months` || timeStr == `monthly` {
-
-			if realTime {
-				adjustment := uint64(qty * roundsPerRealHour * 730)
-				return g.RoundNumber + adjustment
-			}
-
-			hoursPerMonth := activeCalendar[g.Calendar].hoursPerMonth
-			gNext := g.Add(int(math.Round(hoursPerMonth))*qty, 0, 0)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `wee` { //  else if timeStr == `week` || timeStr == `weeks` || timeStr == `weekly` {
-
-			if realTime {
-				adjustment := uint64(qty * roundsPerRealDay * 7)
-				return g.RoundNumber + adjustment
-			}
-
-			gNext := g.Add(0, activeCalendar[g.Calendar].daysPerWeek*qty, 0)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `day` || strShort == `dai` { //  else if timeStr == `day` || timeStr == `days` || timeStr == `daily` {
-
-			if realTime {
-				adjustment := uint64(qty * roundsPerRealDay)
-				return g.RoundNumber + adjustment
-			}
-
-			gNext := g.Add(0, qty, 0)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `hou` { // if timeStr == `hour` || timeStr == `hours` || timeStr == `hourly` {
-
-			if realTime {
-				adjustment := uint64(qty * roundsPerRealHour)
-				return g.RoundNumber + adjustment
-			}
-
-			gNext := g.Add(qty, 0, 0)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `min` { // if timeStr == `minute` || if timeStr == `minutes` || if timeStr == `minutely`
-
-			if realTime {
-				adjustment := uint64(qty * roundsPerRealMinute)
-				return g.RoundNumber + adjustment
-			}
-
-			return g.RoundNumber + uint64(math.Floor(float64(qty)*activeCalendar[g.Calendar].roundsPerMinute))
-
-		} else if strShort == `noo` { // if timeStr == `noon` || timeStr == `noons` {
-
-			if realTime {
-				mudlog.Error("AddPeriod", "error", "real time not supported for noon yet: "+timeStr)
-			}
-
-			g = getDate(GetLastPeriod(`noon`, g.RoundNumber))
-			// adjusts by days
-			gNext := g.Add(0, qty, 0)
-
-			return gNext.RoundNumber
-
-		} else if strShort == `mid` { // if timeStr == `midnight` || timeStr == `midnights` {
-
-			if realTime {
-				mudlog.Error("AddPeriod", "error", "real time not supported for midnight yet: "+timeStr)
-			}
-
-			g = getDate(GetLastPeriod(`day`, g.RoundNumber))
-			// adjusts by days
-			gNext := g.Add(0, qty, 0)
-
-			return gNext.RoundNumber
-
-		} else if timeStr == `sunrise` || timeStr == `sunrises` {
-
-			if realTime {
-				mudlog.Error("AddPeriod", "error", "real time not supported for sunrise yet: "+timeStr)
-			}
-
-			g = getDate(GetLastPeriod(`sunrise`, g.RoundNumber))
-			// adjusts by days
-			gNext := g.Add(0, qty, 0)
-
-			return gNext.RoundNumber
-
-		} else if timeStr == `sunset` || timeStr == `sunsets` {
-
-			if realTime {
-				mudlog.Error("AddPeriod", "error", "real time not supported for sunset yet: "+timeStr)
-			}
-
-			g = getDate(GetLastPeriod(`sunset`, g.RoundNumber))
-			// adjusts by days
-			gNext := g.Add(0, qty, 0)
-
-			return gNext.RoundNumber
-
+			anchored := getDateForCalendar(g.LastPeriod(anchor), g.Calendar)
+			return anchored.Add(0, qty, 0).RoundNumber
 		}
 
-		// Failover to rounds
+		// --- Fixed-duration units -----------------------------------------------
+		switch strShort {
+
+		case `yea`: // year / years / yearly
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perDay*365)
+			}
+			return g.Add(0, 0, qty).RoundNumber
+
+		case `mon`: // month / months / monthly
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perHour*730)
+			}
+			hoursPerMonth := activeCalendar[g.Calendar].hoursPerMonth
+			return g.Add(int(math.Round(hoursPerMonth))*qty, 0, 0).RoundNumber
+
+		case `wee`: // week / weeks / weekly
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perDay*7)
+			}
+			return g.Add(0, activeCalendar[g.Calendar].daysPerWeek*qty, 0).RoundNumber
+
+		case `day`, `dai`: // day / days / daily
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perDay)
+			}
+			return g.Add(0, qty, 0).RoundNumber
+
+		case `hou`: // hour / hours / hourly
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perHour)
+			}
+			return g.Add(qty, 0, 0).RoundNumber
+
+		case `min`: // minute / minutes
+			if realTime {
+				rt := newRealTimeRounds()
+				return g.RoundNumber + uint64(qty*rt.perMinute)
+			}
+			return g.RoundNumber + uint64(math.Floor(float64(qty)*activeCalendar[g.Calendar].roundsPerMinute))
+		}
+
+		// Unrecognised unit: fail over to treating qty as raw rounds.
 		return g.RoundNumber + uint64(qty)
 	}
 
-	// Assume rounds?
-	//if timeStr == `hour` || timeStr == `hours` || timeStr == `hourly` {
-
-	gNext := g.Add(qty, 0, 0)
-
-	return gNext.RoundNumber
-
-	//}
-
+	// No unit string at all (e.g. just a number): treat qty as hours, matching the
+	// historical default behaviour.
+	return g.Add(qty, 0, 0).RoundNumber
 }
 
-func GetLastPeriod(periodName string, roundNumber uint64) uint64 {
+// parsePeriod breaks a period string such as "2 days", "3 irl hours" or "5" into
+// its component quantity, unit token and a real-time flag.
+//
+// Supported shapes:
+//
+//	"<unit>"                e.g. "day"            -> qty 1
+//	"<qty>"                 e.g. "5"              -> raw rounds (no unit)
+//	"<qty> <unit>"          e.g. "2 days"
+//	"<qty> <real> <unit>"   e.g. "2 irl days"
+//	"<qty> <unit> <real>"   e.g. "2 days irl"
+//	"<qty> <game> <unit>"   e.g. "2 game days"    (explicit game time)
+//	"<qty> <unit> <game>"   e.g. "2 days gametime"
+//
+// qty defaults to 1 whenever it is missing or not a positive integer.
+func parsePeriod(periodStr string) (qty int, timeStr string, realTime bool) {
 
-	ac := activeCalendar[`default`]
+	qty = 1
+
+	if periodStr == `` {
+		return 0, ``, false
+	}
+
+	parts := strings.Split(strings.ToLower(periodStr), ` `)
+
+	switch len(parts) {
+
+	case 1: // either a bare number, or a bare unit
+		// Try to parse a number; if that fails (or is < 1) it must be a unit string.
+		if n, err := strconv.Atoi(parts[0]); err == nil && n >= 1 {
+			qty = n
+		} else {
+			timeStr = parts[0]
+		}
+
+	case 2: // "<qty> <unit>"
+		if n, _ := strconv.Atoi(parts[0]); n >= 1 {
+			qty = n
+		}
+		timeStr = parts[1]
+
+	case 3: // "<qty> <qualifier> <unit>" or "<qty> <unit> <qualifier>"
+		if n, _ := strconv.Atoi(parts[0]); n >= 1 {
+			qty = n
+		}
+		switch {
+		case parts[1] == `real` || parts[1] == `irl`:
+			realTime = true
+			timeStr = parts[2]
+		case parts[1] == `game` || parts[1] == `gametime`:
+			timeStr = parts[2]
+		case parts[2] == `real` || parts[2] == `irl`:
+			realTime = true
+			timeStr = parts[1]
+		case parts[2] == `game` || parts[2] == `gametime`:
+			timeStr = parts[1]
+		}
+	}
+
+	return qty, timeStr, realTime
+}
+
+// StartOf snaps BACKWARD to the start of the named period relative to this
+// GameDate, returning that round number. It is the backward-snapping counterpart
+// to AddPeriod and never returns a round later than g.RoundNumber.
+//
+// It accepts both bare period names ("hour", "day", "week", "month", "year",
+// "noon", "sunrise", "sunset") and the natural-language "start of X" forms used by
+// player/scripting input. The connective words "start", "of" and "the" are
+// stripped during normalisation, so all of these are equivalent:
+//
+//	"start of the hour"   "start of hour"   "start hour"   "hour"
+//
+// IMPORTANT: this is a backward operation. Callers that expect a future expiry
+// round (the common AddPeriod use case) must NOT route "start of X" strings here
+// expecting forward movement — the result will be in the past or present.
+func (g GameDate) StartOf(periodStr string) uint64 {
+	name := normalizeStartOf(periodStr)
+	if name == `` {
+		// Nothing recognisable to snap to; stay put.
+		return g.RoundNumber
+	}
+	return g.LastPeriod(name)
+}
+
+// normalizeStartOf lowercases the input and removes the connective tokens
+// "start", "of" and "the", leaving just the period name. e.g. "Start Of The Day"
+// becomes "day". Returns "" if nothing is left.
+func normalizeStartOf(periodStr string) string {
+	parts := strings.Fields(strings.ToLower(periodStr))
+	kept := parts[:0]
+	for _, p := range parts {
+		switch p {
+		case `start`, `of`, `the`:
+			// drop connective words
+		default:
+			kept = append(kept, p)
+		}
+	}
+	if len(kept) == 0 {
+		return ``
+	}
+	// Only the period name is meaningful; ignore any trailing words.
+	return kept[0]
+}
+
+// LastPeriod returns the round number at which the named period last began,
+// relative to this GameDate's round number, honouring this GameDate's calendar.
+//
+// This is the calendar-aware core used by both StartOf and AddPeriod's day-anchor
+// handling. Previously this logic lived only in the package-level GetLastPeriod,
+// which always used the "default" calendar; making it a method ensures a non-
+// default calendar's AddPeriod("1 sunrise") and StartOf calls compute against the
+// correct calendar.
+//
+// Supported names: hour, day (== midnight), week, month, year, noon, sunrise,
+// sunset. Unknown names return the round number unchanged.
+func (g GameDate) LastPeriod(periodName string) uint64 {
+
+	ac := activeCalendar[g.Calendar]
+	roundNumber := g.RoundNumber
 
 	roundsPerDay := ac.roundsPerDay
 	nightHoursPerDay := uint64(ac.nightHours)
 	roundsPerHour := ac.roundsPerHour
 	noonRound := ac.noonRound
 
-	// What round started this week?
+	// Offsets of the current round within each enclosing period.
 	roundOfWeek := roundNumber % ac.roundsPerWeek
+	roundOfDay := roundNumber % roundsPerDay                      // since midnight
+	roundOfHour := roundOfDay % uint64(math.Floor(roundsPerHour)) // since top of hour
 
-	// What round started this day? (midnight)
-	roundOfDay := roundNumber % roundsPerDay
+	switch periodName {
 
-	// What round started this hour?
-	roundOfHour := roundOfDay % uint64(math.Floor(roundsPerHour))
-
-	if periodName == `hour` { // Start of the current hour (or closest to it)
-
+	case `hour`: // start of the current hour
 		roundNumber -= roundOfHour
 
-	} else if periodName == `day` { // Start of current day
-
+	case `day`, `midnight`: // start of the current day (midnight)
 		roundNumber -= roundOfDay
 
-	} else if periodName == `week` { // Start of current week
+	case `week`: // start of the current week
+		roundNumber -= roundOfWeek
 
-		roundNumber -= roundOfWeek // First go to the start of the day
+	case `month`: // start of the current month
+		// Walk back to the most recent round whose day is the first of the month.
+		// hoursPerMonth is fractional in general, so there is no closed-form round
+		// offset; instead snap to midnight and step whole days backward until the
+		// month rolls over. Bounded by the days in a month, so it is cheap.
+		roundNumber -= roundOfDay // first go to midnight today
+		startMonth := getDateForCalendar(roundNumber, g.Calendar).Month
+		for roundNumber >= roundsPerDay {
+			prev := roundNumber - roundsPerDay
+			if getDateForCalendar(prev, g.Calendar).Month != startMonth {
+				break
+			}
+			roundNumber = prev
+		}
 
-	} else if periodName == `noon` { // Last time 12pm was hit
+	case `year`: // start of the current year
+		// day is 1-based within the year, so (day-1) whole days have elapsed.
+		roundNumber -= roundOfDay // midnight today
+		dayOfYear := uint64(getDateForCalendar(roundNumber, g.Calendar).Day)
+		if dayOfYear > 1 {
+			roundNumber -= (dayOfYear - 1) * roundsPerDay
+		}
 
+	case `noon`: // last time 12pm was reached
 		roundNumber -= roundOfDay
 		if roundOfDay < noonRound {
-			// We haven't reached noon today yet; last noon was yesterday.
+			// Noon has not happened yet today; the last noon was yesterday.
 			roundNumber -= roundsPerDay - noonRound
 		} else {
-			// Noon has already passed today.
+			// Noon already passed today.
 			roundNumber += noonRound
 		}
 
-	} else if periodName == `sunrise` { // last sunrise
-
-		roundNumber -= roundOfDay                                                       // Strip rounds of today off
-		roundNumber -= roundsPerDay                                                     // Subtract a day
+	case `sunrise`: // last sunrise (start of day + half the night)
+		roundNumber -= roundOfDay                                                       // strip today's rounds
+		roundNumber -= roundsPerDay                                                     // back up a day
 		roundNumber += uint64(math.Ceil(float64(nightHoursPerDay) / 2 * roundsPerHour)) // add half a night
 
-	} else if periodName == `sunset` { // 12am of next day, minus half of night
-
-		roundNumber -= roundOfDay                                                       // Strip rounds of today off
-		roundNumber -= uint64(math.Ceil(float64(nightHoursPerDay) / 2 * roundsPerHour)) // Subtract half a night
-
+	case `sunset`: // last sunset (next midnight minus half the night)
+		roundNumber -= roundOfDay                                                       // strip today's rounds
+		roundNumber -= uint64(math.Ceil(float64(nightHoursPerDay) / 2 * roundsPerHour)) // subtract half a night
 	}
 
 	return roundNumber
+}
+
+// GetLastPeriod is a package-level convenience wrapper around GameDate.LastPeriod
+// for the "default" calendar. It is retained for callers that only have a round
+// number on hand (e.g. SetToNight/SetToDay) and do not need calendar selection.
+//
+// Prefer GameDate.LastPeriod when you already hold a GameDate, as it respects that
+// date's calendar.
+func GetLastPeriod(periodName string, roundNumber uint64) uint64 {
+	g := GameDate{Calendar: `default`, RoundNumber: roundNumber}
+	return g.LastPeriod(periodName)
 }
 
 func MonthName(month int) string {

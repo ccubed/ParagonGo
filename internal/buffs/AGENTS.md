@@ -11,6 +11,7 @@
 - `buffs.go`: runtime buff state, collection indexing, trigger flow, pruning, and stat aggregation.
 - `flags.go`: shared flag constants used by other systems.
 - `admin.go`: CRUD helpers that persist buff YAML and refresh in-memory state.
+- `plugin.go`: module data-file integration. `RegisterFS(...)` registers plugin filesystems; `loadPluginBuffs` merges embedded `buffs/*.yaml` into the spec map inside `LoadDataFiles` (after disk load, before items load). `RegisterBuffScript(buffId, src)` registers embedded JS; `BuffSpec.GetScript()` checks it before the disk path. Disk buffs win on duplicate ids.
 
 ## Working Rules
 

@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/conversations"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/flags"
@@ -195,6 +196,11 @@ func main() {
 	templates.RegisterFS(plugins.GetPluginRegistry())
 	items.RegisterFS(plugins.GetPluginRegistry())
 	mutators.RegisterFS(plugins.GetPluginRegistry())
+	buffs.RegisterFS(plugins.GetPluginRegistry())
+	pets.RegisterFS(plugins.GetPluginRegistry())
+	quests.RegisterFS(plugins.GetPluginRegistry())
+	mobs.RegisterFS(plugins.GetPluginRegistry())
+	conversations.RegisterFS(plugins.GetPluginRegistry())
 	usercommands.AddFunctionExporter(plugins.GetPluginRegistry())
 	users.AddFunctionExporter(plugins.GetPluginRegistry())
 	usercommands.SetRoomTagProvider(plugins.GetRegisteredRoomTags)

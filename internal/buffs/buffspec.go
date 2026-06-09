@@ -155,6 +155,11 @@ func (b *BuffSpec) Filepath() string {
 
 func (b *BuffSpec) GetScript() string {
 
+	// Check plugin-registered scripts first.
+	if script := getPluginScript(b.BuffId); script != `` {
+		return script
+	}
+
 	scriptPath := b.GetScriptPath()
 	// Load the script into a string
 	if _, err := os.Stat(scriptPath); err == nil {
@@ -191,6 +196,10 @@ func LoadDataFiles() {
 	}
 
 	buffs = tmpBuffs
+
+	// Merge buffs from plugin file systems. Must happen here (not deferred)
+	// so plugin buffs are present before items load and compute their values.
+	loadPluginBuffs(buffs)
 
 	mudlog.Info("buffSpec.LoadDataFiles()", "loadedCount", len(buffs), "Time Taken", time.Since(start))
 }

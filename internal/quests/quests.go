@@ -194,6 +194,9 @@ func LoadDataFiles() {
 
 	quests = tmpQuests
 
+	// Merge quests from plugin file systems.
+	loadPluginQuests(quests)
+
 	mudlog.Info("quests.LoadDataFiles()", "loadedCount", len(quests), "Time Taken", time.Since(start))
 
 }

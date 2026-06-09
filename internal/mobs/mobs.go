@@ -687,6 +687,10 @@ func (r *Mob) Save() error {
 
 func (m *Mob) HasScript() bool {
 
+	if script := getPluginScript(int(m.MobId), m.ScriptTag); script != `` {
+		return true
+	}
+
 	scriptPath := m.GetScriptPath()
 	// Load the script into a string
 	if _, err := os.Stat(scriptPath); err == nil {
@@ -697,6 +701,10 @@ func (m *Mob) HasScript() bool {
 }
 
 func (m *Mob) GetScript() string {
+
+	if script := getPluginScript(int(m.MobId), m.ScriptTag); script != `` {
+		return script
+	}
 
 	scriptPath := m.GetScriptPath()
 	// Load the script into a string
@@ -839,6 +847,10 @@ func LoadDataFiles() {
 	}
 
 	mobs = tmpMobs
+
+	// Merge mobs from plugin file systems before populating name caches so
+	// allMobNames and mobNameCache include plugin-provided mobs.
+	loadPluginMobs(mobs)
 
 	clear(mobNameCache)
 

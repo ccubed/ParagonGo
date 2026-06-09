@@ -395,12 +395,19 @@ func (p *Pet) GetScriptPath() string {
 }
 
 func (p *Pet) HasScript() bool {
+	if script := getPluginScript(p.Type); script != `` {
+		return true
+	}
 	scriptPath := p.GetScriptPath()
 	_, err := os.Stat(scriptPath)
 	return err == nil
 }
 
 func (p *Pet) GetScript() string {
+	// Check plugin-registered scripts first.
+	if script := getPluginScript(p.Type); script != `` {
+		return script
+	}
 	scriptPath := p.GetScriptPath()
 	if _, err := os.Stat(scriptPath); err == nil {
 		if bytes, err := util.ReadFile(scriptPath); err == nil {
@@ -463,6 +470,9 @@ func LoadDataFiles() {
 	}
 
 	petTypes = tmpPetTypes
+
+	// Merge pets from plugin file systems.
+	loadPluginPets(petTypes)
 
 	mudlog.Info("pets.LoadDataFiles()", "loadedCount", len(petTypes), "Time Taken", time.Since(start))
 }

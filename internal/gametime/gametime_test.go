@@ -361,8 +361,99 @@ func Test_AddPeriod_Noon(t *testing.T) {
 	}
 }
 
-// --- applyCalendarConfigInto clamp tests ---
+// --- LastPeriod (month/year) and StartOf ---
 
+func Test_LastPeriod_MatchesPackageWrapper(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	// The package-level wrapper must agree with the method for the default calendar.
+	for _, name := range []string{"hour", "day", "week", "noon", "sunrise", "sunset"} {
+		g := GameDate{Calendar: `default`, RoundNumber: 1700}
+		if g.LastPeriod(name) != GetLastPeriod(name, 1700) {
+			t.Errorf("LastPeriod(%q) != GetLastPeriod(%q): %d vs %d",
+				name, name, g.LastPeriod(name), GetLastPeriod(name, 1700))
+		}
+	}
+}
+
+func Test_LastPeriod_Year(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	// 240 rounds/day, 365 days/year => year start at round 0 for year 1.
+	// Pick a round mid-year (day 100, 50 rounds in) and confirm it snaps to round 0.
+	round := uint64(99*240 + 50)
+	g := GameDate{Calendar: `default`, RoundNumber: round}
+	if got := g.LastPeriod("year"); got != 0 {
+		t.Errorf("LastPeriod(year) from round %d: got %d, want 0", round, got)
+	}
+
+	// A round early in year 2 should snap to the first round of year 2.
+	roundY2 := uint64(365*240 + 30)
+	g2 := GameDate{Calendar: `default`, RoundNumber: roundY2}
+	if got := g2.LastPeriod("year"); got != uint64(365*240) {
+		t.Errorf("LastPeriod(year) from round %d: got %d, want %d", roundY2, got, 365*240)
+	}
+}
+
+func Test_LastPeriod_Month(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	// Snapping to the start of a month must land on a midnight whose month matches
+	// the starting round's month, and the round just before it must be a different month.
+	round := uint64(40 * 240) // day 41, midnight
+	g := GameDate{Calendar: `default`, RoundNumber: round}
+	start := g.LastPeriod("month")
+
+	startMonth := GetDate(start).Month
+	if GetDate(round).Month != startMonth {
+		t.Fatalf("month start month %d does not match origin month %d", startMonth, GetDate(round).Month)
+	}
+	if start%240 != 0 {
+		t.Errorf("month start round %d is not aligned to midnight", start)
+	}
+	if start > 0 && GetDate(start-240).Month == startMonth {
+		t.Errorf("round before month start is still month %d; not the true start", startMonth)
+	}
+}
+
+func Test_StartOf_NormalizesConnectiveWords(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	g := GameDate{Calendar: `default`, RoundNumber: 255}
+	want := g.LastPeriod("hour") // 250
+
+	// All of these phrasings must resolve to the same start-of-hour round.
+	for _, phrase := range []string{"hour", "start hour", "start of hour", "start of the hour"} {
+		if got := g.StartOf(phrase); got != want {
+			t.Errorf("StartOf(%q): got %d, want %d", phrase, got, want)
+		}
+	}
+}
+
+func Test_StartOf_NeverMovesForward(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	g := GameDate{Calendar: `default`, RoundNumber: 1234}
+	for _, name := range []string{"hour", "day", "week", "month", "year"} {
+		if got := g.StartOf(name); got > g.RoundNumber {
+			t.Errorf("StartOf(%q) = %d moved forward past %d", name, got, g.RoundNumber)
+		}
+	}
+}
+
+func Test_StartOf_UnknownReturnsUnchanged(t *testing.T) {
+	seedCalendarConfig(t, defaultTestCalendar(240, 0))
+
+	g := GameDate{Calendar: `default`, RoundNumber: 777}
+	if got := g.StartOf(""); got != 777 {
+		t.Errorf("StartOf(empty): got %d, want 777", got)
+	}
+	if got := g.StartOf("start of the"); got != 777 {
+		t.Errorf("StartOf(connectives only): got %d, want 777", got)
+	}
+}
+
+// --- applyCalendarConfigInto clamp tests ---
 func Test_ApplyCalendarConfig_ClampsLowRoundsPerDay(t *testing.T) {
 	// rounds_per_day values below 24 must be replaced with the failover value
 	// so that roundsPerHour >= 1 and GetLastPeriod never divides by zero.

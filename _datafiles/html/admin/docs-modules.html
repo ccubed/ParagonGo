@@ -179,6 +179,7 @@
         <a href="#api-commands">Commands</a>
         <a href="#api-scripting">Scripting Bridge</a>
         <a href="#api-filesystem">File System</a>
+        <a href="#api-datafiles">Content Data Files</a>
         <a href="#api-persistence">Persistence</a>
         <a href="#api-config">Configuration</a>
         <a href="#api-roomtags">Room Tags</a>
@@ -763,14 +764,99 @@ func init() {
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">templates/</span> <span class="note">-- Go templates used by templates.Process()</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">html/admin/</span> <span class="note">-- admin page HTML fragments</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">html/public/</span> <span class="note">-- public-facing web pages</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">items/</span> <span class="note">-- item YAML definitions</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">items/</span> <span class="note">-- item YAML definitions (see Content Data Files)</span><br>
 &nbsp;&nbsp;<span class="dir">data-overlays/</span> <span class="note">-- config defaults (see Data Overlays)</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;config.yaml <span class="note">-- seeds Modules.&lt;name&gt;.* config keys</span>
     </div>
 
     <div class="callout callout-tip">
         <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <p>Embedded files override core data files when a path collision occurs, so a module can replace any template, help file, or data file by placing a file at the same relative path inside <code>files/datafiles/</code>.</p>
+        <p>Embedded files override core data files when a path collision occurs, so a module can replace any template, help file, or data file by placing a file at the same relative path inside <code>files/datafiles/</code>. For gameplay content (items, mobs, buffs, etc.) see <a href="#api-datafiles">Content Data Files</a> for the per-type folder structure and naming rules.</p>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     PLUGIN API — CONTENT DATA FILES
+══════════════════════════════════════════════════════════════════ -->
+<section class="doc-section" id="api-datafiles">
+    <h2>Plugin API: Content Data Files</h2>
+
+    <p>A module can ship gameplay content as embedded YAML that is merged into the world at load time, exactly like the bundled core data files. The supported content systems are <code>items</code>, <code>mutators</code>, <code>buffs</code>, <code>pets</code>, <code>quests</code>, <code>mobs</code>, and <code>conversations</code>. No registration call is required &mdash; simply place correctly-named YAML files under <code>files/datafiles/&lt;system&gt;/</code> and attach the file system with <code>plug.AttachFileSystem(files)</code>. The engine discovers and merges them automatically.</p>
+
+    <div class="callout callout-info">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p><strong>Disk wins on collision.</strong> If a server's on-disk <code>_datafiles/</code> already defines an entry with the same id/key as a module entry, the on-disk one is kept and the module's duplicate is logged and skipped. This lets operators override module content by dropping a file on disk.</p>
+    </div>
+
+    <h3>Required Folder Structure</h3>
+    <p>Each file's path inside the embedded file system must end with the value the engine derives from the spec (its <code>Filepath()</code>). The id in the filename must match the id inside the YAML, and the name segment must match the spec name run through filename sanitisation (lowercase; every character that is not <code>a&ndash;z</code> or <code>0&ndash;9</code> becomes an underscore; apostrophes are dropped). A mismatched filename is rejected.</p>
+
+    <div class="dir-tree">
+<span class="dir">modules/mymod/files/datafiles/</span><br>
+&nbsp;&nbsp;<span class="dir">items/</span> <span class="note">-- {itemId}-{name}.yaml (folder may be nested by item type)</span><br>
+&nbsp;&nbsp;<span class="dir">mutators/</span> <span class="note">-- {mutatorId}.yaml</span><br>
+&nbsp;&nbsp;<span class="dir">buffs/</span> <span class="note">-- {buffId}-{name}.yaml</span><br>
+&nbsp;&nbsp;<span class="dir">pets/</span> <span class="note">-- {pettype}.yaml</span><br>
+&nbsp;&nbsp;<span class="dir">quests/</span> <span class="note">-- {questId}-{name}.yaml</span><br>
+&nbsp;&nbsp;<span class="dir">mobs/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">{zone}/</span> <span class="note">-- {mobId}-{charactername}.yaml</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">scripts/</span> <span class="note">-- on-disk mob scripts (not used by embedded modules)</span><br>
+&nbsp;&nbsp;<span class="dir">conversations/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">{zone}/</span> <span class="note">-- {mobId}.yaml</span>
+    </div>
+
+    <table class="ref-table">
+        <thead><tr><th>System</th><th>Folder &amp; filename</th><th>Key</th><th>Scripts</th></tr></thead>
+        <tbody>
+            <tr><td><code>items</code></td><td><code>items/{itemId}-{name}.yaml</code> (may be nested by item type, e.g. <code>items/armor-20000/head/</code>)</td><td>numeric item id</td><td>Yes &mdash; <code>items.RegisterItemScript</code></td></tr>
+            <tr><td><code>mutators</code></td><td><code>mutators/{mutatorId}.yaml</code></td><td>string mutator id</td><td>No</td></tr>
+            <tr><td><code>buffs</code></td><td><code>buffs/{buffId}-{name}.yaml</code></td><td>numeric buff id</td><td>Yes &mdash; <code>buffs.RegisterBuffScript</code></td></tr>
+            <tr><td><code>pets</code></td><td><code>pets/{pettype}.yaml</code></td><td>pet type string</td><td>Yes &mdash; <code>pets.RegisterPetScript</code></td></tr>
+            <tr><td><code>quests</code></td><td><code>quests/{questId}-{name}.yaml</code></td><td>numeric quest id</td><td>No</td></tr>
+            <tr><td><code>mobs</code></td><td><code>mobs/{zone}/{mobId}-{charactername}.yaml</code></td><td>numeric mob id</td><td>Yes &mdash; <code>mobs.RegisterMobScript</code></td></tr>
+            <tr><td><code>conversations</code></td><td><code>conversations/{zone}/{mobId}.yaml</code></td><td>(zone, mob id) &mdash; looked up on demand</td><td>No</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-warn">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>Zone names in <code>mobs/</code> and <code>conversations/</code> paths must be sanitised (spaces become underscores, all lowercase) and must match the <code>zone</code> field in the mob/conversation data. For mobs, the <code>{mobId}</code> and <code>{charactername}</code> in the filename must match the <code>mobid</code> and <code>character.name</code> fields, or the file is rejected.</p>
+    </div>
+
+    <h3>Embedded Scripts</h3>
+    <p>For systems that support JavaScript (<code>items</code>, <code>buffs</code>, <code>pets</code>, <code>mobs</code>), scripts placed on disk are loaded by file path. Embedded module scripts are not on disk, so register them in <code>init()</code> with the matching helper. <code>GetScript()</code> checks these registries before falling back to a disk path.</p>
+
+    <div class="code-block">
+        <div class="code-block-header">Registering embedded content scripts</div>
+        <pre><code>import (
+    "github.com/GoMudEngine/GoMud/internal/buffs"
+    "github.com/GoMudEngine/GoMud/internal/items"
+    "github.com/GoMudEngine/GoMud/internal/mobs"
+    "github.com/GoMudEngine/GoMud/internal/pets"
+)
+
+func init() {
+    plug := plugins.New("mymod", "1.0")
+    if err := plug.AttachFileSystem(files); err != nil {
+        panic(err)
+    }
+
+    // Item / buff scripts are keyed by numeric id.
+    items.RegisterItemScript(40050, itemScriptSrc)
+    buffs.RegisterBuffScript(9001, buffScriptSrc)
+
+    // Pet scripts are keyed by pet type string.
+    pets.RegisterPetScript("plasmahound", petScriptSrc)
+
+    // Mob scripts are keyed by (mobId, scriptTag). Empty tag = base script.
+    mobs.RegisterMobScript(9001, "", mobScriptSrc)
+    mobs.RegisterMobScript(9001, "combat", mobCombatScriptSrc)
+}</code></pre>
+    </div>
+
+    <div class="callout callout-info">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p><strong>Limitation:</strong> embedded mob scripts are not enumerated by the admin script-tag editor, so module-provided mob scripts cannot be edited from the admin UI (the same constraint applies to embedded item scripts). <code>buffs</code> must be present before <code>items</code> at load time for item value calculation; the engine already merges plugin buffs early to preserve this ordering.</p>
     </div>
 </section>
 

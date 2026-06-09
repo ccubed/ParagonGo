@@ -9,6 +9,7 @@
 
 - `quests.go`: quest structs, token parsing, progression checks, cache access, and bulk loading.
 - `admin.go`: save/delete helpers that validate quest data and update the in-memory registry.
+- `plugin.go`: module data-file integration. `RegisterFS(...)` registers plugin filesystems; `loadPluginQuests` merges embedded `quests/*.yaml` into the registry inside `LoadDataFiles`. Disk quests win on duplicate ids.
 
 ## Working Rules
 
