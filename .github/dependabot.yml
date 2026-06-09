@@ -45,7 +45,7 @@ updates:
           - "*"
 
   - package-ecosystem: "docker"
-    directory: "/docker/provisioning"
+    directory: "/provisioning"
     schedule:
       interval: "monthly"
       time: "06:00"
@@ -62,7 +62,7 @@ updates:
           - "patch"
 
   - package-ecosystem: "docker"
-    directory: "/docker/terminal"
+    directory: "/provisioning/terminal"
     schedule:
       interval: "monthly"
       time: "06:00"

@@ -1,0 +1,193 @@
+---
+name: Prerelease
+
+"on":
+  push:
+    branches:
+      - master
+
+# Prerelease is intentionally mutable: each successful merge to master replaces
+# the existing prerelease assets and moves the prerelease tag forward.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DATAFILES_ARCHIVE: gomud-ALL-datafiles.zip
+  CHECKSUMS_FILE: SHA256SUMS.txt
+
+jobs:
+  metadata:
+    name: Read Binary Version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      binary_version: ${{ steps.meta.outputs.binary_version }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Compute release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+
+          binary_version="$(
+            awk -F'"' '/^const VERSION = "/ { print $2; exit }' main.go
+          )"
+          if [ -z "$binary_version" ]; then
+            echo "Could not determine binary version from main.go" >&2
+            exit 1
+          fi
+
+          echo "binary_version=${binary_version}" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Validate Release Source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-go
+
+      - uses: ./.github/actions/go-checks
+
+  build:
+    name: Build Release Binaries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs:
+      - metadata
+      - test
+    permissions:
+      contents: read
+    env:
+      BINARY_VERSION: ${{ needs.metadata.outputs.binary_version }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-go
+
+      - name: Generate code
+        run: go generate ./...
+
+      - name: Build release binaries
+        run: .github/scripts/build-release-binaries.sh
+
+      - name: Upload release binaries
+        # actions/uploadf-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-binaries
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish Rolling Prerelease
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs:
+      - metadata
+      - build
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      RELEASE_TAG: prerelease
+      RELEASE_TITLE: prerelease
+      BINARY_VERSION: ${{ needs.metadata.outputs.binary_version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Download release binaries
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-binaries
+          path: bin/
+
+      - name: Assemble release assets
+        run: .github/scripts/assemble-release-assets.sh
+
+      - name: Write release notes
+        env:
+          RELEASE_KIND: prerelease
+          RELEASE_NOTES_FILE: release-notes.md
+        run: .github/scripts/release-notes.sh
+
+      - name: Resolve attestation paths
+        id: release-assets
+        # Attest binaries and checksums. The datafiles zip is covered by the
+        # checksum file because it is assembled inside this workflow.
+        run: |
+          {
+            echo 'attestation_paths<<EOF'
+            .github/scripts/release-assets.sh attestation-paths
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Attest release assets
+        # actions/attest-build-provenance v4.1.0
+        # yamllint disable-line rule:line-length
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32
+        with:
+          subject-path: ${{ steps.release-assets.outputs.attestation_paths }}
+
+      - name: Publish rolling prerelease
+        run: |
+          set -euo pipefail
+
+          mapfile -t assets < <(
+            .github/scripts/release-assets.sh upload-paths
+          )
+
+          # Move the lightweight prerelease tag when it already exists. If it
+          # does not exist, gh release create will create it at this commit.
+          if gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            >/dev/null 2>&1; then
+            gh api \
+              -X PATCH \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
+              -f "sha=${GITHUB_SHA}" \
+              -F force=true
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" \
+              --title "$RELEASE_TITLE" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --latest=false \
+              --notes-file release-notes.md
+          else
+            gh release create "$RELEASE_TAG" \
+              "${assets[@]}" \
+              --title "$RELEASE_TITLE" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --latest=false \
+              --notes-file release-notes.md
+          fi

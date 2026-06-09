@@ -1,6 +1,6 @@
 ---
 name: "Setup Go"
-description: "Setup Go using go.mod"
+description: "Install the Go toolchain pinned by go.mod and enable module cache"
 runs:
   using: "composite"
   steps:

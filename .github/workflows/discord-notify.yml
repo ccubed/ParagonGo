@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   notify-discord:
+    # Draft pull requests wait until ready_for_review so Discord only receives
+    # notifications for PRs that are ready for broader attention.
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -25,6 +27,7 @@ jobs:
         run: |
           webhook_url='${{ secrets.DISCORD_WEBHOOK_URL }}'
           if [ -z "$webhook_url" ]; then
+            # Local act dry runs can pass this as an environment variable.
             webhook_url="${DISCORD_WEBHOOK_URL:-}"
           fi
           echo "url=$webhook_url" >> "$GITHUB_OUTPUT"

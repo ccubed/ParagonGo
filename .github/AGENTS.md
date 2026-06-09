@@ -11,7 +11,7 @@
 - Keep trigger shapes intentional. This repo currently uses pull request triggers such as `opened`, `synchronize`, `reopened`, and `ready_for_review` where needed.
 - Preserve `persist-credentials: false` on checkout steps unless there is a concrete reason to change authentication behavior.
 - Reuse local composite actions in `.github/actions/` when they already capture setup shared across workflows.
-- Treat release behavior as merge-driven: pushes to `master` and manual `workflow_dispatch` runs feed the current release flow documented in `.github/RELEASING.md`.
+- Treat release behavior as split by stability: pushes to `master` update the rolling prerelease, and manual `workflow_dispatch` runs create protected stable releases as documented in `.github/RELEASING.md`.
 
 ## Verification
 

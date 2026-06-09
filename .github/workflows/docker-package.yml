@@ -2,6 +2,7 @@
 name: Docker Image
 
 "on":
+  # Manual dispatch lets maintainers rebuild the image without changing source.
   workflow_dispatch:
   push:
     branches:
@@ -35,6 +36,7 @@ jobs:
 
       - name: Detect Go version
         id: go-version
+        # The Dockerfile build arg follows go.mod through the Makefile helper.
         run: echo "version=$(make go-version)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
@@ -69,6 +71,8 @@ jobs:
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           context: .
+          # Pull requests build and cache the image, but only trusted events
+          # publish to GitHub Packages.
           push: ${{ github.event_name != 'pull_request' }}
           file: ./provisioning/Dockerfile
           build-args: |

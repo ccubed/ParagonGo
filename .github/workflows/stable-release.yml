@@ -1,0 +1,259 @@
+---
+name: Stable Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Stable semver tag to create, such as v0.10.0
+        required: true
+        type: string
+
+# Stable releases are intentionally immutable. Re-running with an existing tag
+# or release fails instead of replacing published assets.
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DATAFILES_ARCHIVE: gomud-ALL-datafiles.zip
+  CHECKSUMS_FILE: SHA256SUMS.txt
+
+jobs:
+  validate-release:
+    name: Validate Stable Release Request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      binary_version: ${{ steps.meta.outputs.binary_version }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Validate stable release request
+        id: meta
+        run: |
+          set -euo pipefail
+
+          semver_re='^v(0|[1-9][0-9]*)\.'
+          semver_re="${semver_re}(0|[1-9][0-9]*)\."
+          semver_re="${semver_re}(0|[1-9][0-9]*)$"
+          if ! printf '%s\n' "$RELEASE_TAG" | grep -Eq "$semver_re"; then
+            echo "release_tag must be a stable semver tag like v0.10.0" >&2
+            exit 1
+          fi
+
+          if gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            >/dev/null 2>&1; then
+            echo "Tag ${RELEASE_TAG} already exists; stable releases are" \
+              "immutable." >&2
+            exit 1
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; stable releases are" \
+              "immutable." >&2
+            exit 1
+          fi
+
+          binary_version="$(
+            awk -F'"' '/^const VERSION = "/ { print $2; exit }' main.go
+          )"
+          if [ -z "$binary_version" ]; then
+            echo "Could not determine binary version from main.go" >&2
+            exit 1
+          fi
+
+          echo "binary_version=${binary_version}" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Validate Release Source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: validate-release
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-go
+
+      - uses: ./.github/actions/go-checks
+
+  build:
+    name: Build Release Binaries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs:
+      - validate-release
+      - test
+    permissions:
+      contents: read
+    env:
+      BINARY_VERSION: ${{ needs.validate-release.outputs.binary_version }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-go
+
+      - name: Generate code
+        run: go generate ./...
+
+      - name: Build release binaries
+        run: .github/scripts/build-release-binaries.sh
+
+      - name: Upload release binaries
+        # actions/upload-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-binaries
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish Stable Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs:
+      - validate-release
+      - build
+    environment: stable-release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_TITLE: ${{ inputs.release_tag }}
+      BINARY_VERSION: ${{ needs.validate-release.outputs.binary_version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Recheck stable release immutability
+        # The first check catches bad manual inputs early. This second check
+        # runs after environment approval in case someone created the tag or
+        # release while the workflow was waiting.
+        run: |
+          set -euo pipefail
+
+          if gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            >/dev/null 2>&1; then
+            echo "Tag ${RELEASE_TAG} already exists; stable releases are" \
+              "immutable." >&2
+            exit 1
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; stable releases are" \
+              "immutable." >&2
+            exit 1
+          fi
+
+      - name: Download release binaries
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-binaries
+          path: bin/
+
+      - name: Assemble release assets
+        run: .github/scripts/assemble-release-assets.sh
+
+      - name: Write release notes
+        env:
+          RELEASE_KIND: stable
+          RELEASE_NOTES_FILE: release-notes.md
+        run: .github/scripts/release-notes.sh
+
+      - name: Resolve attestation paths
+        id: release-assets
+        # Attest binaries and checksums. The datafiles zip is covered by the
+        # checksum file because it is assembled inside this workflow.
+        run: |
+          {
+            echo 'attestation_paths<<EOF'
+            .github/scripts/release-assets.sh attestation-paths
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Attest release assets
+        # actions/attest-build-provenance v4.1.0
+        # yamllint disable-line rule:line-length
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32
+        with:
+          subject-path: ${{ steps.release-assets.outputs.attestation_paths }}
+
+      - name: Create stable draft release
+        id: draft
+        # Draft first so a failed upload does not expose a partial release.
+        run: |
+          set -euo pipefail
+
+          release_id="$(
+            gh api \
+              -X POST \
+              "repos/${GITHUB_REPOSITORY}/releases" \
+              -f "tag_name=${RELEASE_TAG}" \
+              -f "target_commitish=${GITHUB_SHA}" \
+              -f "name=${RELEASE_TITLE}" \
+              -f "body=Stable release assets are uploading." \
+              -f "make_latest=true" \
+              -F draft=true \
+              -F prerelease=false \
+              --jq '.id'
+          )"
+
+          echo "release_id=${release_id}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload stable release assets
+        run: |
+          set -euo pipefail
+
+          mapfile -t assets < <(
+            .github/scripts/release-assets.sh upload-paths
+          )
+
+          gh release upload "$RELEASE_TAG" "${assets[@]}"
+
+      - name: Attach stable release notes
+        run: |
+          set -euo pipefail
+
+          gh release edit "$RELEASE_TAG" \
+            --notes-file release-notes.md \
+            --title "$RELEASE_TITLE" \
+            --latest
+
+      - name: Publish stable release
+        env:
+          RELEASE_ID: ${{ steps.draft.outputs.release_id }}
+        run: |
+          set -euo pipefail
+
+          gh api \
+            -X PATCH \
+            "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            -F draft=false \
+            -F prerelease=false

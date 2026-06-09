@@ -3,6 +3,7 @@ name: Update Go Toolchain
 
 "on":
   schedule:
+    # Monthly check near the end of the month, after typical Go patch releases.
     - cron: '0 6 25 * *'
   workflow_dispatch:
 
@@ -55,6 +56,8 @@ jobs:
             }
 
             const latestVersion = stable.version.replace(/^go/, '')
+            // Keep the repository pinned in one place. Docker, CI, and helper
+            // scripts derive their Go version from go.mod.
             const updates = [
               {
                 path: 'go.mod',
@@ -110,6 +113,8 @@ jobs:
             https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{
             github.repository }}.git
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
@@ -124,6 +129,9 @@ jobs:
           git add go.mod go.sum
           git commit -m \
             "deps: update Go toolchain to ${GO_VERSION}"
+
+          # Existing automation branches are updated with a lease so a manual
+          # maintainer edit cannot be overwritten silently.
           if [ -n "$remote_sha" ]; then
             git push \
               --force-with-lease="$BRANCH_NAME:$remote_sha" \

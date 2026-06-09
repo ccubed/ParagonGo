@@ -1,5 +1,12 @@
 ---
-name: Lint
+name: CI
+
+# ci.yml performs the Continuous Integration (CI) workflow and performs the
+# following actions:
+# - Go format/vet
+# - conditional JS lint
+# - Go race tests
+# - Release cross-compile check
 
 "on":
   push:
@@ -12,6 +19,7 @@ name: Lint
       - reopened
       - ready_for_review
 
+# Superseded CI runs cancel previous runs
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -22,12 +30,15 @@ permissions:
 
 jobs:
   detect-changes:
+    name: Detect JavaScript Changes
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       js_lint: >-
         ${{ steps.filter.outputs.js_lint }}
     steps:
+      # Full history is needed so push and pull request events can diff against
+      # the actual base commit instead of whatever shallow checkout provides.
       # actions/checkout v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -59,6 +70,7 @@ jobs:
           fi
 
   go-lint:
+    name: Go Format And Vet
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -73,9 +85,11 @@ jobs:
         run: make validate
 
   js-lint:
+    name: JavaScript Lint
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: detect-changes
+    # The web client JavaScript is linted only when related files change.
     if: >-
       needs.detect-changes.outputs.js_lint == 'true'
     steps:
@@ -92,3 +106,25 @@ jobs:
 
       - name: Run JavaScript lint checks
         run: make js-lint
+
+  test:
+    name: Go Tests And Release Cross-Compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-go
+
+      - uses: ./.github/actions/go-checks
+
+      - name: Cross-compile release targets
+        if: >-
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/master'
+        env:
+          RELEASE_DIST_DIR: ${{ runner.temp }}/release-cross-compile
+        run: .github/scripts/build-release-binaries.sh
