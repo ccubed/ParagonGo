@@ -3,9 +3,11 @@ name: CI
 
 # ci.yml performs the Continuous Integration (CI) workflow and performs the
 # following actions:
+# - conditional GitHub automation lint
 # - Go format/vet
 # - conditional JS lint
-# - Go race tests
+# - conditional Lua lint
+# - PR Go race tests
 
 "on":
   push:
@@ -29,14 +31,20 @@ permissions:
 
 jobs:
   detect-changes:
-    name: Detect JavaScript Changes
+    name: Detect CI Inputs
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
+      automation_lint: >-
+        ${{ steps.filter.outputs.automation_lint }}
+      go_lint: >-
+        ${{ steps.filter.outputs.go_lint }}
+      go_tests: >-
+        ${{ steps.filter.outputs.go_tests }}
       js_lint: >-
         ${{ steps.filter.outputs.js_lint }}
-      runtime_build: >-
-        ${{ steps.filter.outputs.runtime_build }}
+      lua_lint: >-
+        ${{ steps.filter.outputs.lua_lint }}
     steps:
       # Full history is needed so push and pull request events can diff against
       # the actual base commit instead of whatever shallow checkout provides.
@@ -51,6 +59,7 @@ jobs:
         env:
           BASE_REF: >-
             ${{ github.event.pull_request.base.sha || github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.sha }}
         run: |
           set -eu
@@ -70,16 +79,91 @@ jobs:
             echo "js_lint=false" >> "$GITHUB_OUTPUT"
           fi
 
+          if printf '%s\n' "${changed_files}" | grep -Eq '^\.github/'; then
+            echo "automation_lint=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "automation_lint=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          lua_re='(^|/)[^/]+\.lua$'
+          lua_re="${lua_re}|^(Makefile|\.luacheckrc|\.github/workflows/ci\.yml)$"
+          if printf '%s\n' "${changed_files}" | grep -Eq "${lua_re}"; then
+            echo "lua_lint=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lua_lint=false" >> "$GITHUB_OUTPUT"
+          fi
+
           go_re='(^|/)[^/]+\.go$'
           go_re="${go_re}|^(go\.mod|go\.sum|Makefile)$"
           go_re="${go_re}|^\.github/actions/(go-checks|setup-go)/"
           go_re="${go_re}|^\.github/workflows/ci\.yml"
 
           if printf '%s\n' "${changed_files}" | grep -Eq "${go_re}"; then
-            echo "runtime_build=true" >> "$GITHUB_OUTPUT"
+            echo "go_lint=true" >> "$GITHUB_OUTPUT"
+            if [ "${EVENT_NAME}" = "pull_request" ]; then
+              echo "go_tests=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "go_tests=false" >> "$GITHUB_OUTPUT"
+            fi
           else
-            echo "runtime_build=false" >> "$GITHUB_OUTPUT"
+            echo "go_lint=false" >> "$GITHUB_OUTPUT"
+            echo "go_tests=false" >> "$GITHUB_OUTPUT"
           fi
+
+  automation-lint:
+    name: GitHub Automation Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.automation_lint == 'true'
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Set up Go for actionlint
+        # actions/setup-go v6.4.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Install automation linters
+        env:
+          ACTIONLINT_VERSION: v1.7.8
+          YAMLLINT_VERSION: 1.38.0
+        run: |
+          set -euo pipefail
+
+          go install \
+            "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
+
+          need_apt=false
+          if ! python3 -m pip --version >/dev/null 2>&1; then
+            need_apt=true
+          fi
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            need_apt=true
+          fi
+          if [ "$need_apt" = "true" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends \
+              python3-pip \
+              shellcheck
+          fi
+
+          python3 -m pip install --user "yamllint==${YAMLLINT_VERSION}"
+
+      - name: Run automation lint
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
+
+          actionlint .github/workflows/*.yml
+          yamllint .github
+          shellcheck .github/scripts/*.sh
 
   go-lint:
     name: Go Format And Vet
@@ -87,7 +171,7 @@ jobs:
     timeout-minutes: 20
     needs: detect-changes
     if: >-
-      needs.detect-changes.outputs.runtime_build == 'true'
+      needs.detect-changes.outputs.go_lint == 'true'
     steps:
       # actions/checkout v6.0.2
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
@@ -121,13 +205,29 @@ jobs:
       - name: Run JavaScript lint checks
         run: make js-lint
 
+  lua-lint:
+    name: Lua Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.lua_lint == 'true'
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Run Lua lint checks
+        run: make lua-lint
+
   test:
     name: Go Tests
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: detect-changes
     if: >-
-      needs.detect-changes.outputs.runtime_build == 'true'
+      needs.detect-changes.outputs.go_tests == 'true'
     steps:
       # actions/checkout v6.0.2
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10

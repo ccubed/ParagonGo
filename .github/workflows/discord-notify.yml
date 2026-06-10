@@ -17,32 +17,56 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
     steps:
-      # actions/checkout v6.0.2
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-        with:
-          persist-credentials: false
-      - name: Resolve Discord webhook URL
-        id: webhook
-        run: |
-          webhook_url='${{ secrets.DISCORD_WEBHOOK_URL }}'
-          if [ -z "$webhook_url" ]; then
-            # Local act dry runs can pass this as an environment variable.
-            webhook_url="${DISCORD_WEBHOOK_URL:-}"
-          fi
-          echo "url=$webhook_url" >> "$GITHUB_OUTPUT"
-
       - name: Skip when webhook is not configured
-        if: ${{ steps.webhook.outputs.url == '' }}
+        if: ${{ env.DISCORD_WEBHOOK_URL == '' }}
         run: >
           echo "DISCORD_WEBHOOK_URL is not configured;
           skipping Discord notification."
 
       - name: Send Discord Message
-        if: ${{ steps.webhook.outputs.url != '' }}
-        uses: ./.github/actions/discord-webhook
-        with:
-          webhook-url: ${{ steps.webhook.outputs.url }}
-          pr-title: ${{ github.event.pull_request.title }}
-          pr-body: ${{ github.event.pull_request.body }}
-          pr-url: ${{ github.event.pull_request.html_url }}
+        if: ${{ env.DISCORD_WEBHOOK_URL != '' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -euo pipefail
+
+          payload="$(
+            python3 - <<'PY'
+          import json
+          import os
+
+          title = os.environ.get("PR_TITLE") or "Pull request notification"
+          description = (
+              os.environ.get("PR_BODY") or
+              "No pull request description provided."
+          )
+          url = os.environ.get("PR_URL") or ""
+
+          print(json.dumps({
+              "allowed_mentions": {
+                  "parse": [],
+              },
+              "embeds": [
+                  {
+                      "title": title[:256],
+                      "description": description[:4096],
+                      "url": url,
+                  },
+              ],
+          }))
+          PY
+          )"
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$DISCORD_WEBHOOK_URL"
