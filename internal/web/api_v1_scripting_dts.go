@@ -350,6 +350,15 @@ declare interface PathEventDetails {
     status: string;
 }
 
+declare interface LevelEventDetails {
+    newLevel: number;
+    previousLevel: number;
+    levelsGained: number;
+    trainingPoints: number;
+    statPoints: number;
+    livesGained: number;
+}
+
 declare interface PanelLayoutObject {
     /** Adds a new vertical slot (column) to the layout. Returns the slot for adding rows. */
     AddSlot(): SlotObject;

@@ -19,6 +19,15 @@
 - Wrapper types (`ScriptActor`, `ScriptRoom`, `ScriptItem`, etc.) and global helpers are language-agnostic Go and are shared by both engines. goja and gopher-luar both reflect their exported methods and mutate through the held pointers.
 - Lua method calls use `obj:Method(args)`; JS uses `obj.Method(args)`. Field access is `obj.field` in both.
 
+## Global user script
+
+- `user.go` implements a single global script that runs for every player (not per-user, not per-room). It is cached as one shared VM (`userVM`) keyed by nothing; there is at most one user-script VM at a time.
+- The script lives at `<DataFiles>/scripts/user.js` (or `.lua`), resolved through `userScriptPathFn` (a package var so tests can redirect it). There is no YAML data record; the path is fixed and global.
+- Dispatchers: `TryUserCommand` (onCommand), `TryUserScriptEvent` (onDying/onLogin/onLogout and any simple `(user, room)` handler), `TryUserDieEvent` (onDie), `TryUserLevelEvent` (onLevel). All no-op safely when the script or the handler is absent.
+- `onCommand` is fired from `usercommands.TryCommand` before mob/room scripts; returning true halts all further command processing. `onDying`/`onDie` are fired from the player drop hook and `Suicide` and abort the default behavior when they return true.
+- Save/edit goes through `GetUserScript`/`SaveUserScript`/`UserScriptLang` and the admin API (`/admin/api/v1/user/script`). The editor page is `/admin/users-script`; reference docs are at `/admin/scripting-users`. `SaveUserScript` calls `InvalidateUserVM` so edits take effect without restart; `ClearUserVM` is also wired into `PruneVMs(forceClear)`.
+- The editor schema entry is `userScriptType()` in `schema.go` (scriptType key `"user"`); `LevelEventDetails` is declared in the `.d.ts`.
+
 ## Editor intellisense (admin script editor)
 
 - The admin Monaco editor is language-aware. JavaScript uses the TypeScript language service seeded by the generated `.d.ts` (`internal/web/api_v1_scripting_dts.go`). Lua has no language service, so type-aware intellisense is built in `monaco-editor-frame.js` from two JSON endpoints.

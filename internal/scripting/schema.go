@@ -67,6 +67,7 @@ func GetScriptFunctionsSchema() *ScriptFunctionsSchema {
 			"pet":       petScriptType(),
 			"spell":     spellScriptType(),
 			"buff":      buffScriptType(),
+			"user":      userScriptType(),
 			"container": containerObjectType(),
 		},
 		EngineFunctions: engineGlobalFunctions(),
@@ -917,6 +918,93 @@ func buffScriptType() *ScriptTypeDef {
 				ReturnSemantics: "Return true to halt further command processing.",
 				Dynamic:         commandDynamic,
 				Stub:            "function onCommand_{command}(rest, actor, room) {\n\n    return true;\n}\n",
+			},
+		},
+	}
+}
+
+func userScriptType() *ScriptTypeDef {
+	return &ScriptTypeDef{
+		Label:       "User Script",
+		Description: "A single global script that runs for every player. Triggered by player commands and lifecycle events such as logging in, leveling up, being downed, and dying.",
+		Functions: []ScriptFuncDef{
+			{
+				Name:            "onLoad",
+				Description:     "Called once when the global user script is first loaded into memory. Has an extended timeout for initialization work.",
+				Params:          []ScriptFuncParam{},
+				ReturnType:      "void",
+				ReturnSemantics: "Return value is ignored.",
+				ExtendedTimeout: true,
+				Stub:            "function onLoad() {\n\n}\n",
+			},
+			{
+				Name:        "onCommand",
+				Description: "Called when any command is typed by a player. Fires before mob and room onCommand handlers.",
+				Params: []ScriptFuncParam{
+					{Name: "cmd", Type: "string", Description: "The command word typed by the player (e.g., 'look', 'north')."},
+					{Name: "rest", Type: "string", Description: "Everything entered after the command word."},
+					{Name: "user", Type: "ActorObject", Description: "The player who typed the command."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player is in."},
+				},
+				ReturnType:      "boolean | void",
+				ReturnSemantics: "Return true to halt further command processing, including mob/room scripts and the built-in command.",
+				Stub:            "function onCommand(cmd, rest, user, room) {\n\n    return false;\n}\n",
+			},
+			{
+				Name:        "onLogin",
+				Description: "Called when a player enters the world.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The player logging in."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player spawned in."},
+				},
+				ReturnType:      "void",
+				ReturnSemantics: "Return value is ignored.",
+				Stub:            "function onLogin(user, room) {\n\n}\n",
+			},
+			{
+				Name:        "onLogout",
+				Description: "Called when a player leaves the world. The room may be null in some disconnect scenarios.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The player logging out."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player was in, or null."},
+				},
+				ReturnType:      "void",
+				ReturnSemantics: "Return value is ignored.",
+				Stub:            "function onLogout(user, room) {\n\n}\n",
+			},
+			{
+				Name:        "onLevel",
+				Description: "Called when a player gains a level.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The player who leveled up."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player is in."},
+					{Name: "eventDetails", Type: "LevelEventDetails", Description: "Contains newLevel (int), previousLevel (int), trainingPoints (int), statPoints (int), and livesGained (int)."},
+				},
+				ReturnType:      "void",
+				ReturnSemantics: "Return value is ignored.",
+				Stub:            "function onLevel(user, room, eventDetails) {\n\n}\n",
+			},
+			{
+				Name:        "onDying",
+				Description: "Called when a player is downed (bleeding out, not yet fully dead). Fires again each round while the player remains downed and unhealed.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The downed player."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player is in."},
+				},
+				ReturnType:      "boolean | void",
+				ReturnSemantics: "Return true to suppress the default downed handling for this round.",
+				Stub:            "function onDying(user, room) {\n\n    return false;\n}\n",
+			},
+			{
+				Name:        "onDie",
+				Description: "Called when a player fully dies, before any death penalties are applied. Use this to implement custom death behavior such as a revival.",
+				Params: []ScriptFuncParam{
+					{Name: "user", Type: "ActorObject", Description: "The dying player."},
+					{Name: "room", Type: "RoomObject", Description: "The room the player is in."},
+				},
+				ReturnType:      "boolean | void",
+				ReturnSemantics: "Return true to abort the default death (no penalties, no corpse). The script is responsible for whatever happens instead, and must not synchronously trigger another death.",
+				Stub:            "function onDie(user, room) {\n\n    return false;\n}\n",
 			},
 		},
 	}

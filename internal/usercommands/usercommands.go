@@ -261,6 +261,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		}
 
 		if !skipScript {
+			// Global user script runs first and can halt all further processing.
+			if handled, _ := scripting.TryUserCommand(alias, rest, userId); handled {
+				return true, nil
+			}
+
 			// Instead of calling scripting.TryRoomCommand directly,
 			// use our new function that sends GMCP notifications for blocked directions
 			handled, err := TryRoomScripts(cmd+` `+rest, alias, rest, userId)

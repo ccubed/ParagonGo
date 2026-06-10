@@ -1,0 +1,375 @@
+{{template "header" .}}
+
+<style>
+.doc-layout { display: grid; grid-template-columns: 210px 1fr; gap: 2rem; align-items: start; }
+.doc-sidebar { position: sticky; top: 1rem; max-height: calc(100vh - 5rem); overflow-y: auto; background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem 0; scrollbar-width: thin; }
+.doc-sidebar h3 { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-subtle); padding: 0 1rem 0.4rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--color-border-light); }
+.doc-sidebar a { display: block; padding: 0.3rem 1rem; font-size: 0.85rem; color: var(--color-text-secondary); text-decoration: none; transition: background 0.1s, color 0.1s; }
+.doc-sidebar a:hover { background: var(--color-surface-alt); color: var(--color-primary); }
+.doc-sidebar a.active { background: var(--color-surface-alt); color: var(--color-primary); font-weight: 600; border-left: 3px solid var(--color-primary); padding-left: calc(1rem - 3px); }
+.doc-sidebar .sidebar-group { margin-bottom: 0.5rem; }
+.doc-sidebar .sidebar-section-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); padding: 0.5rem 1rem 0.15rem; display: block; }
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.6rem; }
+.page-header .subtitle { color: var(--color-text-muted); font-size: 0.9rem; }
+.breadcrumb { font-size: 0.8rem; color: var(--color-text-faint); margin-bottom: 0.5rem; }
+.breadcrumb a { color: var(--color-text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--color-primary); }
+.callout { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.875rem; line-height: 1.6; }
+.callout-info { background: var(--color-info-bg, #dbeafe); border: 1px solid var(--color-info-border, #93c5fd); color: var(--color-info-text, #1e40af); }
+.callout-warn { background: var(--color-warning-bg); border: 1px solid var(--color-warning-border, #fcd34d); color: var(--color-warning-text); }
+.callout-icon { flex-shrink: 0; margin-top: 0.1rem; }
+.callout p { margin: 0; }
+.callout code { font-family: monospace; font-size: 0.85em; background: rgba(0,0,0,0.08); padding: 0.1em 0.3em; border-radius: 3px; }
+.path-box { background: var(--color-code-bg); color: var(--color-code-text); font-family: monospace; font-size: 0.85rem; padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1.5rem; line-height: 1.8; }
+.path-box .path-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); font-family: system-ui, sans-serif; display: block; margin-bottom: 0.35rem; }
+.path-box .ph { color: var(--color-api-kw, #f59e0b); }
+.doc-section { margin-bottom: 2.5rem; scroll-margin-top: 1rem; }
+.doc-section > h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-border-light); color: var(--color-text); }
+.doc-section > p { font-size: 0.875rem; color: var(--color-text-tertiary); line-height: 1.6; margin-bottom: 0.75rem; }
+.doc-section > p code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-alt); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+.order-list { list-style: none; counter-reset: ordstep; padding: 0; margin: 0 0 1rem; }
+.order-list li { counter-increment: ordstep; position: relative; padding: 0.4rem 0.75rem 0.4rem 2.4rem; font-size: 0.85rem; color: var(--color-text-tertiary); line-height: 1.5; }
+.order-list li::before { content: counter(ordstep); position: absolute; left: 0.6rem; top: 0.4rem; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: var(--color-primary); color: var(--color-surface-white); font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.order-list code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-alt); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+.hook-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.hook-card { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+.hook-card summary { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; user-select: none; list-style: none; }
+.hook-card summary::-webkit-details-marker { display: none; }
+.hook-card summary::before { content: "\25B6"; font-size: 0.6rem; color: var(--color-text-faint); transition: transform 0.15s; flex-shrink: 0; }
+.hook-card[open] summary::before { transform: rotate(90deg); }
+.hook-card summary:hover { background: var(--color-surface-alt); }
+.hook-sig { font-family: monospace; font-size: 0.9rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hook-sig .fn-name { color: var(--color-primary); font-weight: 700; }
+.hook-sig .fn-paren { color: var(--color-text-faint); }
+.hook-sig .fn-param { color: var(--color-api-str, #10b981); }
+.hook-sig .fn-type { color: var(--color-text-faint); font-size: 0.8em; }
+.hook-tag { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.12rem 0.4rem; border-radius: 3px; flex-shrink: 0; }
+.hook-tag.tag-abort { background: var(--color-warning-bg); color: var(--color-warning-text); border: 1px solid var(--color-warning-border, #fcd34d); }
+.hook-tag.tag-info { background: var(--color-info-bg, #dbeafe); color: var(--color-info-text, #1e40af); border: 1px solid var(--color-info-border, #93c5fd); }
+.hook-body { padding: 0.85rem 1.25rem 1.25rem; border-top: 1px solid var(--color-border-light); background: var(--color-surface-alt); }
+.hook-desc { font-size: 0.875rem; color: var(--color-text-tertiary); margin-bottom: 1rem; line-height: 1.6; }
+.hook-desc code { font-family: monospace; font-size: 0.85em; background: var(--color-surface-white); padding: 0.1em 0.35em; border-radius: 3px; color: var(--color-primary); }
+.hook-returns { font-size: 0.82rem; color: var(--color-text-muted); margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: var(--color-surface-white); border-radius: 4px; border-left: 3px solid var(--color-border-medium); }
+.hook-returns strong { color: var(--color-text-secondary); }
+.hook-returns code { font-family: monospace; font-size: 0.85em; }
+.arg-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 1rem; }
+.arg-table thead tr { border-bottom: 2px solid var(--color-border); }
+.arg-table th { text-align: left; padding: 0.3rem 0.6rem; color: var(--color-text-secondary); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.arg-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--color-border-faint); color: var(--color-text-tertiary); vertical-align: top; }
+.arg-table tr:last-child td { border-bottom: none; }
+.arg-table .arg-name { font-family: monospace; color: var(--color-api-str, #10b981); font-size: 0.85em; }
+.arg-table .arg-type { font-family: monospace; font-size: 0.82em; }
+.arg-table .arg-type a { color: var(--color-primary); text-decoration: none; }
+.arg-table .arg-type a:hover { text-decoration: underline; }
+.code-wrap { position: relative; margin-top: 0.75rem; }
+.code-wrap pre { margin: 0; }
+.code-wrap .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.2rem 0.55rem; font-size: 0.72rem; cursor: pointer; color: var(--color-text-muted); transition: background 0.1s, color 0.1s; }
+.code-wrap .copy-btn:hover { background: var(--color-border-light); color: var(--color-text); }
+.code-wrap .copy-btn.copied { color: var(--color-success-text); border-color: var(--color-success-text); }
+.hljs { border-radius: 6px; font-size: 0.82rem; padding: 0.9rem 1rem !important; }
+.see-also { margin-top: 2rem; padding: 1rem 1.25rem; background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 8px; }
+.see-also h3 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-subtle); margin-bottom: 0.6rem; }
+.see-also-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.see-also-link { font-size: 0.85rem; padding: 0.3rem 0.75rem; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 4px; text-decoration: none; color: var(--color-primary); transition: background 0.1s; }
+.see-also-link:hover { background: var(--color-border-light); }
+@media (max-width: 860px) { .doc-layout { grid-template-columns: 1fr; } .doc-sidebar { position: static; max-height: none; } }
+</style>
+
+<div class="doc-layout">
+    <aside class="doc-sidebar" id="doc-sidebar">
+        <h3>Scripting Docs</h3>
+        <div class="sidebar-group"><a href="/admin/scripting">Overview</a></div>
+        <span class="sidebar-section-label">Script Types</span>
+        <div class="sidebar-group">
+            <a href="/admin/scripting-rooms">Room Scripts</a>
+            <a href="/admin/scripting-mobs">Mob Scripts</a>
+            <a href="/admin/scripting-items">Item Scripts</a>
+            <a href="/admin/scripting-buffs">Buff Scripts</a>
+            <a href="/admin/scripting-spells">Spell Scripts</a>
+            <a href="/admin/scripting-pets">Pet Scripts</a>
+            <a href="/admin/scripting-users" class="active">User Scripts</a>
+        </div>
+        <span class="sidebar-section-label">Reference</span>
+        <div class="sidebar-group">
+            <a href="/admin/scripting-objects">Object Reference</a>
+            <a href="/admin/scripting-functions">Function Reference</a>
+            <a href="/admin/scripting-api">REST API</a>
+        </div>
+        <span class="sidebar-section-label">On This Page</span>
+        <div class="sidebar-group">
+            <a href="#overview">Overview</a>
+            <a href="#script-path">Script Path</a>
+            <a href="#editing">Editing &amp; Reloading</a>
+            <a href="#script-state">Script State</a>
+            <a href="#hooks">Event Hooks</a>
+            <a href="#hook-onLogin">onLogin</a>
+            <a href="#hook-onLogout">onLogout</a>
+            <a href="#hook-onLevel">onLevel</a>
+            <a href="#hook-onCommand">onCommand</a>
+            <a href="#hook-onDying">onDying</a>
+            <a href="#hook-onDie">onDie</a>
+            <a href="#hook-onLoad">onLoad</a>
+        </div>
+    </aside>
+
+    <main>
+        <div class="page-header">
+            <div class="breadcrumb"><a href="/admin/scripting">Scripting</a> <span>›</span> User Scripts</div>
+            <h1>
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                User Scripts
+            </h1>
+            <p class="subtitle">One global script that runs for every player, hooking key lifecycle and command events.</p>
+        </div>
+
+        <section class="doc-section" id="overview">
+            <h2>Overview</h2>
+            <p>Unlike rooms, mobs, items, and the other script types &mdash; which attach a separate script to each object &mdash; there is a <strong>single, global user script</strong> shared by every player. It is loaded once into one cached VM and its event handlers are invoked for whichever player triggered the event.</p>
+            <p>Use it for cross-cutting per-player behavior that should apply everywhere: welcome/farewell messages, level-up rewards, custom death handling (such as a phoenix-style revival), global command interception, and bleed-out effects while downed.</p>
+            <div class="callout callout-info">
+                <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <p>Edit the script in the <a href="/admin/users-script">User Script editor</a>. This page is reference documentation for the available event hooks.</p>
+            </div>
+        </section>
+
+        <section class="doc-section" id="script-path">
+            <h2>Script Path</h2>
+            <p>The user script lives at a fixed path under the data files directory. A JavaScript file (<span style="font-family:monospace">.js</span>) is preferred; a Lua file (<span style="font-family:monospace">.lua</span>) is used only when no JavaScript file exists.</p>
+            <div class="path-box">
+                <span class="path-label">User script</span>
+                _datafiles/scripts/<span class="ph">user</span>.js
+            </div>
+        </section>
+
+        <section class="doc-section" id="editing">
+            <h2>Editing &amp; Reloading</h2>
+            <p>Save the script through the <a href="/admin/users-script">User Script editor</a> or the REST API. Saving invalidates the cached VM, so changes take effect on the next event without a server restart. Saving an empty script deletes the file and disables all handlers.</p>
+            <div class="path-box">
+                <span class="path-label">REST API</span>
+                GET&nbsp;&nbsp;/admin/api/v1/user/script
+                <br>PUT&nbsp;&nbsp;/admin/api/v1/user/script&nbsp;&nbsp;<span class="ph">(requires users.write)</span>
+            </div>
+        </section>
+
+        <section class="doc-section" id="script-state">
+            <h2>Script State</h2>
+            <div class="callout callout-warn">
+                <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>Because there is one shared VM, global variables in the user script are <strong>shared across all players</strong>. For per-player data, use <code>user.SetTempData()</code> (session-scoped) or <code>user.SetMiscCharacterData()</code> (persisted) on the actor passed into each handler.</p>
+            </div>
+        </section>
+
+        <section class="doc-section" id="hooks">
+            <h2>Event Hooks</h2>
+            <p>Define any subset of the handlers below. Every handler receives the affected player as an <a href="/admin/scripting-objects#actor">ActorObject</a> and their current <a href="/admin/scripting-objects#room">RoomObject</a>. Handlers tagged <span class="hook-tag tag-abort" style="vertical-align:middle;">Can Abort</span> can suppress the engine's default behavior by returning <code>true</code>.</p>
+            <div class="hook-list">
+
+                <details class="hook-card" id="hook-onLogin">
+                    <summary><span class="hook-sig"><span class="fn-name">onLogin</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span><span class="hook-tag tag-info">Info</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called when a player enters the world (spawns in). Useful for welcome messages, daily login rewards, or refreshing per-session state. The return value is ignored.</p>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The player logging in.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player spawned in.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLogin(user, room) {
+    user.SendText('Welcome back, ' + user.GetCharacterName(false) + '!');
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLogin(user, room)
+    user:SendText("Welcome back, " .. user:GetCharacterName(false) .. "!")
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onLogout">
+                    <summary><span class="hook-sig"><span class="fn-name">onLogout</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span><span class="hook-tag tag-info">Info</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called when a player leaves the world (despawns). Fires before the engine's final cleanup so the actor is still resolvable. The <code>room</code> argument may be <code>null</code> in some disconnect scenarios &mdash; always null-check it before use. The return value is ignored.</p>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The player logging out.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player was in, or <code>null</code>.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLogout(user, room) {
+    if (room) {
+        room.SendText(user.GetCharacterName(false) + ' fades from view.', user.UserId());
+    }
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLogout(user, room)
+    if room ~= nil then
+        room:SendText(user:GetCharacterName(false) .. " fades from view.", user:UserId())
+    end
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onLevel">
+                    <summary><span class="hook-sig"><span class="fn-name">onLevel</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span>, <span class="fn-param">eventDetails</span> <span class="fn-type">LevelEventDetails</span><span class="fn-paren">)</span></span><span class="hook-tag tag-info">Info</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called when a player gains one or more levels. The <code>eventDetails</code> object describes the change, including the previous level so you can compute how many levels were gained or trigger milestone rewards. The return value is ignored.</p>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The player who leveled up.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player is in.</td></tr>
+                            <tr><td class="arg-name">eventDetails</td><td class="arg-type">LevelEventDetails</td><td>Level change details (see below).</td></tr>
+                        </tbody></table>
+                        <table class="arg-table"><thead><tr><th>eventDetails Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">newLevel</td><td class="arg-type">number</td><td>The player's new (current) level.</td></tr>
+                            <tr><td class="arg-name">previousLevel</td><td class="arg-type">number</td><td>The level the player was before this event.</td></tr>
+                            <tr><td class="arg-name">levelsGained</td><td class="arg-type">number</td><td>How many levels were gained at once.</td></tr>
+                            <tr><td class="arg-name">trainingPoints</td><td class="arg-type">number</td><td>Training points granted by this level change.</td></tr>
+                            <tr><td class="arg-name">statPoints</td><td class="arg-type">number</td><td>Stat points granted by this level change.</td></tr>
+                            <tr><td class="arg-name">livesGained</td><td class="arg-type">number</td><td>Extra lives granted (permadeath configurations).</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLevel(user, room, eventDetails) {
+    user.SendText('You are now level ' + eventDetails.newLevel + '!');
+    // Milestone reward at level 10
+    if (eventDetails.previousLevel < 10 && eventDetails.newLevel >= 10) {
+        user.AddGold(1000);
+        user.SendText('A milestone bonus of 1000 gold has been awarded!');
+    }
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLevel(user, room, eventDetails)
+    user:SendText("You are now level " .. eventDetails.newLevel .. "!")
+    -- Milestone reward at level 10
+    if eventDetails.previousLevel &lt; 10 and eventDetails.newLevel &gt;= 10 then
+        user:AddGold(1000)
+        user:SendText("A milestone bonus of 1000 gold has been awarded!")
+    end
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onCommand">
+                    <summary><span class="hook-sig"><span class="fn-name">onCommand</span><span class="fn-paren">(</span><span class="fn-param">cmd</span> <span class="fn-type">string</span>, <span class="fn-param">rest</span> <span class="fn-type">string</span>, <span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span><span class="hook-tag tag-abort">Can Abort</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called whenever a player types any command. This runs <strong>before</strong> mob and room <code>onCommand</code> handlers and before the built-in command itself. Return <code>true</code> to consume the command and halt all further processing.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> <code>true</code> = consumed (no mob/room scripts, no built-in command runs). <code>false</code> or nothing = pass through.</div>
+                        <div class="callout callout-warn" style="margin-bottom:1rem;">
+                            <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <p>This fires for <em>every</em> command from <em>every</em> player. Keep it fast and return <code>false</code> early for commands you do not handle. Admin/server commands are never routed through scripts.</p>
+                        </div>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">cmd</td><td class="arg-type">string</td><td>The command word typed (e.g. <code>look</code>, <code>north</code>).</td></tr>
+                            <tr><td class="arg-name">rest</td><td class="arg-type">string</td><td>Everything entered after the command word.</td></tr>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The player who typed the command.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player is in.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onCommand(cmd, rest, user, room) {
+    if (cmd === 'salute') {
+        room.SendText(user.GetCharacterName(false) + ' snaps a crisp salute.');
+        return true; // consume; no built-in 'salute' needed
+    }
+    return false;
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onCommand(cmd, rest, user, room)
+    if cmd == "salute" then
+        room:SendText(user:GetCharacterName(false) .. " snaps a crisp salute.")
+        return true -- consume; no built-in 'salute' needed
+    end
+    return false
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onDying">
+                    <summary><span class="hook-sig"><span class="fn-name">onDying</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span><span class="hook-tag tag-abort">Can Abort</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called when a player is downed &mdash; bleeding out but not yet fully dead. This fires <strong>again each round</strong> while the player remains downed and unhealed. Return <code>true</code> to suppress the default downed handling (the &ldquo;you drop to the ground&rdquo; message and nearby-mob reactions) for that round.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> <code>true</code> = suppress default downed handling this round. <code>false</code> or nothing = default behavior runs.</div>
+                        <div class="callout callout-info" style="margin-bottom:1rem;">
+                            <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <p>Aborting does not heal the player &mdash; they keep bleeding out and this handler is called again next round. To stop the bleed-out, heal the player (e.g. <code>user.AddHealth(...)</code>) so they leave the downed state.</p>
+                        </div>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The downed player.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player is in.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onDying(user, room) {
+    user.SendText('Your vision blurs as your strength bleeds away...');
+    return true; // suppress the default downed messaging this round
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onDying(user, room)
+    user:SendText("Your vision blurs as your strength bleeds away...")
+    return true -- suppress the default downed messaging this round
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onDie">
+                    <summary><span class="hook-sig"><span class="fn-name">onDie</span><span class="fn-paren">(</span><span class="fn-param">user</span> <span class="fn-type">ActorObject</span>, <span class="fn-param">room</span> <span class="fn-type">RoomObject</span><span class="fn-paren">)</span></span><span class="hook-tag tag-abort">Can Abort</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called when a player fully dies, <strong>before</strong> any death penalties are applied (XP loss, corpse creation, item drops, teleport to the death recovery room). Return <code>true</code> to abort the death entirely &mdash; no penalties run and the script is responsible for whatever happens instead, such as a phoenix-style revival.</p>
+                        <div class="hook-returns"><strong>Return value:</strong> <code>true</code> = abort death (no penalties, no corpse). <code>false</code> or nothing = normal death proceeds.</div>
+                        <div class="callout callout-warn" style="margin-bottom:1rem;">
+                            <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <p>When you abort, the engine ensures the player is left alive (health is restored to at least 1) and clears pending damage so they do not immediately re-die in the same combat resolution. Do <strong>not</strong> synchronously trigger another death from inside this handler.</p>
+                        </div>
+                        <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                            <tr><td class="arg-name">user</td><td class="arg-type"><a href="/admin/scripting-objects#actor">ActorObject</a></td><td>The dying player.</td></tr>
+                            <tr><td class="arg-name">room</td><td class="arg-type"><a href="/admin/scripting-objects#room">RoomObject</a></td><td>The room the player is in.</td></tr>
+                        </tbody></table>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onDie(user, room) {
+    // Phoenix charm: revive once instead of dying
+    if (user.GetMiscCharacterData('phoenix') === 1) {
+        user.SetMiscCharacterData('phoenix', 0);
+        user.SetHealth(user.GetHealthMax());
+        room.SendText(user.GetCharacterName(false) + ' is reborn in a burst of flame!');
+        user.SendText('The phoenix charm shatters and pulls you back from death!');
+        return true; // abort the death
+    }
+    return false;
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onDie(user, room)
+    -- Phoenix charm: revive once instead of dying
+    if user:GetMiscCharacterData("phoenix") == 1 then
+        user:SetMiscCharacterData("phoenix", 0)
+        user:SetHealth(user:GetHealthMax())
+        room:SendText(user:GetCharacterName(false) .. " is reborn in a burst of flame!")
+        user:SendText("The phoenix charm shatters and pulls you back from death!")
+        return true -- abort the death
+    end
+    return false
+end</code></pre></div>
+                    </div>
+                </details>
+
+                <details class="hook-card" id="hook-onLoad">
+                    <summary><span class="hook-sig"><span class="fn-name">onLoad</span><span class="fn-paren">()</span></span><span class="hook-tag tag-info">Info</span></summary>
+                    <div class="hook-body">
+                        <p class="hook-desc">Called once when the global user script is first loaded into memory (and again after a save reloads it). Use it for one-time initialization of shared script state. It has an extended timeout for setup work and takes no arguments.</p>
+                        <div class="code-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="scriptlang-block" data-lang="js"><code class="language-javascript">function onLoad() {
+    // one-time setup of shared script state
+}</code></pre><pre class="scriptlang-block" data-lang="lua"><code class="language-lua">function onLoad()
+    -- one-time setup of shared script state
+end</code></pre></div>
+                    </div>
+                </details>
+
+            </div>
+        </section>
+
+        <div class="see-also">
+            <h3>See Also</h3>
+            <div class="see-also-links">
+                <a class="see-also-link" href="/admin/users-script">User Script Editor</a>
+                <a class="see-also-link" href="/admin/scripting-objects#actor">ActorObject Reference</a>
+                <a class="see-also-link" href="/admin/scripting-objects#room">RoomObject Reference</a>
+                <a class="see-also-link" href="/admin/scripting-functions">Function Reference</a>
+                <a class="see-also-link" href="/admin/scripting">Scripting Overview</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// copyCode is provided by the shared scripting-docs.js (copies the visible variant).
+document.querySelectorAll('pre code').forEach(function(el) { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
+(function() {
+    var sidebar = document.getElementById('doc-sidebar');
+    var anchors = sidebar ? sidebar.querySelectorAll('a[href^="#"]') : [];
+    var pairs = [];
+    anchors.forEach(function(a) { var el = document.getElementById(a.getAttribute('href').slice(1)); if (el) pairs.push({ el: el, a: a }); });
+    if (!pairs.length || !('IntersectionObserver' in window)) return;
+    var current = null;
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) { if (e.isIntersecting) { var found = pairs.find(function(p) { return p.el === e.target; }); if (found && found.a !== current) { if (current) current.classList.remove('active'); found.a.classList.add('active'); current = found.a; } } });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    pairs.forEach(function(p) { obs.observe(p.el); });
+})();
+</script>
+
+{{template "footer" .}}

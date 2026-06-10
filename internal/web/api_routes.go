@@ -13,6 +13,10 @@ func registerAdminAPIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/api/v1/scripting/objecttypes", doBasicAuth(RunWithMUDLocked(apiV1GetScriptObjectTypes)))
 	mux.HandleFunc("GET /admin/api/v1/scripting/types.d.ts", doBasicAuth(apiV1GetScriptingTypesDts))
 
+	// Global user script
+	mux.HandleFunc("GET /admin/api/v1/user/script", doBasicAuth(RunWithMUDLocked(apiV1GetUserScript)))
+	mux.HandleFunc("PUT /admin/api/v1/user/script", doBasicAuth(RequirePermission("users.write", RunWithMUDLocked(apiV1PutUserScript))))
+
 	// Telemetry
 	mux.HandleFunc("GET /admin/api/v1/telemetry", doBasicAuth(RunWithoutMUDLock(apiV1GetTelemetry)))
 	mux.HandleFunc("DELETE /admin/api/v1/telemetry", doBasicAuth(RequirePermission("telemetry.write", RunWithoutMUDLock(apiV1DeleteTelemetry))))

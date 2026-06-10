@@ -29,6 +29,11 @@ func HandlePlayerDrop(e events.Event) events.ListenerReturn {
 		return events.Cancel
 	}
 
+	// Global user script can take over the downed handling for this round.
+	if handled, _ := scripting.TryUserScriptEvent(`onDying`, user.UserId); handled {
+		return events.Continue
+	}
+
 	user.SendText(`<ansi fg="red">you drop to the ground!</ansi>`)
 
 	room := rooms.LoadRoom(evt.RoomId)

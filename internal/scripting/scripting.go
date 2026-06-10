@@ -95,6 +95,7 @@ func Setup(scriptLoadTimeoutMs int, scriptRoomTimeoutMs int) {
 	scriptMobTimeout = t
 	scriptPetTimeout = t
 	scriptSpellTimeout = t
+	scriptUserTimeout = t
 }
 
 // SetHotReload enables or disables mtime-based script hot-reload.
@@ -148,6 +149,7 @@ func PruneVMs(forceClear ...bool) {
 		ClearItemVMs()
 		ClearPetVMs()
 		ClearSpellVMs()
+		ClearUserVM()
 	} else {
 		PruneRoomVMs()
 		PruneMobVMs()

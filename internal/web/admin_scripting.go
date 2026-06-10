@@ -34,6 +34,14 @@ func adminScriptingPets(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "scripting-pets.html", nil)
 }
 
+func adminScriptingUsers(w http.ResponseWriter, r *http.Request) {
+	serveAdminTemplate(w, r, "scripting-users.html", nil)
+}
+
+func adminUsersScript(w http.ResponseWriter, r *http.Request) {
+	serveAdminTemplate(w, r, "users-script.html", nil)
+}
+
 func adminScriptingFunctions(w http.ResponseWriter, r *http.Request) {
 	serveAdminTemplate(w, r, "scripting-functions.html", nil)
 }

@@ -14,6 +14,7 @@ func buildAdminNav() []WebNavItem {
 					Description: "Manage player accounts, roles, and permissions.",
 					Children: []WebNavItem{
 						{Label: "View / Edit", Target: "/admin/users", Description: "Browse, search, and edit player account records."},
+						{Label: "User Script", Target: "/admin/users-script", Description: "Edit the global script that runs for every player."},
 						{Label: "API Docs", Target: "/admin/users-api", Description: "REST API reference for the users endpoint."},
 					},
 				},
@@ -237,6 +238,7 @@ func buildAdminNav() []WebNavItem {
 						{Label: "Buff Scripts", Target: "/admin/scripting-buffs", Description: "Event hooks for buff/status effect scripts."},
 						{Label: "Spell Scripts", Target: "/admin/scripting-spells", Description: "Event hooks for spell scripts."},
 						{Label: "Pet Scripts", Target: "/admin/scripting-pets", Description: "Event hooks for pet scripts."},
+						{Label: "User Scripts", Target: "/admin/scripting-users", Description: "Event hooks for the global per-player script."},
 						{Label: "Object Reference", Target: "/admin/scripting-objects", Description: "API reference for ActorObject, RoomObject, ItemObject, PetObject, PartyObject, and ContainerObject."},
 						{Label: "Function Reference", Target: "/admin/scripting-functions", Description: "Global utility, messaging, and panel layout functions."},
 						{Label: "REST API", Target: "/admin/scripting-api", Description: "REST endpoints for script validation and schema."},

@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -30,15 +31,10 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return true, errors.New(`already dead`)
 	}
 
-	if user.Character.HasBuffFlag(buffs.ReviveOnDeath) {
-
-		user.Character.Health = user.Character.HealthMax.Value
-
-		user.SendText(`You are revived in a shower of magical sparks!`)
-		room.SendText(`<ansi fg="username">`+user.Character.Name+`</ansi> is suddenly revived in a shower of sparks!`, user.UserId)
-
-		user.Character.CancelBuffsWithFlag(buffs.ReviveOnDeath)
-
+	// Give the global user script a chance to override death entirely (e.g. a
+	// phoenix-style revival). If it returns true, the death is aborted and the
+	// script is responsible for whatever happens instead.
+	if handled, _ := scripting.TryUserDieEvent(user.UserId); handled {
 		return true, nil
 	}
 

@@ -1,0 +1,142 @@
+{{template "header" .}}
+
+<style>
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--color-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+    .editor-card { background: var(--color-surface-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.25rem; max-width: 1100px; }
+
+    /* script editor */
+    .script-section {
+        margin-top: 1.25rem; border-top: 1px solid var(--color-border-light); padding-top: 1rem;
+        display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .script-section-toolbar {
+        display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .script-section-label {
+        font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); flex: 1;
+    }
+    .script-hint { font-size: 0.75rem; color: var(--color-text-faint); margin-top: 0.3rem; }
+
+    .action-bar { display: flex; gap: 0.6rem; align-items: center; margin-top: 1rem; }
+    .btn { padding: 0.45rem 1.1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 600; }
+    .btn-primary { background: var(--color-primary); color: var(--color-surface-white); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:disabled { background: var(--color-text-secondary); cursor: default; }
+    .btn-danger { background: var(--color-btn-danger-bg); color: var(--color-surface-white); }
+    .btn-danger:hover { background: var(--color-btn-danger-hover); }
+    .btn-secondary { background: var(--color-border-light); color: var(--color-text-strong); }
+    .btn-secondary:hover { background: var(--color-border); }
+    .status-msg { font-size: 0.85rem; }
+    .status-msg.ok { color: var(--color-success, #2e7d32); }
+    .status-msg.err { color: var(--color-danger, #c62828); }
+
+    .handler-list { margin: 0.5rem 0 0; padding-left: 1.1rem; font-size: 0.85rem; color: var(--color-text-muted); }
+    .handler-list code { font-size: 0.82rem; }
+</style>
+
+<h1>User Script</h1>
+<p class="subtitle">
+    A single global script that runs for every player. See the
+    <a href="/admin/scripting-users">User Scripts documentation</a> for event hooks, and the
+    <a href="/admin/scripting-functions">Scripting Functions</a> reference for available APIs.
+</p>
+
+<div class="editor-card">
+    <p style="font-size:0.86rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
+        Available event handlers:
+    </p>
+    <ul class="handler-list">
+        <li><code>onLogin(user, room)</code> &mdash; player entered the world.</li>
+        <li><code>onLogout(user, room)</code> &mdash; player left the world.</li>
+        <li><code>onLevel(user, room, eventDetails)</code> &mdash; player gained a level.</li>
+        <li><code>onCommand(cmd, rest, user, room)</code> &mdash; runs before mob/room scripts; return <code>true</code> to halt the command.</li>
+        <li><code>onDying(user, room)</code> &mdash; player downed/bleeding out; return <code>true</code> to suppress default handling.</li>
+        <li><code>onDie(user, room)</code> &mdash; player fully died; return <code>true</code> to abort the death.</li>
+    </ul>
+
+    <div class="script-section">
+        <div class="script-section-toolbar">
+            <span class="script-section-label">Script</span>
+            <span class="script-lang-mount"></span>
+            <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="openScriptWizard()">+ Add Event Handler</button>
+            <button class="btn btn-secondary" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="ScriptEditor.open('f-script')">&#x26F6; Pop Out</button>
+        </div>
+        <textarea id="f-script" spellcheck="false" style="display:none"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+            <button class="btn btn-danger" style="font-size:0.78rem;padding:0.25rem 0.7rem;" onclick="deleteScript()">&#x1F5D1; Delete Script</button>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-primary" id="save-btn" onclick="saveScript()">Save Script</button>
+        <span class="status-msg" id="status"></span>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    let scriptSync = null;
+
+    function showStatus(msg, ok) {
+        const el = document.getElementById('status');
+        el.textContent = msg;
+        el.className = 'status-msg ' + (ok ? 'ok' : 'err');
+    }
+
+    async function init() {
+        scriptSync = ScriptEditor.init('f-script', 'user');
+        ScriptEditor.setDeleteHandler('f-script', deleteScript);
+        await loadScript();
+    }
+
+    async function loadScript() {
+        const res = await AdminAPI.get('/admin/api/v1/user/script');
+        if (!res.ok) { showStatus('Failed to load script: ' + res.error, false); return; }
+
+        const script = (res.data && res.data.data && res.data.data.script) || '';
+        const lang   = (res.data && res.data.data && res.data.data.lang) || 'js';
+
+        document.getElementById('f-script').value = script;
+        if (scriptSync) scriptSync(undefined, lang);
+        ScriptEditor.lockLang('f-script', script !== '');
+    }
+
+    window.openScriptWizard = function () {
+        ScriptWizard.open({ scriptType: 'user', textareaId: 'f-script' });
+    };
+
+    window.saveScript = async function () {
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        const script = document.getElementById('f-script').value;
+        const res = await AdminAPI.put('/admin/api/v1/user/script', { script: script, lang: ScriptEditor.getLang('f-script') });
+
+        btn.disabled = false; btn.textContent = 'Save Script';
+
+        if (!res.ok) { showStatus('Save failed: ' + res.error, false); return; }
+
+        ScriptEditor.lockLang('f-script', script.trim().length > 0);
+        showStatus('Script saved.', true);
+    };
+
+    window.deleteScript = async function () {
+        if (!confirm('Delete this script? This cannot be undone.')) return;
+
+        const res = await AdminAPI.put('/admin/api/v1/user/script', { script: '', lang: ScriptEditor.getLang('f-script') });
+        if (!res.ok) { showStatus('Script delete failed: ' + res.error, false); return; }
+
+        if (scriptSync) scriptSync('');
+        ScriptEditor.lockLang('f-script', false);
+        showStatus('Script deleted.', true);
+    };
+
+    init();
+})();
+</script>
+
+{{template "footer" .}}
