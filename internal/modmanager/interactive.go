@@ -109,8 +109,9 @@ func isInteractiveTerminal() bool {
 
 // handleManifestSourceCommand implements the interactive "manifest-source"
 // command. With no argument it prints the current manifest source. With
-// "default" (or "reset") it restores the default registry. Otherwise it points
-// the manager at the given .yaml file or URL for the rest of the session.
+// "default" (or "reset") it restores the default registry, and with "test" it
+// switches to the test registry. Otherwise it points the manager at the given
+// .yaml file or URL for the rest of the session.
 func handleManifestSourceCommand(args []string) {
 	if len(args) == 0 {
 		printCurrentManifestSource()
@@ -161,7 +162,7 @@ func printInteractiveHelp() {
 		{green("remove") + " <name>", "Remove an installed module"},
 		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
 		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},
-		{green("manifest-source") + " [src]", "Show, or set for this session, the manifest source (.yaml file or URL; 'default' to reset)"},
+		{green("manifest-source") + " [src]", "Show, or set for this session, the manifest source (.yaml file or URL; 'test' for the test registry, 'default' to reset)"},
 		{green("help"), "Show this help"},
 		{green("quit") + " / " + green("exit"), "Exit the module manager"},
 	}

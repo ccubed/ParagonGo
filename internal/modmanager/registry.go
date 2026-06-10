@@ -13,6 +13,7 @@ import (
 )
 
 const registryURL = "https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules/refs/heads/master/module-registry.yaml"
+const registryTestURL = "https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules/refs/heads/master/module-registry-test.yaml"
 
 // officialAuthor is the author value used for modules published by the GoMud team.
 const officialAuthor = "GoMud"

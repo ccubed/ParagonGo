@@ -118,14 +118,32 @@ func applyManifestFlag(args []string) ([]string, error) {
 
 // useManifestOverride validates source, points the module manager at it for the
 // remainder of this invocation, and warns the user that the default registry is
-// being overridden.
+// being overridden. The special identifiers "default"/"reset" and "test" are
+// resolved to the built-in registry URLs before validation.
 func useManifestOverride(source string) error {
-	if err := validateManifestSource(source); err != nil {
+	resolved := resolveManifestSource(source)
+	if err := validateManifestSource(resolved); err != nil {
 		return err
 	}
-	manifestSource = source
-	printManifestOverrideWarning(source)
+	manifestSource = resolved
+	if resolved != registryURL {
+		printManifestOverrideWarning(resolved)
+	}
 	return nil
+}
+
+// resolveManifestSource maps the special identifiers "default"/"reset" to the
+// official registry URL and "test" to the test registry URL. Any other value is
+// returned unchanged so it can be treated as a literal file path or URL.
+func resolveManifestSource(source string) string {
+	switch source {
+	case "default", "reset":
+		return registryURL
+	case "test":
+		return registryTestURL
+	default:
+		return source
+	}
 }
 
 // validateManifestSource ensures a custom manifest location points at a YAML
@@ -177,7 +195,9 @@ func printUsage() {
 	fmt.Printf("  %s  %s\n", padRight(green("--manifest")+" <path|url>", 22),
 		"Temporarily use an alternate module manifest (.yaml file or")
 	fmt.Printf("  %s  %s\n", padRight("", 22),
-		"local path) instead of the default registry; for local testing")
+		"local path) instead of the default registry; for local testing.")
+	fmt.Printf("  %s  %s\n", padRight("", 22),
+		"Use 'test' for the built-in test registry, 'default' to reset.")
 	fmt.Println()
 	fmt.Println(gray("Run without arguments (with a terminal) to start interactive mode."))
 	fmt.Println()

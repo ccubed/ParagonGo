@@ -448,6 +448,20 @@ func TestApplyManifestFlag(t *testing.T) {
 	assert.Equal(t, []string{"install", "birds"}, rest)
 	assert.Equal(t, "other.yaml", manifestSource)
 
+	// "test" resolves to the built-in test registry URL.
+	manifestSource = orig
+	rest, err = applyManifestFlag([]string{"--manifest", "test", "list"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"list"}, rest)
+	assert.Equal(t, registryTestURL, manifestSource)
+
+	// "default" resolves back to the official registry URL.
+	manifestSource = "local.yaml"
+	rest, err = applyManifestFlag([]string{"--manifest=default", "list"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"list"}, rest)
+	assert.Equal(t, registryURL, manifestSource)
+
 	// No flag leaves the default in place.
 	manifestSource = orig
 	rest, err = applyManifestFlag([]string{"list"})
@@ -492,6 +506,11 @@ func TestHandleManifestSourceCommand(t *testing.T) {
 	manifestSource = "local.yaml"
 	handleManifestSourceCommand([]string{"reset"})
 	assert.Equal(t, registryURL, manifestSource)
+
+	// "test" switches to the test registry.
+	manifestSource = orig
+	handleManifestSourceCommand([]string{"test"})
+	assert.Equal(t, registryTestURL, manifestSource)
 
 	// An invalid (non-yaml) source does not change the current value.
 	manifestSource = "local.yaml"
