@@ -6,6 +6,8 @@ FROM golang:1.25
 
 ARG ACTIONLINT_VERSION=v1.7.8
 ARG ACT_VERSION=v0.2.89
+ARG ACT_LINUX_X86_64_SHA256=0191d6f1f3b716b5c55820032605d05fc3c1cdbf581ebeff655019e5dd1524c0
+ARG ACT_LINUX_ARM64_SHA256=daa8679ba9615a74d2d0cec321dc593f21948a2a11bb65862b063d8b930f4bcb
 ARG YAMLLINT_VERSION=1.38.0
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,13 +37,14 @@ RUN pip3 install --break-system-packages "yamllint==${YAMLLINT_VERSION}"
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
-        amd64) act_arch=x86_64 ;; \
-        arm64) act_arch=arm64 ;; \
+        amd64) act_arch=x86_64; act_sha256="${ACT_LINUX_X86_64_SHA256}" ;; \
+        arm64) act_arch=arm64; act_sha256="${ACT_LINUX_ARM64_SHA256}" ;; \
         *) echo "Unsupported act architecture: $arch" >&2; exit 1 ;; \
     esac; \
     curl --proto '=https' --tlsv1.2 -sSfL \
         -o /tmp/act.tar.gz \
         "https://github.com/nektos/act/releases/download/${ACT_VERSION}/act_Linux_${act_arch}.tar.gz"; \
+    printf '%s  %s\n' "$act_sha256" /tmp/act.tar.gz | sha256sum -c -; \
     tar -xzf /tmp/act.tar.gz -C /usr/local/bin act; \
     rm -f /tmp/act.tar.gz
 
