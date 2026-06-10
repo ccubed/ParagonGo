@@ -116,6 +116,16 @@ func apiV1PatchMob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated := *existing
+
+	// Clear the map-typed character collections the editor fully manages before
+	// decoding. json.Unmarshal MERGES into existing maps rather than replacing
+	// them, so a removed spell would otherwise persist. Resetting on the copy
+	// gives the payload full replace semantics. (Character is a value on the
+	// Mob, so this does not disturb the live spec's map.) Only SpellBook is
+	// reset because that is the only map the mob editor submits — clearing
+	// Skills here would drop skills the editor never sends.
+	updated.Character.SpellBook = nil
+
 	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
 		return

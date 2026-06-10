@@ -78,6 +78,21 @@ func apiV1PatchUser(w http.ResponseWriter, r *http.Request) {
 	_ = json.Unmarshal(body, &raw)
 
 	updated := *u
+
+	// Detach the character from the live/loaded record before decoding. The
+	// admin form submits the complete desired state of the map-typed
+	// collections (skills, spellbook), but json.Unmarshal MERGES into existing
+	// maps rather than replacing them — so a removed skill/spell (omitted from
+	// the payload) would otherwise survive and reappear on reload. Clearing
+	// those maps on a copy gives the payload full replace semantics and leaves
+	// the live record intact if decoding fails.
+	if u.Character != nil {
+		charCopy := *u.Character
+		charCopy.Skills = nil
+		charCopy.SpellBook = nil
+		updated.Character = &charCopy
+	}
+
 	if err := json.Unmarshal(body, &updated); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "malformed request body: "+err.Error())
 		return
