@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 )
 
 var validName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
@@ -13,6 +14,11 @@ var validName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 // Run is the entry point for the module manager subcommand. args should be
 // os.Args[2:] (everything after "module").
 func Run(args []string) {
+	args, err := applyManifestFlag(args)
+	if err != nil {
+		fatalf("%v\n", err)
+	}
+
 	if len(args) == 0 {
 		if isInteractiveTerminal() {
 			runInteractive()
@@ -22,7 +28,6 @@ func Run(args []string) {
 		os.Exit(0)
 	}
 
-	var err error
 	switch args[0] {
 	case "list":
 		err = cmdList()
@@ -83,6 +88,69 @@ func fatalf(format string, args ...any) {
 	os.Exit(1)
 }
 
+// applyManifestFlag scans args for a global --manifest <source> (or
+// --manifest=<source>) flag, applies it as the manifest override, and returns
+// args with the flag and its value removed so subcommand parsing is unaffected.
+// The flag may appear anywhere in args.
+func applyManifestFlag(args []string) ([]string, error) {
+	var rest []string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case a == "--manifest":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--manifest requires a file path or URL")
+			}
+			if err := useManifestOverride(args[i+1]); err != nil {
+				return nil, err
+			}
+			i++ // skip the value we just consumed
+		case strings.HasPrefix(a, "--manifest="):
+			if err := useManifestOverride(strings.TrimPrefix(a, "--manifest=")); err != nil {
+				return nil, err
+			}
+		default:
+			rest = append(rest, a)
+		}
+	}
+	return rest, nil
+}
+
+// useManifestOverride validates source, points the module manager at it for the
+// remainder of this invocation, and warns the user that the default registry is
+// being overridden.
+func useManifestOverride(source string) error {
+	if err := validateManifestSource(source); err != nil {
+		return err
+	}
+	manifestSource = source
+	printManifestOverrideWarning(source)
+	return nil
+}
+
+// validateManifestSource ensures a custom manifest location points at a YAML
+// file. Both http(s) URLs and local filesystem paths are accepted, as long as
+// they end in .yaml or .yml (any query string or fragment on a URL is ignored).
+func validateManifestSource(source string) error {
+	if strings.TrimSpace(source) == "" {
+		return fmt.Errorf("--manifest requires a file path or URL")
+	}
+	lower := strings.ToLower(source)
+	if i := strings.IndexAny(lower, "?#"); i >= 0 {
+		lower = lower[:i]
+	}
+	if !strings.HasSuffix(lower, ".yaml") && !strings.HasSuffix(lower, ".yml") {
+		return fmt.Errorf("manifest must be a .yaml file, got %q", source)
+	}
+	return nil
+}
+
+// printManifestOverrideWarning warns that a non-default manifest is in use.
+func printManifestOverrideWarning(source string) {
+	printWarning("using a custom module manifest instead of the default registry: %s", bold(source))
+	fmt.Fprintln(os.Stderr, gray("         only use manifests from sources you trust; downloads are still SHA256-verified."))
+}
+
 func printUsage() {
 	fmt.Println()
 	fmt.Println(cyan("GoMud Module Manager"))
@@ -104,6 +172,12 @@ func printUsage() {
 	for _, e := range entries {
 		fmt.Printf("  %s  %s\n", padRight(e.cmd, 22), e.desc)
 	}
+	fmt.Println()
+	fmt.Println(bold("Global options:"))
+	fmt.Printf("  %s  %s\n", padRight(green("--manifest")+" <path|url>", 22),
+		"Temporarily use an alternate module manifest (.yaml file or")
+	fmt.Printf("  %s  %s\n", padRight("", 22),
+		"local path) instead of the default registry; for local testing")
 	fmt.Println()
 	fmt.Println(gray("Run without arguments (with a terminal) to start interactive mode."))
 	fmt.Println()

@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,6 +50,13 @@ func cmdInstall(name string) error {
 		}
 	}
 
+	// A manifest entry must declare a checksum so the downloaded archive can be
+	// verified against it. Refuse to install otherwise rather than fetching
+	// unverifiable code.
+	if strings.TrimSpace(entry.SHA256) == "" {
+		return fmt.Errorf("manifest entry for %q has no sha256 checksum; refusing to install unverifiable module", name)
+	}
+
 	printStep("Downloading %s %s...", bold(entry.Name), cyan("v"+entry.Version))
 
 	tmpFile, err := os.CreateTemp("", "gomud-module-*.tmp")
@@ -63,23 +69,23 @@ func cmdInstall(name string) error {
 		os.Remove(tmpPath)
 	}()
 
-	resp, err := http.Get(entry.URL)
+	rc, err := openArchiveReader(entry.URL)
 	if err != nil {
-		return fmt.Errorf("downloading archive: %w", err)
+		return err
 	}
-	defer resp.Body.Close()
+	defer rc.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("downloading archive: HTTP %d from %s", resp.StatusCode, entry.URL)
-	}
-
-	if err := verifyArchive(resp.Body, tmpFile, entry.SHA256); err != nil {
+	// verifyArchive streams the download to disk while computing its SHA256 and
+	// fails if it does not match the checksum declared in the manifest.
+	if err := verifyArchive(rc, tmpFile, entry.SHA256); err != nil {
 		return err
 	}
 
 	if err := tmpFile.Close(); err != nil {
 		return fmt.Errorf("flushing temp file: %w", err)
 	}
+
+	printStep("Verified SHA256 checksum.")
 
 	destDir := filepath.Join("modules", name)
 	if _, err := os.Stat(destDir); err == nil {

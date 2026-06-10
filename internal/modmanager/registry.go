@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -15,6 +16,13 @@ const registryURL = "https://raw.githubusercontent.com/GoMudEngine/GoMud-Modules
 
 // officialAuthor is the author value used for modules published by the GoMud team.
 const officialAuthor = "GoMud"
+
+// manifestSource is the location the module manifest (registry) is loaded from.
+// It defaults to the official registry URL but can be temporarily overridden,
+// either to another URL or to a local filesystem path, via the global
+// --manifest flag (see useManifestOverride). This is primarily intended for
+// local testing of modules and registries.
+var manifestSource = registryURL
 
 // RegistryEntry is a single module entry from the central registry.
 type RegistryEntry struct {
@@ -31,9 +39,32 @@ type Registry struct {
 	Modules []RegistryEntry `yaml:"modules"`
 }
 
-// fetchRegistry downloads and parses the module registry from the hardcoded URL.
+// fetchRegistry loads and parses the module manifest from manifestSource, which
+// may be an http(s) URL or a local filesystem path (optionally prefixed with
+// file://).
 func fetchRegistry() (*Registry, error) {
-	resp, err := http.Get(registryURL)
+	var data []byte
+	if isHTTPURL(manifestSource) {
+		var err error
+		data, err = fetchRegistryHTTP(manifestSource)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		path := strings.TrimPrefix(manifestSource, "file://")
+		var err error
+		data, err = os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading manifest file %q: %w", path, err)
+		}
+	}
+
+	return parseRegistry(data)
+}
+
+// fetchRegistryHTTP downloads the raw manifest bytes from an http(s) URL.
+func fetchRegistryHTTP(url string) ([]byte, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("fetching registry: %w", err)
 	}
@@ -48,7 +79,37 @@ func fetchRegistry() (*Registry, error) {
 		return nil, fmt.Errorf("reading registry response: %w", err)
 	}
 
-	return parseRegistry(data)
+	return data, nil
+}
+
+// isHTTPURL reports whether s is an http(s) URL (as opposed to a local path).
+func isHTTPURL(s string) bool {
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+}
+
+// openArchiveReader returns a reader for a module archive at the given location,
+// which may be an http(s) URL or a local filesystem path (optionally prefixed
+// with file://). The returned ReadCloser must be closed by the caller. Local
+// paths let modules be installed from a manifest used for local testing.
+func openArchiveReader(location string) (io.ReadCloser, error) {
+	if isHTTPURL(location) {
+		resp, err := http.Get(location)
+		if err != nil {
+			return nil, fmt.Errorf("downloading archive: %w", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("downloading archive: HTTP %d from %s", resp.StatusCode, location)
+		}
+		return resp.Body, nil
+	}
+
+	path := strings.TrimPrefix(location, "file://")
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening local archive %q: %w", path, err)
+	}
+	return f, nil
 }
 
 // parseRegistry parses raw YAML bytes into a Registry.

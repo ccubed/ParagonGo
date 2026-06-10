@@ -19,6 +19,7 @@ func runInteractive() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
+		printCustomManifestBanner()
 		fmt.Print(cyan(">") + " ")
 		if !scanner.Scan() {
 			// EOF (Ctrl-D)
@@ -92,6 +93,9 @@ func runInteractive() {
 				printError("%v", err)
 			}
 
+		case "manifest-source", "manifest":
+			handleManifestSourceCommand(args)
+
 		default:
 			printError("unknown command: %q (type 'help' for a list)", cmd)
 		}
@@ -101,6 +105,48 @@ func runInteractive() {
 // isInteractiveTerminal reports whether stdin is an interactive terminal.
 func isInteractiveTerminal() bool {
 	return term.IsTerminal(int(os.Stdin.Fd()))
+}
+
+// handleManifestSourceCommand implements the interactive "manifest-source"
+// command. With no argument it prints the current manifest source. With
+// "default" (or "reset") it restores the default registry. Otherwise it points
+// the manager at the given .yaml file or URL for the rest of the session.
+func handleManifestSourceCommand(args []string) {
+	if len(args) == 0 {
+		printCurrentManifestSource()
+		return
+	}
+
+	if args[0] == "default" || args[0] == "reset" {
+		manifestSource = registryURL
+		printSuccess("Manifest source reset to the default registry.")
+		return
+	}
+
+	if err := useManifestOverride(args[0]); err != nil {
+		printError("%v", err)
+	}
+}
+
+// printCustomManifestBanner prints a prominent, color-emphasized warning above
+// the prompt whenever a non-default manifest source is active, so it stays
+// visible on every menu of the interactive session.
+func printCustomManifestBanner() {
+	if manifestSource == registryURL {
+		return
+	}
+	fmt.Println(warnBanner("⚠ CUSTOM MANIFEST SOURCE — not the default registry") +
+		" " + yellow(manifestSource))
+}
+
+// printCurrentManifestSource reports where the manifest is currently loaded from.
+func printCurrentManifestSource() {
+	if manifestSource == registryURL {
+		fmt.Println(gray("Manifest source: ") + dimStr("default registry"))
+		fmt.Println("  " + gray(registryURL))
+		return
+	}
+	fmt.Println(gray("Manifest source: ") + bold(manifestSource))
 }
 
 func printInteractiveHelp() {
@@ -115,6 +161,7 @@ func printInteractiveHelp() {
 		{green("remove") + " <name>", "Remove an installed module"},
 		{green("update") + " [name]", "Check for updates; update a specific module if name given"},
 		{green("package") + " <name>", "Package a local module into a .tar.gz and print its SHA256"},
+		{green("manifest-source") + " [src]", "Show, or set for this session, the manifest source (.yaml file or URL; 'default' to reset)"},
 		{green("help"), "Show this help"},
 		{green("quit") + " / " + green("exit"), "Exit the module manager"},
 	}

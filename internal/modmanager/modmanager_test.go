@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -397,6 +398,177 @@ func TestValidateName(t *testing.T) {
 	for _, n := range invalid {
 		assert.Error(t, validateName(n), "expected invalid: %q", n)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// manifest override
+// ---------------------------------------------------------------------------
+
+func TestValidateManifestSource(t *testing.T) {
+	valid := []string{
+		"manifest.yaml",
+		"manifest.yml",
+		"./local/registry.yaml",
+		"/abs/path/registry.YAML",
+		"file:///abs/path/registry.yaml",
+		"https://example.com/module-registry.yaml",
+		"https://example.com/module-registry.yaml?ref=main",
+	}
+	for _, s := range valid {
+		assert.NoError(t, validateManifestSource(s), "expected valid: %q", s)
+	}
+
+	invalid := []string{
+		"",
+		"   ",
+		"manifest.txt",
+		"manifest.json",
+		"https://example.com/registry",
+		"registry.yaml.bak",
+	}
+	for _, s := range invalid {
+		assert.Error(t, validateManifestSource(s), "expected invalid: %q", s)
+	}
+}
+
+func TestApplyManifestFlag(t *testing.T) {
+	orig := manifestSource
+	defer func() { manifestSource = orig }()
+
+	// --manifest <value> form, flag is stripped from returned args.
+	rest, err := applyManifestFlag([]string{"--manifest", "local.yaml", "list"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"list"}, rest)
+	assert.Equal(t, "local.yaml", manifestSource)
+
+	// --manifest=<value> form.
+	manifestSource = orig
+	rest, err = applyManifestFlag([]string{"install", "--manifest=other.yaml", "birds"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"install", "birds"}, rest)
+	assert.Equal(t, "other.yaml", manifestSource)
+
+	// No flag leaves the default in place.
+	manifestSource = orig
+	rest, err = applyManifestFlag([]string{"list"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"list"}, rest)
+	assert.Equal(t, orig, manifestSource)
+}
+
+func TestApplyManifestFlag_errors(t *testing.T) {
+	orig := manifestSource
+	defer func() { manifestSource = orig }()
+
+	// Missing value.
+	_, err := applyManifestFlag([]string{"--manifest"})
+	assert.Error(t, err)
+
+	// Non-yaml value.
+	manifestSource = orig
+	_, err = applyManifestFlag([]string{"--manifest", "registry.txt", "list"})
+	assert.Error(t, err)
+	assert.Equal(t, orig, manifestSource, "manifestSource must not change on validation failure")
+}
+
+func TestHandleManifestSourceCommand(t *testing.T) {
+	orig := manifestSource
+	defer func() { manifestSource = orig }()
+
+	// No arg leaves the source unchanged (display only).
+	manifestSource = orig
+	handleManifestSourceCommand(nil)
+	assert.Equal(t, orig, manifestSource)
+
+	// Setting a valid .yaml source updates it for the session.
+	handleManifestSourceCommand([]string{"local.yaml"})
+	assert.Equal(t, "local.yaml", manifestSource)
+
+	// "default" restores the default registry.
+	handleManifestSourceCommand([]string{"default"})
+	assert.Equal(t, registryURL, manifestSource)
+
+	// "reset" is an alias for default.
+	manifestSource = "local.yaml"
+	handleManifestSourceCommand([]string{"reset"})
+	assert.Equal(t, registryURL, manifestSource)
+
+	// An invalid (non-yaml) source does not change the current value.
+	manifestSource = "local.yaml"
+	handleManifestSourceCommand([]string{"bad.txt"})
+	assert.Equal(t, "local.yaml", manifestSource)
+}
+
+func TestFetchRegistry_localFile(t *testing.T) {
+	orig := manifestSource
+	defer func() { manifestSource = orig }()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "registry.yaml")
+	content := `
+modules:
+  - name: birds
+    version: "1.0.0"
+    author: "GoMud"
+    url: "https://example.com/birds.tar.gz"
+    sha256: "abc123"
+`
+	require.NoError(t, os.WriteFile(path, []byte(content), 0644))
+
+	manifestSource = path
+	reg, err := fetchRegistry()
+	require.NoError(t, err)
+	require.Len(t, reg.Modules, 1)
+	assert.Equal(t, "birds", reg.Modules[0].Name)
+
+	// file:// prefix is also accepted.
+	manifestSource = "file://" + path
+	reg, err = fetchRegistry()
+	require.NoError(t, err)
+	require.Len(t, reg.Modules, 1)
+}
+
+func TestFetchRegistry_localFileMissing(t *testing.T) {
+	orig := manifestSource
+	defer func() { manifestSource = orig }()
+
+	manifestSource = filepath.Join(t.TempDir(), "does-not-exist.yaml")
+	_, err := fetchRegistry()
+	assert.Error(t, err)
+}
+
+func TestIsHTTPURL(t *testing.T) {
+	assert.True(t, isHTTPURL("http://example.com/x.yaml"))
+	assert.True(t, isHTTPURL("https://example.com/x.yaml"))
+	assert.False(t, isHTTPURL("/local/path.yaml"))
+	assert.False(t, isHTTPURL("file:///local/path.yaml"))
+	assert.False(t, isHTTPURL("./relative.yaml"))
+}
+
+func TestOpenArchiveReader_localFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "archive.tar.gz")
+	require.NoError(t, os.WriteFile(path, []byte("payload"), 0644))
+
+	rc, err := openArchiveReader(path)
+	require.NoError(t, err)
+	defer rc.Close()
+	data, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	assert.Equal(t, "payload", string(data))
+
+	// file:// prefix is also accepted.
+	rc2, err := openArchiveReader("file://" + path)
+	require.NoError(t, err)
+	defer rc2.Close()
+	data, err = io.ReadAll(rc2)
+	require.NoError(t, err)
+	assert.Equal(t, "payload", string(data))
+}
+
+func TestOpenArchiveReader_localFileMissing(t *testing.T) {
+	_, err := openArchiveReader(filepath.Join(t.TempDir(), "missing.tar.gz"))
+	assert.Error(t, err)
 }
 
 // ---------------------------------------------------------------------------

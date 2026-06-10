@@ -87,6 +87,38 @@ With a built binary:
 
 A `make module` shortcut is also available.
 
+## Using a custom manifest (local testing)
+
+By default the manager loads the manifest from the official registry URL. For
+local testing you can temporarily point it at a different manifest with the
+global `--manifest` flag, which accepts either an http(s) URL or a local
+filesystem path (a `file://` prefix is also accepted):
+
+```sh
+# Local file
+go run . module --manifest ./my-registry.yaml list
+go run . module --manifest /abs/path/registry.yaml install <name>
+
+# Alternate URL
+go run . module --manifest https://example.com/registry.yaml list
+```
+
+The flag may appear anywhere in the command. The manifest location must end in
+`.yaml` (or `.yml`), and the manager prints a warning whenever a non-default
+manifest is in use. Module archives referenced by the manifest `url` may also be
+local paths (or `file://` URLs), so a module can be installed entirely from
+local files. Downloads are still SHA256-verified against the manifest in all
+cases.
+
+In interactive mode (where the `--manifest` switch can't be passed) use the
+`manifest-source` command to change the source for the rest of the session:
+
+```sh
+> manifest-source                  # show the current source
+> manifest-source ./my-registry.yaml   # set it for this session
+> manifest-source default          # reset to the default registry
+```
+
 ## After installing or removing a module
 
 Modules are compiled into the server binary, so a rebuild is required for

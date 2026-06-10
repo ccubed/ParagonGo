@@ -68,6 +68,12 @@ func header(title string) string {
 	return cyan(title)
 }
 
+// warnBanner renders an attention-grabbing warning (bold black text on a yellow
+// background) so a non-default state stays visible.
+func warnBanner(s string) string {
+	return col("\033[1;30;43m", " "+s+" ")
+}
+
 // codeSnippet renders a shell command in a distinct style.
 func codeSnippet(s string) string {
 	return col(ansiGray, "  "+s)
