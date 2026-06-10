@@ -39,7 +39,7 @@ jobs:
       # actions/checkout v6.0.3
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
-          fetch-depth: 0
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Detect changed CodeQL inputs
@@ -68,6 +68,13 @@ jobs:
             else
               diff_base=HEAD^
               diff_head=HEAD
+            fi
+
+            if ! git cat-file -e "${diff_base}^{commit}" 2>/dev/null; then
+              if ! git fetch --no-tags --depth=1 origin "${diff_base}" \
+                2>/dev/null; then
+                git fetch --no-tags --unshallow origin
+              fi
             fi
 
             mapfile -t changed_files < <(

@@ -104,9 +104,6 @@ jobs:
 
       - uses: ./.github/actions/setup-go
 
-      - name: Generate code
-        run: go generate ./...
-
       - name: Build release binary
         run: .github/scripts/build-release-binaries.sh
 

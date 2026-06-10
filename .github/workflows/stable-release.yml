@@ -137,9 +137,6 @@ jobs:
 
       - uses: ./.github/actions/setup-go
 
-      - name: Generate code
-        run: go generate ./...
-
       - name: Build release binary
         run: .github/scripts/build-release-binaries.sh
 
@@ -309,3 +306,71 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
             -F draft=false \
             -F prerelease=false
+
+  cleanup-failed-draft:
+    name: Cleanup Failed Stable Draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs:
+      - stage-release
+      - docker-image
+      - publish
+    if: >-
+      ${{
+        always() &&
+        (
+          needs.stage-release.result == 'failure' ||
+          needs.docker-image.result == 'failure' ||
+          needs.publish.result == 'failure'
+        )
+      }}
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_ID: ${{ needs.stage-release.outputs.release_id }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+    steps:
+      - name: Delete unpublished stable draft
+        run: |
+          set -euo pipefail
+
+          release_endpoint="repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}"
+          if [ -n "$RELEASE_ID" ]; then
+            release_endpoint="repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
+          fi
+
+          release_data="$(
+            gh api "$release_endpoint" \
+              --jq '[.id, .draft, .target_commitish] | @tsv' \
+              2>/dev/null || true
+          )"
+          if [ -z "$release_data" ]; then
+            echo "No stable draft release found for ${RELEASE_TAG}."
+            exit 0
+          fi
+
+          IFS=$'\t' read -r release_id draft target_commitish \
+            <<<"$release_data"
+          if [ "$draft" != "true" ] ||
+            [ "$target_commitish" != "$GITHUB_SHA" ]; then
+            echo "Release ${RELEASE_TAG} is not this run's draft; leaving it."
+            exit 0
+          fi
+
+          gh api \
+            -X DELETE \
+            "repos/${GITHUB_REPOSITORY}/releases/${release_id}"
+
+          tag_sha="$(
+            gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+              --jq '.object.sha' \
+              2>/dev/null || true
+          )"
+          if [ "$tag_sha" = "$GITHUB_SHA" ]; then
+            gh api \
+              -X DELETE \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}"
+          elif [ -n "$tag_sha" ]; then
+            echo "Tag ${RELEASE_TAG} does not point at this run; leaving it."
+          fi
