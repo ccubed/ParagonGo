@@ -198,8 +198,10 @@ ci-local: ci-local-image ## Run local CI validation in the CI tool container.
 ci-local-inner: ## Run CI checks from inside the local CI tool container.
 	actionlint .github/workflows/*.yml
 	yamllint .github
+	shellcheck .github/scripts/*.sh
 	$(MAKE) validate
 	$(MAKE) js-lint
+	$(MAKE) lua-lint
 	ACT_FLAGS="$(ACT_FLAGS)" \
 		ACT_DRYRUN_SECRETS="$(ACT_DRYRUN_SECRETS)" \
 		.github/scripts/ci-local-act.sh

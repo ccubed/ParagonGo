@@ -35,7 +35,7 @@ jobs:
     outputs:
       binary_version: ${{ steps.meta.outputs.binary_version }}
     steps:
-      # actions/checkout v6.0.2
+      # actions/checkout v6.0.3
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
@@ -90,7 +90,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v6.0.2
+      # actions/checkout v6.0.3
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
@@ -100,36 +100,52 @@ jobs:
       - uses: ./.github/actions/go-checks
 
   build:
-    name: Build Release Binaries
+    name: Build Release Binary (${{ matrix.label }})
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs:
       - validate-release
       - test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Linux amd64
+            asset: gomud-linux_x64
+          - label: Linux arm64
+            asset: gomud-linux_arm64
+          - label: Linux arm/v7
+            asset: gomud-linux_armv7
+          - label: Windows amd64
+            asset: gomud-windows_x64.exe
+          - label: Windows arm64
+            asset: gomud-windows_arm64.exe
+          - label: macOS amd64
+            asset: gomud-darwin_x64
+          - label: macOS arm64
+            asset: gomud-darwin_arm64
     permissions:
       contents: read
     env:
       BINARY_VERSION: ${{ needs.validate-release.outputs.binary_version }}
+      RELEASE_TARGET_ASSET: ${{ matrix.asset }}
     steps:
-      # actions/checkout v6.0.2
+      # actions/checkout v6.0.3
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
 
       - uses: ./.github/actions/setup-go
 
-      - name: Generate code
-        run: go generate ./...
-
-      - name: Build release binaries
+      - name: Build release binary
         run: .github/scripts/build-release-binaries.sh
 
-      - name: Upload release binaries
+      - name: Upload release binary
         # actions/upload-artifact v7.0.1
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: release-binaries
-          path: dist/*
+          name: release-binary-${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
           if-no-files-found: error
 
   stage-release:
@@ -152,7 +168,7 @@ jobs:
       BINARY_VERSION: ${{ needs.validate-release.outputs.binary_version }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      # actions/checkout v6.0.2
+      # actions/checkout v6.0.3
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
@@ -182,8 +198,9 @@ jobs:
         # actions/download-artifact v8.0.1
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: release-binaries
+          pattern: release-binary-*
           path: bin/
+          merge-multiple: true
 
       - name: Assemble release assets
         run: .github/scripts/assemble-release-assets.sh
@@ -264,7 +281,6 @@ jobs:
       packages: write
       attestations: write
       id-token: write
-    secrets: inherit
     with:
       release_tag: ${{ inputs.release_tag }}
 
@@ -290,3 +306,74 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
             -F draft=false \
             -F prerelease=false
+
+  cleanup-failed-draft:
+    name: Cleanup Failed Stable Draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs:
+      - stage-release
+      - docker-image
+      - publish
+    if: >-
+      ${{
+        always() &&
+        (
+          needs.stage-release.result == 'failure' ||
+          needs.docker-image.result == 'failure' ||
+          needs.publish.result == 'failure'
+        )
+      }}
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_ID: ${{ needs.stage-release.outputs.release_id }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+    steps:
+      - name: Delete unpublished stable draft
+        run: |
+          set -euo pipefail
+
+          # Only delete a draft whose ID came from this run. Looking it up by
+          # tag can delete a draft created while this run waited for approval.
+          if [ -z "$RELEASE_ID" ]; then
+            echo "No draft release ID was created by this workflow run."
+            exit 0
+          fi
+
+          release_data="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+              --jq '[.id, .tag_name, .draft, .target_commitish] | @tsv' \
+              2>/dev/null || true
+          )"
+          if [ -z "$release_data" ]; then
+            echo "Draft release ${RELEASE_ID} was not found."
+            exit 0
+          fi
+
+          IFS=$'\t' read -r release_id tag_name draft target_commitish \
+            <<<"$release_data"
+          if [ "$tag_name" != "$RELEASE_TAG" ] ||
+            [ "$draft" != "true" ] ||
+            [ "$target_commitish" != "$GITHUB_SHA" ]; then
+            echo "Release ${RELEASE_TAG} is not this run's draft; leaving it."
+            exit 0
+          fi
+
+          gh api \
+            -X DELETE \
+            "repos/${GITHUB_REPOSITORY}/releases/${release_id}"
+
+          tag_sha="$(
+            gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+              --jq '.object.sha' \
+              2>/dev/null || true
+          )"
+          if [ "$tag_sha" = "$GITHUB_SHA" ]; then
+            gh api \
+              -X DELETE \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}"
+          elif [ -n "$tag_sha" ]; then
+            echo "Tag ${RELEASE_TAG} does not point at this run; leaving it."
+          fi

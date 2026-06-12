@@ -17,9 +17,9 @@ EOF
 }
 
 binary_names() {
-	local label goos goarch goarm asset
+	local _label _goos _goarch _goarm asset
 
-	while IFS='|' read -r label goos goarch goarm asset; do
+	while IFS='|' read -r _label _goos _goarch _goarm asset; do
 		printf '%s\n' "$asset"
 	done < <(release_targets)
 }
@@ -49,13 +49,13 @@ attestation_paths() {
 }
 
 downloads_markdown() {
-	local label goos goarch goarm asset
+	local label _goos _goarch _goarm asset
 
-	while IFS='|' read -r label goos goarch goarm asset; do
-		printf -- '- %s: `%s`\n' "$label" "$asset"
+	while IFS='|' read -r label _goos _goarch _goarm asset; do
+		printf -- "- %s: \`%s\`\n" "$label" "$asset"
 	done < <(release_targets)
-	printf -- '- Datafiles: `%s`\n' "$datafiles_archive"
-	printf -- '- Checksums: `%s`\n' "$checksums_file"
+	printf -- "- Datafiles: \`%s\`\n" "$datafiles_archive"
+	printf -- "- Checksums: \`%s\`\n" "$checksums_file"
 }
 
 case "${1:-}" in
